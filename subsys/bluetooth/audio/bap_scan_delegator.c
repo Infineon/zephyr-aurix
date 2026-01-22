@@ -35,7 +35,6 @@
 #include <zephyr/sys/__assert.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/sys/check.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/sys/util_macro.h>
 #include <zephyr/toolchain.h>
@@ -1549,12 +1548,12 @@ static bool valid_bt_bap_scan_delegator_add_src_param(
 		return false;
 	}
 
-	CHECKIF(param->addr.type > BT_ADDR_LE_RANDOM) {
+	if (param->addr.type > BT_ADDR_LE_RANDOM) {
 		LOG_DBG("param->addr.type %u is invalid", param->addr.type);
 		return false;
 	}
 
-	CHECKIF(param->sid > BT_GAP_SID_MAX) {
+	if (param->sid > BT_GAP_SID_MAX) {
 		LOG_DBG("param->sid %d is invalid", param->sid);
 		return false;
 	}
@@ -1602,7 +1601,7 @@ int bt_bap_scan_delegator_add_src(const struct bt_bap_scan_delegator_add_src_par
 	struct bt_bap_scan_delegator_recv_state *state;
 	__maybe_unused int err;
 
-	CHECKIF(!valid_bt_bap_scan_delegator_add_src_param(param)) {
+	if (!valid_bt_bap_scan_delegator_add_src_param(param)) {
 		return -EINVAL;
 	}
 
@@ -1713,7 +1712,7 @@ int bt_bap_scan_delegator_mod_src(const struct bt_bap_scan_delegator_mod_src_par
 	bool state_changed = false;
 	__maybe_unused int err;
 
-	CHECKIF(!valid_bt_bap_scan_delegator_mod_src_param(param)) {
+	if (!valid_bt_bap_scan_delegator_mod_src_param(param)) {
 		return -EINVAL;
 	}
 
