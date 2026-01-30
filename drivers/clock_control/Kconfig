@@ -78,4 +78,6 @@ source "drivers/clock_control/Kconfig.xec"
 
 source "drivers/clock_control/Kconfig.rts5817"
 
+source "drivers/clock_control/Kconfig.aurix"
+
 endif # CLOCK_CONTROL
