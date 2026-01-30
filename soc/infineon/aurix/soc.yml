@@ -1,0 +1,54 @@
+family:
+- name: aurix
+  series:
+  - name: tc3x
+    socs:
+    - name: tc375tp
+      cpuclusters:
+      - name: tc
+      - name: tc0
+      - name: tc1
+      - name: tc2
+    - name: tc377tx
+      cpuclusters:
+      - name: tc
+      - name: tc0
+      - name: tc1
+      - name: tc2
+    - name: tc387qp
+      cpuclusters:
+      - name: tc
+      - name: tc0
+      - name: tc1
+      - name: tc2
+      - name: tc3
+    - name: tc397xp
+      cpuclusters:
+      - name: cpu0
+      - name: cpu1
+      - name: cpu2
+      - name: cpu3
+      - name: cpu4
+      - name: cpu5
+  - name: tc4x
+    socs:
+    - name: tc4d7xp
+      cpuclusters:
+      - name: tc
+      - name: tc0
+      - name: tc1
+      - name: tc2
+      - name: tc3
+      - name: tc4
+      - name: tc5
+      - name: cs
+    - name: tc4d9xp
+      cpuclusters:
+      - name: tc
+      - name: tc0
+      - name: tc1
+      - name: tc2
+      - name: tc3
+      - name: tc4
+      - name: tc5
+      - name: cs
