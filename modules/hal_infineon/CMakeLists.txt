@@ -117,3 +117,11 @@ if(CONFIG_SOC_FAMILY_INFINEON_PSOC4)
   ## Add abstraction-rtos sources
   add_subdirectory(abstraction-rtos)
 endif()
+
+if (CONFIG_HAS_INFINEON_TC3X_HAL)
+  add_subdirectory(${ZEPHYR_HAL_INFINEON_MODULE_DIR}/tc3x tc3x)
+endif()
+
+if (CONFIG_HAS_INFINEON_TC4X_HAL)
+  add_subdirectory(${ZEPHYR_HAL_INFINEON_MODULE_DIR}/tc4x tc4x)
+endif()
