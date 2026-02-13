@@ -44,6 +44,7 @@ unsigned int z_tricore_create_context(struct k_thread *thread, k_thread_entry_t 
 	lower->pcxi |= (1 << 21) | (1 << 20); /* Set PIE and UL bits */
 
 	upper->a10 = (uint32_t)stack_ptr;
+	upper->a11 = (uint32_t)z_thread_entry;
 	upper->psw = (1 << 7); /* Set CDE bit*/
 	upper->pcxi = 0;
 
@@ -79,9 +80,12 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 
 	/* Set protection set value, if MPU is enabled, the PRS 0 is reseverd for ISR, SYSCALL */
 	thread->arch.prs =
-		CONFIG_TRICORE_MPU
-			? MAX(1, FIELD_GET(K_PROTECTION_SET_MASK, thread->base.user_options))
-			: FIELD_GET(K_PROTECTION_SET_MASK, thread->base.user_options);
+#if defined(CONFIG_TRICORE_MPU)
+		MAX(1, FIELD_GET(K_PROTECTION_SET_MASK, thread->base.user_options));
+#else
+		FIELD_GET(K_PROTECTION_SET_MASK, thread->base.user_options);
+#endif
+
 #if CONFIG_CPU_TC18
 	thread->callee_saved.pprs = thread->arch.prs;
 #endif
@@ -106,7 +110,7 @@ FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry, void *p1, v
 
 #ifndef CONFIG_MULTITHREADING
 
-FUNC_NORETURN void z_riscv_switch_to_main_no_multithreading(k_thread_entry_t main_entry, void *p1,
+FUNC_NORETURN void z_tricore_switch_to_main_no_multithreading(k_thread_entry_t main_entry, void *p1,
 							    void *p2, void *p3)
 {
 }

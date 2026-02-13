@@ -6,6 +6,7 @@ zephyr_library()
 zephyr_library_sources(
     reset.S
     switch.S
+    syscall_wrapper.S
     isr_wrapper.S
     cache.c
     fatal.c
@@ -15,7 +16,7 @@ zephyr_library_sources(
     vectors.c
 )
 zephyr_library_sources_ifdef(CONFIG_TRICORE_MPU mpu.c)
-zephyr_library_sources_ifdef(CONFIG_USERSPACE syscall_wrapper.S userspace.S)
+zephyr_library_sources_ifdef(CONFIG_USERSPACE userspace.S)
 zephyr_library_sources_ifdef(CONFIG_CPU_TC16 tc16/lib.S)
 zephyr_library_sources_ifdef(CONFIG_CPU_TC18 tc18/lib.S)
 
