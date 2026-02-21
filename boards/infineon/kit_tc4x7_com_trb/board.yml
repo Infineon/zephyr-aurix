@@ -1,5 +1,6 @@
 board:
   name: kit_tc4x7_com_trb
+  full_name: KIT TC4x7 COM TRB
   vendor: infineon
   socs:
     - name: tc4d7xp
