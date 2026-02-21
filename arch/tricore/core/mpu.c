@@ -186,6 +186,7 @@ void z_tricore_mpu_configure_kernel_thread(struct k_thread *thread)
 	_set_cpxe(thread->arch.prs, MPU_DEFAULT_CPXE);
 }
 
+#if CONFIG_USERSPACE
 void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 {
 	struct k_mem_domain *mem_domain = thread->mem_domain_info.mem_domain;
@@ -261,6 +262,7 @@ void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 
 	sys_dlist_append(&loaded_mem_domains, &mem_domain->arch.loaded_node);
 }
+#endif
 
 void z_tricore_mpu_configure_thread(struct k_thread *thread)
 {
@@ -303,6 +305,7 @@ void z_tricore_mpu_init(void)
 	z_tricore_mpu_enable();
 }
 
+#if CONFIG_USERSPACE
 int arch_mem_domain_init(struct k_mem_domain *domain)
 {
 	domain->arch.cpxe = 0;
@@ -328,3 +331,4 @@ int arch_buffer_validate(const void *addr, size_t size, int write)
 
 	return 0;
 }
+#endif
