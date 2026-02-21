@@ -20,6 +20,11 @@ union z_tricore_context __kstackmem __aligned(4 * 16) z_tricore_csa[CONFIG_TRICO
 //__thread uint8_t is_user_mode;
 #endif
 
+int arch_coprocessors_disable(struct k_thread *thread)
+{
+	return -ENOTSUP;
+}
+
 unsigned int z_tricore_create_context(struct k_thread *thread, k_thread_entry_t entry, void *p1,
 				      void *p2, void *p3, char *stack_ptr)
 {
