@@ -15,6 +15,8 @@
  */
 
 #include <kernel_internal.h>
+#include <zephyr/arch/common/init.h>
+#include <zephyr/arch/common/xip.h>
 
 extern void z_tricore_mpu_init(void);
 
@@ -27,8 +29,8 @@ extern void z_tricore_mpu_init(void);
 
 void z_prep_c(void)
 {
-	z_bss_zero();
-	z_data_copy();
+	arch_bss_zero();
+	arch_data_copy();
 
 #ifdef CONFIG_TRICORE_MPU
 	z_tricore_mpu_init();
