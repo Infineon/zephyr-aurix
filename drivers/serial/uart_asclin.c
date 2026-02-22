@@ -103,8 +103,7 @@ static int uart_asclin_err_check(const struct device *dev)
 		return UART_ERROR_COLLISION;
 	}
 
-	config->base->FLAGSCLEAR.B =
-		(Ifx_ASCLIN_FLAGSCLEAR_Bits){.PEC = 1, .FEC = 1, .BDC = 1, .RFOC = 1, .CEC = 1};
+	config->base->FLAGSCLEAR.U = BIT(16) | BIT(18) | BIT(21) | BIT(25) | BIT(26);
 
 	return 0;
 }
@@ -304,10 +303,10 @@ static void uart_asclin_irq_tx_enable(const struct device *dev)
 {
 	const struct uart_asclin_config *config = dev->config;
 	uint32_t key = irq_lock();
-	Ifx_ASCLIN_FLAGSENABLE flags_enable = {.U = config->base->FLAGSENABLE.U};
 
-	flags_enable.B.TFLE = 1;
-	config->base->FLAGSENABLE.U = flags_enable.U;
+	config->base->FLAGSENABLE.U |= BIT(31);
+	config->base->FLAGSCLEAR.U = BIT(31);
+	config->base->FLAGSSET.U = BIT(31);
 
 	irq_unlock(key);
 }
@@ -326,9 +325,10 @@ static void uart_asclin_irq_tx_disable(const struct device *dev)
 
 static int uart_asclin_irq_tx_ready(const struct device *dev)
 {
+	const struct uart_asclin_config *config = dev->config;
 	struct uart_asclin_data *data = dev->data;
 
-	return data->flags.B.TFL;
+	return data->flags.B.TFL && (config->base->FLAGSENABLE.U & BIT(31));
 }
 
 static int uart_asclin_irq_tx_complete(const struct device *dev)
@@ -380,8 +380,7 @@ static void uart_asclin_irq_err_enable(const struct device *dev)
 	flags_enable.B.CEE = 1;
 	flags_enable.B.RFOE = 1;
 	flags_enable.B.BDE = 1;
-	config->base->FLAGSCLEAR.B =
-		(Ifx_ASCLIN_FLAGSCLEAR_Bits){.PEC = 1, .FEC = 1, .CEC = 1, .RFOC = 1, .BDC = 1};
+	config->base->FLAGSCLEAR.U = BIT(16) | BIT(18) | BIT(21) | BIT(25) | BIT(26);
 	config->base->FLAGSENABLE.U = flags_enable.U;
 
 	irq_unlock(key);
@@ -405,9 +404,12 @@ static void uart_asclin_irq_err_disable(const struct device *dev)
 
 static int uart_asclin_irq_is_pending(const struct device *dev)
 {
+	const struct uart_asclin_config *config = dev->config;
 	struct uart_asclin_data *data = dev->data;
+	uint32_t en = config->base->FLAGSENABLE.U;
 
-	return (data->flags.B.RFL == 1) || (data->flags.B.TFL == 1);
+	return (data->flags.B.RFL && (en & BIT(28))) ||
+		(data->flags.B.TFL && (en & BIT(31)));
 }
 
 static int uart_asclin_irq_update(const struct device *dev)
@@ -416,7 +418,7 @@ static int uart_asclin_irq_update(const struct device *dev)
 	struct uart_asclin_data *data = dev->data;
 
 	data->flags.U = config->base->FLAGS.U;
-	config->base->FLAGSCLEAR.B = (Ifx_ASCLIN_FLAGSCLEAR_Bits){.RFLC = 1, .TFLC = 1, .TCC = 1};
+	config->base->FLAGSCLEAR.U = BIT(17);
 
 	return 1;
 }
@@ -473,6 +475,9 @@ static int uart_asclin_init(const struct device *dev)
 				 data->uart_cfg->stop_bits,
 				 data->uart_cfg->parity != UART_CFG_PARITY_NONE,
 				 data->uart_cfg->parity == UART_CFG_PARITY_ODD);
+
+	cfg->base->FLAGSENABLE.U = 0;
+	cfg->base->FLAGSCLEAR.U = 0xFFFFFFFFu;
 
 	if (uart_asclin_set_clk(cfg, cfg->clk_src)) {
 		return -ETIMEDOUT;
