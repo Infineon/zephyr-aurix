@@ -1,0 +1,6 @@
+sample:
+  name: TriCore Bitfield Packing
+tests:
+  sample.boards.infineon.tricore_bitfield_pack:
+    platform_allow: kit_a3g_tc4d7_lite/tc4d7xp/tc
+    tags: tricore
