@@ -2,6 +2,7 @@
  * Copyright (c) 2024 Infineon Technologies AG
  * SPDX-License-Identifier: Apache-2.0
  */
+#include <string.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util_macro.h>
@@ -58,4 +59,9 @@ void z_tricore_wdt_boot()
 #endif
 	WDT_CPU_DISABLE_IF_UNUSED(WDT_CPU_IDX(CONFIG_TRICORE_CORE_ID));
 #endif
+}
+
+void *__memcpy_assume_aligned(void *dst, const void *src, size_t n)
+{
+	return memcpy(dst, src, n);
 }
