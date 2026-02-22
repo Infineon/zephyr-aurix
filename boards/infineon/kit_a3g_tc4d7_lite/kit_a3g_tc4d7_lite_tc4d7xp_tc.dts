@@ -15,6 +15,7 @@
 		zephyr,dtcm = &dsram0;
 		zephyr,itcm = &psram0;
 		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
 	};
 };
 
