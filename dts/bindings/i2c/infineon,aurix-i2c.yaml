@@ -1,0 +1,16 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Infineon Aurix I2C
+
+compatible: "infineon,aurix-i2c"
+
+include: [i2c-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+  interrupts:
+    required: true
+  interrupt-names:
+    required: true
