@@ -1,6 +1,18 @@
 #include <infineon/tc4x/tc4x7_com-pinctrl.h>
 
 &pinctrl {
+	eeprom_i2c: eeprom_i2c {
+	    group1 {
+		pinmux = <I2C0_SCL_IN_P13_1>, <I2C0_SDA_IN_P13_2>;
+	    };
+
+	    group2 {
+		pinmux = <I2C0_SCL_OUT_P13_1>, <I2C0_SDA_OUT_P13_2>;
+		output-enable;
+		drive-open-drain;
+	    };
+	};
+
 	uart0_default: uart0_default {
 		group1 {
 			pinmux = <ASCLIN0_TX_P14_0>;
