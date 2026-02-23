@@ -1,0 +1,10 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig I2C_AURIX
+	bool "I2C support for Aurix SoCs"
+	default y
+	depends on DT_HAS_INFINEON_AURIX_I2C_ENABLED
+	help
+	  Enable the Aurix I2C driver
+
