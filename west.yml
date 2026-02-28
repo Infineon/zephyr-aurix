@@ -24,7 +24,7 @@ manifest:
     - name: babblesim
       url-base: https://github.com/BabbleSim
     - name: linumiz
-      url-base: https://github.com/linumiz
+      url-base: git@github.com:linumiz
 
   group-filter: [-babblesim, -optional, -testing]
 
@@ -189,9 +189,9 @@ manifest:
       path: modules/hal/gigadevice
       groups:
         - hal
-    - name: hal_infineon
+    - name: hal_infineon-aurix
       remote: linumiz
-      revision: dev/ifx/tricore-latest
+      revision: dev/ifx/tricore
       path: modules/hal/infineon
       groups:
         - hal
