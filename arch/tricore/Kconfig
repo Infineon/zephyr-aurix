@@ -42,6 +42,15 @@ config TRICORE_RESET_TRAMPOLINE
 		any address (e.g. no cached) to the actual startup
 		function.
 
+config CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS
+	bool "Custom fixed SoC MPU region definition"
+	help
+	  If enabled, this option signifies that the SoC will
+	  define and configure its own fixed MPU regions in the
+	  SoC definition. These fixed MPU regions are currently
+	  used to set Flash and SRAM default access policies and
+	  they are programmed at boot time.
+
 menu "Tricore Processor Options"
 
 config TRICORE_MPU
