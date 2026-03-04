@@ -48,8 +48,16 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 #endif
 
 	ld.w %d15, [%a15]+___cpu_t_nested_OFFSET
-	addi %d15, %d15, 1
-	st.w [%a15]+___cpu_t_nested_OFFSET, %d15
+	addi %d14, %d15, 1
+	st.w [%a15]+___cpu_t_nested_OFFSET, %d14
+
+#if CONFIG_MPU_STACK_GUARD
+	jnz	%d15, no_stack_guard
+	mov.a	%a4, 0
+	/* Enable stack guard for ISR */
+	call z_tricore_mpu_stackguard_enable
+no_stack_guard:
+#endif
 
 #ifdef CONFIG_TRACING_ISR
 	call sys_trace_isr_enter
@@ -76,11 +84,10 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 	ld.w %d15, [%a15]+___cpu_t_nested_OFFSET
 	addi %d15, %d15, -1
 	st.w [%a15]+___cpu_t_nested_OFFSET, %d15
-
-#if defined(CONFIG_MULTITHREADING)
 	/* Check nesting */
 	jnz	%d15, no_reschedule
 
+#if defined(CONFIG_MULTITHREADING)
 	/* Check pending irq for reschedule */
 	mfcr	%d15, TRICORE_ICR
 	extr.u	%d15, %d15, 16, 8
@@ -98,6 +105,12 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 	mov.aa	%a4, %a2
 	mov.aa	%a5, %a14
 	fcall	z_tricore_switch
+#endif
+
+#if CONFIG_MPU_STACK_GUARD
+	ld.a	%a4, [%a15]+___cpu_t_current_OFFSET
+	/* Enable stack guard for thread */
+	call z_tricore_mpu_stackguard_enable
 #endif
 
 no_reschedule:
