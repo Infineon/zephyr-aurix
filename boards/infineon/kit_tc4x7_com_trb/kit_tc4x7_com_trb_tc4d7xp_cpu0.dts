@@ -14,5 +14,10 @@
 		zephyr,sram = &dsram0;
 		zephyr,dtcm = &dsram0;
 		zephyr,itcm = &psram0;
+		zephyr,console = &uart0;
 	};
+};
+
+&uart0 {
+	status = "okay";
 };
