@@ -34,21 +34,19 @@ family:
     socs:
     - name: tc4d7xp
       cpuclusters:
-      - name: tc
-      - name: tc0
-      - name: tc1
-      - name: tc2
-      - name: tc3
-      - name: tc4
-      - name: tc5
-      - name: cs
+      - name: cpu0
+      - name: cpu1
+      - name: cpu2
+      - name: cpu3
+      - name: cpu4
+      - name: cpu5
+      - name: cpuCS
     - name: tc4d9xp
       cpuclusters:
-      - name: tc
-      - name: tc0
-      - name: tc1
-      - name: tc2
-      - name: tc3
-      - name: tc4
-      - name: tc5
-      - name: cs
+      - name: cpu0
+      - name: cpu1
+      - name: cpu2
+      - name: cpu3
+      - name: cpu4
+      - name: cpu5
+      - name: cpuCS
