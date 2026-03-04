@@ -1,11 +1,14 @@
-#include "kernel_internal.h"
-#include "zephyr/arch/tricore/arch.h"
-#include "zephyr/arch/tricore/arch_inlines.h"
-#include "zephyr/arch/tricore/cr.h"
-#include "zephyr/linker/linker-defs.h"
-#include "zephyr/sys/dlist.h"
-#include "zephyr/sys/util.h"
+/*
+ * Copyright (c) 2026, Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include <stddef.h>
 #include <stdint.h>
+#include <zephyr/arch/tricore/cr.h>
+#include <zephyr/arch/tricore/mpu.h>
+#include <zephyr/mem_mgmt/mem_attr.h>
+#include <zephyr/sys/dlist.h>
 #include <zephyr/kernel.h>
 #include <zephyr/arch/arch_interface.h>
 
@@ -74,51 +77,71 @@ static void _set_cpxe(uint8_t prs, uint32_t xe)
 	}
 }
 
-/* Range Definitions*/
-#define MPU_TEXT_CPR 0
-#if CONFIG_MPU_STACK_GUARD
-#define MPU_RO_DPR        0
-#define MPU_PERI_DPR      1
-#define MPU_RW_ISR_DPR    2
-#define MPU_RW_DPR        3
-#define MPU_RW_KERNEL_DPR 4
-#define MPU_STACK_DPR     5
-#else
-#define MPU_RO_DPR    0
-#define MPU_PERI_DPR  1
-#define MPU_RW_DPR    2
-#define MPU_STACK_DPR 3
-#endif
-
-/* Code MPU Settings */
-#define MPU_DEFAULT_CPXE (BIT(MPU_TEXT_CPR))
-
-/* ISR MPU Settings */
-#if CONFIG_MPU_STACK_GUARD
-#define MPU_ISR_DPWE (BIT(MPU_PERI_DPR) | BIT(MPU_RW_ISR_DPR) | BIT(MPU_RW_DPR))
-#define MPU_ISR_DPRE (BIT(MPU_RO_DPR) | BIT(MPU_PERI_DPR) | BIT(MPU_RW_ISR_DPR) | BIT(MPU_RW_DPR))
-#else
-#define MPU_ISR_DPWE (BIT(MPU_PERI_DPR) | BIT(MPU_RW_DPR))
-#define MPU_ISR_DPRE (BIT(MPU_RO_DPR) | BIT(MPU_PERI_DPR) | BIT(MPU_RW_DPR))
-#endif
-
-/* Kernel MPU Settings */
-#if CONFIG_MPU_STACK_GUARD
-#define MPU_KERNEL_DPWE (BIT(MPU_PERI_DPR) | BIT(MPU_RW_KERNEL_DPR) | BIT(MPU_STACK_DPR))
-#define MPU_KERNEL_DPRE                                                                            \
-	(BIT(MPU_RO_DPR) | BIT(MPU_PERI_DPR) | BIT(MPU_RW_KERNEL_DPR) | BIT(MPU_STACK_DPR))
-#else
-#define MPU_KERNEL_DPWE (BIT(MPU_PERI_DPR) | BIT(MPU_RW_DPR))
-#define MPU_KERNEL_DPRE (BIT(MPU_RO_DPR) | BIT(MPU_PERI_DPR) | BIT(MPU_RW_DPR))
-#endif
-
-/* Userspace MPU Settings*/
-#define MPU_USER_DPWE (BIT(MPU_STACK_DPR))
-#define MPU_USER_DPRE (BIT(MPU_RO_DPR) | BIT(MPU_STACK_DPR))
-
-static uint8_t cpr_free = ~((1 << MPU_TEXT_CPR));
-static uint32_t dpr_free = ~(GENMASK(MPU_STACK_DPR, 0));
+static uint8_t cpr_free = ~0;
+static uint32_t dpr_free = ~0;
+static uint32_t system_dpre = 0;
+static uint32_t system_dpwe = 0;
+static uint32_t system_cpxe = 0;
+static uint32_t user_cpxe = 0;
+static uint32_t user_dpre = 0;
+static uint32_t user_dpwe = 0;
 static sys_dlist_t loaded_mem_domains = SYS_DLIST_STATIC_INIT(&loaded_mem_domains);
+#if CONFIG_MPU_STACK_GUARD
+static uint8_t stack_guard_dpr;
+#endif
+
+static int mpu_configure_region(const struct tricore_mpu_region *section)
+{
+	uint8_t cpr = __builtin_ctz(cpr_free);
+	uint8_t dpr = __builtin_ctz(dpr_free);
+	if (section->flags & (TRICORE_MPU_ACCESS_P_X | TRICORE_MPU_ACCESS_U_X)) {
+		if (cpr >= CONFIG_TRICORE_MPU_CODE_REGIONS) {
+			return -1;
+		}
+		cpr_free &= ~(1 << cpr);
+		_set_cpr(cpr, section->start, section->end);
+		system_cpxe |= (section->flags & TRICORE_MPU_ACCESS_P_X) ? (1 << cpr) : 0;
+		user_cpxe |= (section->flags & TRICORE_MPU_ACCESS_U_X) ? (1 << cpr) : 0;
+	}
+	if (section->flags & TRICORE_MPU_ACCESS_P_RW_U_RW) {
+		if (dpr >= CONFIG_TRICORE_MPU_DATA_REGIONS) {
+			return -1;
+		}
+		dpr_free &= ~(1 << dpr);
+		_set_dpr(dpr, section->start, section->end);
+		system_dpre |= (section->flags & TRICORE_MPU_ACCESS_P_R) ? (1 << dpr) : 0;
+		system_dpwe |= (section->flags & TRICORE_MPU_ACCESS_P_W) ? (1 << dpr) : 0;
+		user_dpre |= (section->flags & TRICORE_MPU_ACCESS_U_R) ? (1 << dpr) : 0;
+		user_dpwe |= (section->flags & TRICORE_MPU_ACCESS_U_W) ? (1 << dpr) : 0;
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_MEM_ATTR
+static int mpu_configure_regions_from_dt()
+{
+	const struct mem_attr_region_t *regions;
+	size_t num_regions, region_idx;
+
+	num_regions = mem_attr_get_regions(&regions);
+
+	for (region_idx = 0; region_idx < num_regions; region_idx++) {
+		struct tricore_mpu_region region;
+
+		region.start = regions[region_idx].dt_addr;
+		region.end = regions[region_idx].dt_addr + regions[region_idx].dt_size;
+		region.name = regions[region_idx].dt_name;
+		region.flags = TRICORE_MPU_ACCESS_P_RW_U_NA; /* TODO: define */
+
+		if (mpu_configure_region(&region) != 0) {
+			return -1;
+		}
+	}
+
+	return num_regions;
+}
+#endif /* CONFIG_MEM_ATTR */
 
 void z_tricore_mpu_enable(void)
 {
@@ -137,34 +160,27 @@ void z_tricore_mpu_disable(void)
 #if CONFIG_MPU_STACK_GUARD
 void z_tricore_mpu_stackguard_disable(struct k_thread *thread)
 {
-	if (thread == NULL) {
-		_set_dpr(MPU_RW_ISR_DPR, (uintptr_t)_image_ram_start,
-			 (uintptr_t)&z_interrupt_stacks[arch_proc_id()]);
-		_set_dpr(MPU_RW_DPR, (uintptr_t)&z_interrupt_stacks[arch_proc_id()],
-			 (uintptr_t)_image_ram_end);
-	} else {
-		_set_dpr(MPU_RW_KERNEL_DPR, (uintptr_t)_image_ram_start,
-			 (uintptr_t)thread->stack_info.start);
-		_set_dpr(MPU_RW_DPR, (uintptr_t)thread->stack_info.start,
-			 (uintptr_t)_image_ram_end);
+	size_t i;
+
+	for (i = 0; i < mpu_config.num_regions; i++) {
+		_set_dpr(i, mpu_config.regions[i].start, mpu_config.regions[i].end);
 	}
 }
 
 void z_tricore_mpu_stackguard_enable(struct k_thread *thread)
 {
-	if (thread == NULL) {
-		_set_dpr(MPU_RW_ISR_DPR, (uintptr_t)_image_ram_start,
-			 (uintptr_t)&z_interrupt_stacks[arch_proc_id()]);
-		_set_dpr(MPU_RW_DPR,
-			 (uintptr_t)&z_interrupt_stacks[arch_proc_id()] +
-				 Z_TRICORE_STACK_GUARD_SIZE,
-			 (uintptr_t)_image_ram_end);
-	} else {
-		_set_dpr(MPU_RW_KERNEL_DPR, (uintptr_t)_image_ram_start,
-			 (uintptr_t)thread->stack_info.start);
-		_set_dpr(MPU_STACK_DPR,
-			 (uintptr_t)thread->stack_info.start + Z_TRICORE_STACK_GUARD_SIZE,
-			 (uintptr_t)_image_ram_end);
+	uint32_t guard_start =
+		thread ? thread->stack_info.start : (uintptr_t)&z_interrupt_stacks[arch_proc_id()];
+	uint32_t guard_end = guard_start + Z_TRICORE_STACK_GUARD_SIZE;
+	uint32_t i;
+
+	for (i = 0; i < mpu_config.num_regions; i++) {
+		const struct tricore_mpu_region *region = &mpu_config.regions[i];
+		if (guard_start >= region->end || guard_end <= region->start) {
+			continue;
+		}
+		_set_dpr(i, region->start, guard_start);
+		_set_dpr(stack_guard_dpr, guard_end, region->end);
 	}
 }
 #endif
@@ -174,19 +190,15 @@ void z_tricore_mpu_configure_kernel_thread(struct k_thread *thread)
 	__ASSERT((thread->base.user_options & K_USER) == 0, "Kernel thread expected");
 
 #if CONFIG_MPU_STACK_GUARD
-	/* Update stack guard region for kernel threads */
-	_set_dpr(MPU_RW_KERNEL_DPR, (uintptr_t)_image_ram_start,
-		 (uintptr_t)thread->stack_info.start);
-	_set_dpr(MPU_STACK_DPR, (uintptr_t)thread->stack_info.start + Z_TRICORE_STACK_GUARD_SIZE,
-		 (uintptr_t)_image_ram_end);
+	z_tricore_mpu_stackguard_enable(thread);
 #endif
 	/* Set region configuration for the thread prs value */
-	_set_dpre(thread->arch.prs, MPU_KERNEL_DPRE);
-	_set_dpwe(thread->arch.prs, MPU_KERNEL_DPWE);
-	_set_cpxe(thread->arch.prs, MPU_DEFAULT_CPXE);
+	_set_dpre(thread->arch.prs, system_dpre);
+	_set_dpwe(thread->arch.prs, system_dpwe);
+	_set_cpxe(thread->arch.prs, system_cpxe);
 }
 
-#if CONFIG_USERSPACE
+#if defined(CONFIG_USERSPACE)
 void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 {
 	struct k_mem_domain *mem_domain = thread->mem_domain_info.mem_domain;
@@ -208,9 +220,9 @@ void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 	}
 
 	/* Set default values for enable ranges */
-	mem_domain->arch.dpwe = MPU_USER_DPWE;
-	mem_domain->arch.dpre = MPU_USER_DPRE;
-	mem_domain->arch.cpxe = MPU_DEFAULT_CPXE;
+	mem_domain->arch.dpwe = user_dpwe;
+	mem_domain->arch.dpre = user_dpre;
+	mem_domain->arch.cpxe = user_cpxe;
 
 	for (i = 0; i < mem_domain->num_partitions; i++) {
 		struct k_mem_partition *partition = &mem_domain->partitions[i];
@@ -266,6 +278,8 @@ void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 
 void z_tricore_mpu_configure_thread(struct k_thread *thread)
 {
+	__ASSERT(thread != NULL, "Thread pointer cannot be NULL");
+
 #if CONFIG_USERSPACE
 	if ((thread->base.user_options & K_USER) != 0) {
 		z_tricore_mpu_configure_user_thread(thread);
@@ -279,28 +293,31 @@ void z_tricore_mpu_configure_thread(struct k_thread *thread)
 
 void z_tricore_mpu_init(void)
 {
-	/* Configure text section as code protection range */
-	_set_cpr(MPU_TEXT_CPR, (uintptr_t)__text_region_start, (uintptr_t)__text_region_end);
 
-	/* Configure read only data sections as data protection range */
-	_set_dpr(MPU_RO_DPR, (uintptr_t)__rodata_region_start, (uintptr_t)__rodata_region_end);
-
+	size_t i;
+	for (i = 0; i < mpu_config.num_regions; i++) {
+		mpu_configure_region(&mpu_config.regions[i]);
+	}
+#ifdef CONFIG_MEM_ATTR
+	/* DT-defined MPU regions. */
+	if (mpu_configure_regions_from_dt(&static_regions_num) == -EINVAL) {
+		__ASSERT(0, "Failed to allocate MPU regions from DT\n");
+		return -EINVAL;
+	}
+#endif /* CONFIG_MEM_ATTR */
 #if CONFIG_MPU_STACK_GUARD
-	_set_dpr(MPU_RW_ISR_DPR, (uintptr_t)_image_ram_start,
-		 (uintptr_t)&z_interrupt_stacks[arch_proc_id()]);
-	_set_dpr(MPU_RW_DPR,
-		 (uintptr_t)&z_interrupt_stacks[arch_proc_id()] + Z_TRICORE_STACK_GUARD_SIZE,
-		 (uintptr_t)_image_ram_end);
-#else
-	_set_dpr(MPU_RW_DPR, (uintptr_t)_image_ram_start, (uintptr_t)_image_ram_end);
+	stack_guard_dpr = __builtin_ctz(dpr_free);
+	dpr_free &= ~(1 << stack_guard_dpr);
+	system_dpre |= (1 << stack_guard_dpr);
+	system_dpwe |= (1 << stack_guard_dpr);
+
+	z_tricore_mpu_stackguard_enable(NULL);
 #endif
-	/* Configure access to peripheral space */
-	_set_dpr(MPU_PERI_DPR, 0xF0000000, 0xFFFFFFFF);
 
 	/* Set regions for the default PRS value */
-	_set_dpre(0, MPU_ISR_DPRE);
-	_set_dpwe(0, MPU_ISR_DPWE);
-	_set_cpxe(0, MPU_DEFAULT_CPXE);
+	_set_dpre(0, system_dpre);
+	_set_dpwe(0, system_dpwe);
+	_set_cpxe(0, system_cpxe);
 
 	z_tricore_mpu_enable();
 }
@@ -315,10 +332,12 @@ int arch_mem_domain_init(struct k_mem_domain *domain)
 
 	return 0;
 }
+#endif
 
 int arch_mem_domain_max_partitions_get()
 {
-	return 32 - MPU_STACK_DPR;
+	/* TODO: Dynamic */
+	return 32;
 }
 
 int arch_buffer_validate(const void *addr, size_t size, int write)
@@ -329,6 +348,6 @@ int arch_buffer_validate(const void *addr, size_t size, int write)
 	uint32_t psw = *(
 		(uint32_t *)((((upper_pcxi & 0xF0000) << 12) | ((upper_pcxi & 0xFFFF) << 6)) + 1));
 
+	/* TODO: Check */
 	return 0;
 }
-#endif
