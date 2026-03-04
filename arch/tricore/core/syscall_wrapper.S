@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Infineon Technologies AG
+ * 
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include <zephyr/toolchain.h>
 #include <zephyr/linker/sections.h>
 #include <zephyr/arch/cpu.h>
@@ -46,6 +51,11 @@ dispatch_syscall:
 
 switch_syscall:
 	fcall	z_tricore_switch
+#if CONFIG_MPU_STACK_GUARD
+	ld.a	%a14, [%a15]+___cpu_t_current_OFFSET
+	/* Enable stack guard for thread */
+	call z_tricore_mpu_stackguard_enable
+#endif
 	j syscall_return
 
 syscall_return:
