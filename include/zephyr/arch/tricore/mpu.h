@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef ZEPHYR_INCLUDE_ARCH_TRICORE_MPU_H_
 #define ZEPHYR_INCLUDE_ARCH_TRICORE_MPU_H_
 
@@ -60,5 +66,20 @@ struct arch_mem_domain {
 };
 
 #define Z_TRICORE_STACK_GUARD_SIZE  Z_POW2_CEIL(MAX(ARCH_STACK_PTR_ALIGN, CONFIG_MPU_STACK_GUARD_MIN_SIZE))
+
+
+struct tricore_mpu_config {
+	size_t num_regions;
+	const struct tricore_mpu_region *regions;
+};
+
+struct tricore_mpu_region {
+	uint32_t start;
+	uint32_t end;
+	uint32_t flags;
+	const char *name;
+};
+
+extern const struct tricore_mpu_config mpu_config;
 
 #endif
