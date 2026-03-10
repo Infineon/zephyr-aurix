@@ -11,7 +11,11 @@
 #include <zephyr/drivers/gpio/gpio_utils.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/irq.h>
+#include <zephyr/sys/slist.h>
 #include <zephyr/sys/util.h>
+
+#include <IfxEgtm_reg.h>
+#include <IfxScu_reg.h>
 #include <soc.h>
 
 #include "gpio_tc4x.h"
@@ -96,7 +100,7 @@ static int gpio_tc4x_port_get_raw(const struct device *dev, uint32_t *value)
 {
 	const struct gpio_tc4x_config *cfg = dev->config;
 
-	*value = cfg->base->OUT.U;
+	*value = cfg->base->IN.U;
 
 	return 0;
 }
@@ -322,6 +326,7 @@ static int gpio_tc4x_init(const struct device *dev)
 	struct gpio_tc4x_data *data = dev->data;
 
 	cfg->config_func(dev);
+	sys_slist_init(&data->callbacks);
 
 	return 0;
 }
