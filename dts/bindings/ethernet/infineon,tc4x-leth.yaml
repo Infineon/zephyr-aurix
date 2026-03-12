@@ -1,0 +1,5 @@
+---
+description: LETH wrapper module
+compatible: infineon,tc4x-leth
+
+include: [base.yaml]
