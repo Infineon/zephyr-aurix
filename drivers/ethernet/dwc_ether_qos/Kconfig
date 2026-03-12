@@ -1,0 +1,23 @@
+config ETH_DWC_ETHER_QOS
+    bool
+    default y
+    depends on DT_HAS_SNPS_DWC_ETHER_QOS_ENABLED
+    select NET_PKT_LINKING
+
+if ETH_DWC_ETHER_QOS
+
+config ETH_QOS_NUM_RX_DMA_DESCRIPTORS
+    int "Number of RX DMA descriptors"
+    default 16
+
+config ETH_QOS_NUM_TX_DMA_DESCRIPTORS
+    int "Number of TX DMA descriptors"
+    default 16
+
+config ETH_QOS_SHARED_DMA
+	bool "Shared DMA between multiple MACs"
+
+config ETH_QOS_TARGET_TIME_CALLBACK
+    bool
+    default y
+endif

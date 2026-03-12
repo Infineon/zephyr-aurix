@@ -1,0 +1,12 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Synopsys IP Ethernet QoS PTP (Precision Time Protocol) Clock
+
+compatible: "snps,dwc-ether-qos-ptp-clock"
+
+include: ["base.yaml"]
+
+properties:
+  resolution:
+    type: int
