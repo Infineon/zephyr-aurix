@@ -35,6 +35,24 @@
             #clock-cells = <0>;
         };
 
+        fcpb: fcpb {
+			compatible = "infineon,aurix-clock";
+			clocks = <&fsource0>;
+			clock-frequency = <DT_FREQ_M(100)>;
+			clock-names = "fcpb";
+			status = "disabled";
+			#clock-cells = <0>;
+		};
+
+		fegtm: fegtm {
+			compatible = "infineon,aurix-clock";
+			clocks = <&fsource0>;
+			clock-frequency = <DT_FREQ_M(500)>;
+			clock-names = "fegtm";
+			status = "disabled";
+			#clock-cells = <0>;
+		};
+
         fcpu0: fcpu0 {
             compatible = "infineon,aurix-clock";
             clocks = <&fsri>;

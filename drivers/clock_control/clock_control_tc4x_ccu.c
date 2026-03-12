@@ -259,29 +259,41 @@ static inline int clock_control_tc4x_ccu_set_divider()
 	Ifx_CLOCK_SYSCCUCON0 sysccu0 = {
 		.B.SRIDIV = fsri_div, .B.SRICSDIV = 0, .B.SPBDIV = fspb_div,
 		.B.TPBDIV = ftpb_div, .B.FSI2DIV = 1,  .B.FSIDIV = ffsi_div,
-		.B.STMDIV = fstm_div, .B.LPDIV = 0,	IF_ENABLED(1, (.B.CPBDIV = fcpb_div, ))
+		.B.STMDIV = fstm_div, .B.LPDIV = 0,
+#if DT_NODE_EXISTS(DT_NODELABEL(fcpb))
+		.B.CPBDIV = fcpb_div,
+#endif
 		.B.UP = 1,
 	};
 	Ifx_CLOCK_SYSCCUCON1 sysccu1 = {
-		.B.CANXLHDIV = 0, // fcanxl_div,
 		.B.MCANHDIV = CLOCK_DIV_WITH_INST(fmcanh, infineon_mcmcan),
-		IF_ENABLED(0, (.B.GTMDIV = fgtm_div,))
-		IF_ENABLED(1, (.B.EGTMDIV = CLOCK_DIV_WITH_STATUS(fegtm),))
-		.B.LETHDIV = CLOCK_DIV_WITH_INST(fleth, infineon_tc4xx_leth),
-		.B.GETHDIV = CLOCK_DIV_WITH_INST(fgeth, infineon_tc4xx_geth),
+		.B.LETHDIV = CLOCK_DIV_WITH_INST(fleth, infineon_tc4x_leth),
+#if DT_NODE_EXISTS(DT_NODELABEL(fcanxl))
+		.B.CANXLHDIV = CLOCK_DIV_WITH_INST(fcanxl, infineon_canxl), 
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fgtm))
+		.B.GTMDIV = CLOCK_DIV_WITH_STATUS(fgtm_div),
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fegtm))
+		.B.EGTMDIV = CLOCK_DIV_WITH_STATUS(fegtm),
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fgeth))
+		.B.GETHDIV = CLOCK_DIV_WITH_INST(fgeth, infineon_tc4x_geth),
+#endif
 	};
 	Ifx_CLOCK_PERCCUCON0 perccu0 = {
 		.B.CLKSELMCAN = CLOCK_SEL_WITH_INST(fmcan, fsource1, fosc, infineon_mcmcan),
 		.B.MCANDIV = CLOCK_DIV_WITH_INST(fmcani, infineon_mcmcan),
 		.B.CLKSELQSPI = CLOCK_SEL_WITH_INST(fsourceqspi, fsource1, fsource2, infineon_aurix_qspi),
 		.B.QSPIDIV = CLOCK_DIV_WITH_INST(fqspi, infineon_aurix_qspi),
-		.B.PPUDIV = fppu_div,
+		IF_ENABLED(DT_NODE_EXISTS(DT_NODELABEL(fppu)), (.B.PPUDIV = fppu_div,))
 		.B.I2CDIV = CLOCK_DIV_WITH_INST(fi2c, infineon_aurix_i2c),
 	};
 	Ifx_CLOCK_PERCCUCON1 perccu1 = {
 		.B.ASCLINFDIV =  CLOCK_DIV_WITH_INST(fasclinf, infineon_asclin_uart),
 		.B.CLKSELASCLINS =  CLOCK_SEL_WITH_INST(fasclins, fasclinsi, fosc, infineon_asclin_uart),
 		.B.ASCLINSDIV = CLOCK_DIV_WITH_INST(fasclinsi, infineon_asclin_uart),
+		.B.LETH100PERON = CLOCK_DIV_WITH_STATUS(fleth100),
 	};
 	/* clang-format on */
 	CLOCK_SYSCCUCON1 = sysccu1;
@@ -308,16 +320,25 @@ static int clock_control_tc4x_ccu_on(const struct device *dev, clock_control_sub
 		return fsri_div != 0 ? 0 : -ENOSYS;
 	case CLOCK_FSPB:
 		return fspb_div != 0 ? 0 : -ENOSYS;
+#if DT_NODE_EXISTS(DT_NODELABEL(fcpb))
 	case CLOCK_FCPB:
 		return fcpb_div != 0 ? 0 : -ENOSYS;
-	/* case CLOCK_FGTM: return fgtm_div != 0 ? 0 : -ENOSYS; */
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fgtm))
+	case CLOCK_FGTM:
+		return fgtm_div != 0 ? 0 : -ENOSYS;
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fegtm))
 	case CLOCK_FEGTM:
 		return fegtm_div != 0 ? 0 : -ENOSYS;
+#endif
 	case CLOCK_FSTM:
 		return fstm_div != 0 ? 0 : -ENOSYS;
-	/* case CLOCK_FMSC: return fmsc_div != 0 ? 0 : -ENOSYS; */
+		/* case CLOCK_FMSC: return fmsc_div != 0 ? 0 : -ENOSYS; */
+#if DT_NODE_EXISTS(DT_NODELABEL(fgeth))
 	case CLOCK_FGETH:
 		return fgeth_div != 0 ? 0 : -ENOSYS;
+#endif
 	case CLOCK_FLETH:
 		return fleth_div != 0 ? 0 : -ENOSYS;
 	case CLOCK_FMCANH:
@@ -363,21 +384,32 @@ static int clock_control_tc4x_ccu_get_rate(const struct device *dev, clock_contr
 	case CLOCK_FSPB:
 		*rate = data->fsource0 / fspb_div;
 		return 0;
+#if DT_NODE_EXISTS(DT_NODELABEL(fcpb))
 	case CLOCK_FCPB:
 		*rate = data->fsource0 / fcpb_div;
 		return 0;
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fgtm))
+	case CLOCK_FGTM:
+		*rate = data->fsource0 / fgtm_div;
+		return 0;
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fegtm))
 	case CLOCK_FEGTM:
 		*rate = data->fsource0 / fegtm_div;
 		return 0;
+#endif
 	case CLOCK_FSTM:
 		*rate = data->fsource0 / fstm_div;
 		return 0;
-	/* case CLOCK_FMSC:
-		*rate = data->fsource0 / fmsc_div;
-		return 0; */
+		/* case CLOCK_FMSC:
+			*rate = data->fsource0 / fmsc_div;
+			return 0; */
+#if DT_NODE_EXISTS(DT_NODELABEL(fgeth))
 	case CLOCK_FGETH:
 		*rate = data->fsource0 / fgeth_div;
 		return 0;
+#endif
 	case CLOCK_FLETH:
 		*rate = data->fsource0 / fleth_div;
 		return 0;
