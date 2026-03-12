@@ -1,0 +1,12 @@
+board:
+  name: kit_a2g_tc3x7_trb
+  full_name: TriBoard TC3X7
+  vendor: infineon
+  revision:
+    format: major.minor.patch
+    default: "2.0"
+    revisions:
+      - name: "1.0"
+      - name: "2.0"
+  socs:
+    - name: tc397xp
