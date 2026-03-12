@@ -5,23 +5,20 @@ family:
     socs:
     - name: tc375tp
       cpuclusters:
-      - name: tc
-      - name: tc0
-      - name: tc1
-      - name: tc2
+      - name: cpu0
+      - name: cpu1
+      - name: cpu2
     - name: tc377tx
       cpuclusters:
-      - name: tc
-      - name: tc0
-      - name: tc1
-      - name: tc2
+      - name: cpu0
+      - name: cpu1
+      - name: cpu2
     - name: tc387qp
       cpuclusters:
-      - name: tc
-      - name: tc0
-      - name: tc1
-      - name: tc2
-      - name: tc3
+      - name: cpu0
+      - name: cpu1
+      - name: cpu2
+      - name: cpu3
     - name: tc397xp
       cpuclusters:
       - name: cpu0
