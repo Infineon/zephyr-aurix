@@ -1572,6 +1572,15 @@ void net_buf_slist_put(sys_slist_t *list, struct net_buf *buf);
 struct net_buf * __must_check net_buf_slist_get(sys_slist_t *list);
 
 /**
+ * @brief Remove a buffer from a list
+ *
+ * @param list Which list to remove the buffer from.
+ * @param prev_buf Previous buffer in the list, or NULL if the buffer to remove is the first one.
+ * @param buf Buffer to remove.
+ */
+void net_buf_slist_remove(sys_slist_t *list, struct net_buf *prev_buf, struct net_buf *buf);
+
+/**
  * @brief Decrements the reference count of a buffer.
  *
  * The buffer is put back into the pool if the reference count reaches zero.
