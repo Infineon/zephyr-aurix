@@ -90,7 +90,7 @@ void pinctrl_configure_leth_mac_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_
 {
 	uintptr_t offset = base - DT_REG_ADDR(DT_NODELABEL(leth0)) - 0x10000;
 	uint8_t id = offset / 0x2000;
-	uint32_t portctrl = 0;
+	uint32_t portctrl0 = MODULE_LETH0.P[id].PORTCTRL0.U;
 	uint32_t j;
 
 	for (j = 0; j < pin_cnt; j++) {
@@ -100,11 +100,39 @@ void pinctrl_configure_leth_mac_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_
 		if (pins[j].type == 0 || pins[j].type > 12) {
 			continue;
 		}
-		portctrl = (portctrl & ~(0x3 << pins[j].type * 2)) |
-			   FIELD_PREP(0x3 << pins[j].type * 2, pins[j].alt);
+		portctrl0 = (portctrl0 & ~(0x3 << pins[j].type * 2)) |
+			    FIELD_PREP(0x3 << pins[j].type * 2, pins[j].alt);
 	}
-	sys_write32(portctrl, DT_REG_ADDR(DT_NODELABEL(leth0)) + offsetof(Ifx_LETH, P) +
-				      sizeof(Ifx_LETH_P) * id);
+
+	MODULE_LETH0.P[id].PORTCTRL0.U = portctrl0;
+}
+
+void pinctrl_configure_leth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base)
+{
+	uintptr_t offset = base - DT_REG_ADDR(DT_NODELABEL(leth0)) - 0x10200;
+	uint8_t id = offset / 0x2000;
+	uint32_t portctrl0 = MODULE_LETH0.P[id].PORTCTRL0.U;
+	uint32_t portctrl1 = MODULE_LETH0.P[id].PORTCTRL1.U;
+	uint32_t j;
+
+	for (j = 0; j < pin_cnt; j++) {
+		if (pins[j].output) {
+			continue;
+		}
+		if (pins[j].type == 0 || (pins[j].type > 12 && pins[j].type != 15)) {
+			continue;
+		}
+		if (pins[j].type == 15) {
+			portctrl1 |= BIT(3) | FIELD_PREP(0x7, pins[j].alt);
+			continue;
+		} else {
+			portctrl0 = (portctrl0 & ~(0x3 << pins[j].type * 2)) |
+				    FIELD_PREP(0x3 << pins[j].type * 2, pins[j].alt);
+		}
+	}
+
+	MODULE_LETH0.P[id].PORTCTRL0.U = portctrl0;
+	MODULE_LETH0.P[id].PORTCTRL1.U = portctrl1;
 }
 
 #if DT_COMPAT_GET_ANY_STATUS_OKAY(infineon_tc4x_geth)
@@ -120,13 +148,12 @@ void pinctrl_configure_geth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin
 		if (pins[j].output) {
 			continue;
 		}
-		if (pins[j].type != 0) {
+		if (pins[j].type != 15) {
 			continue;
 		}
-		portctrl = (portctrl & ~(0x3 << pins[j].type * 2)) |
-			   FIELD_PREP(0x3 << pins[j].type * 2, pins[j].alt);
+		portctrl = (portctrl & ~0x3) | FIELD_PREP(0x3, pins[j].alt) | BIT(2);
 	}
-	MODULE_HSPHY.ETH[id].U = portctrl | 0x4;
+	MODULE_HSPHY.ETH[id].U = portctrl;
 }
 #endif
 #endif
