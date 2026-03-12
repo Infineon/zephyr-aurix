@@ -983,6 +983,13 @@ config NET_PKT_ALLOC_STATS
 	  The extra statistics can be seen in net-shell using "net mem"
 	  command.
 
+config NET_PKT_LINKING
+	bool "Add list node to net_pkt"
+	help
+	  Drivers can select this option to allow net_pkt to be linked 
+	  together in a list. This is needed for example for drivers to
+	  keep track of packets currently in use by the driver.
+
 config NET_PROMISCUOUS_MODE
 	bool "Promiscuous mode support"
 	select NET_MGMT
