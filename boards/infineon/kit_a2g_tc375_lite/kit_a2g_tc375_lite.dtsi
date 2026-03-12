@@ -1,0 +1,175 @@
+/* Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include "kit_a2g_tc375_lite-pinctrl.dtsi"
+
+/ {
+	arduino_header: arduino-connector {
+		compatible = "arduino-header-r3";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &p40 9 0>,	/* A0 */
+			   <1 0 &p40 8 0>,	/* A1 */
+			   <2 0 &p40 7 0>,	/* A2 */
+			   <3 0 &p40 6 0>,	/* A3 */
+			   <4 0 &p40 0 0>,	/* A4 */
+			   <5 0 &p40 1 0>,	/* A5 */
+			   <6 0 &p15 3 0>,	/* D0 */
+			   <7 0 &p15 2 0>,	/* D1 */
+			   <8 0 &p02 0 0>,	/* D2 */
+			   <9 0 &p02 1 0>,	/* D3 */
+			   <10 0 &p10 4 0>,	/* D4 */
+			   <11 0 &p02 3 0>,	/* D5 */
+			   <12 0 &p02 5 0>,	/* D6 */
+			   <13 0 &p02 4 0>,	/* D7 */
+			   <14 0 &p02 6 0>,	/* D8 */
+			   <15 0 &p02 7 0>,	/* D9 */
+			   <16 0 &p10 5 0>,	/* D10 */
+			   <17 0 &p10 3 0>,	/* D11 */
+			   <18 0 &p10 1 0>,	/* D12 */
+			   <19 0 &p10 2 0>,	/* D13 */
+			   <20 0 &p13 2 0>,	/* D14 */
+			   <21 0 &p13 1 0>;	/* D15 */
+	};
+
+	litekit_x1: x1-connector {
+		compatible = "litekit_x1";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = 
+			<3 0 &p33 11 0>,
+			<4 0 &p33 12 0>,
+			<5 0 &p33 13 0>,
+			<6 0 &p32 4 0>,
+			<7 0 &p23 1 0>,
+			<8 0 &p23 0 0>,
+			<9 0 &p23 3 0>,
+			<10 0 &p23 2 0>,
+			<11 0 &p23 5 0>,
+			<12 0 &p23 4 0>,
+			<13 0 &p22 1 0>,
+			<14 0 &p22 0 0>,
+			<15 0 &p21 0 0>,
+			<16 0 &p22 2 0>,
+			<17 0 &p21 2 0>,
+			<18 0 &p22 3 0>,
+			<19 0 &p21 4 0>,
+			<20 0 &p21 3 0>,
+			<21 0 &p20 10 0>,
+			<22 0 &p21 5 0>,
+			<23 0 &p20 0 0>,
+			<24 0 &p20 1 0>,
+			<25 0 &p20 3 0>,
+			<28 0 &p20 14 0>,
+			<29 0 &p15 5 0>,
+			<31 0 &p15 4 0>,
+			<32 0 &p11 12 0>,
+			<33 0 &p11 11 0>,
+			<34 0 &p11 10 0>,
+			<35 0 &p11 9 0>,
+			<36 0 &p11 6 0>,
+			<37 0 &p11 3 0>,
+			<38 0 &p11 2 0>;
+	};
+
+	litekit_x2: x2-connector {
+		compatible = "litekit_x2";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = 
+			<2 0 &p00 0 0>,
+			<3 0 &p00 2 0>,
+			<4 0 &p00 6 0>,
+			<5 0 &p00 8 0>,
+			<6 0 &p00 10 0>,
+			<7 0 &p00 12 0>,
+			<15 0 &p33 1 0>,
+			<16 0 &p33 3 0>,
+			<17 0 &p33 5 0>,
+			<18 0 &p33 7 0>,
+			<19 0 &p33 9 0>,
+			<22 0 &p00 1 0>,
+			<23 0 &p00 3 0>,
+			<24 0 &p00 5 0>,
+			<25 0 &p00 7 0>,
+			<26 0 &p00 9 0>,
+			<27 0 &p00 11 0>,
+			<34 0 &p33 0 0>,
+			<35 0 &p33 2 0>,
+			<36 0 &p33 4 0>,
+			<37 0 &p33 6 0>,
+			<38 0 &p33 8 0>,
+			<39 0 &p33 10 0>;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&p00 5 GPIO_ACTIVE_LOW>;
+		};
+		led1: led_1 {
+			gpios = <&p00 6 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	aliases {
+		led0 = &led0;
+    };
+
+	can_phy0: can-phy0 {
+		compatible = "infineon,tle9251v", "can-transceiver-gpio";
+		standby-gpios = <&p20 6 0>;
+		max-bitrate = <5000000>;
+		#phy-cells = <0>;
+	};
+};
+
+/* arduino_spi: &qspi1 {}; */
+arduino_serial: &uart0 {
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-names = "default";
+};
+/* arduino_i2c: &i2c0 {}; */
+
+&fosc {
+	clock-frequency = <DT_FREQ_M(20)>;
+	status = "okay";
+};
+
+&p00 {
+	status = "okay";
+};
+&p20 {
+	status = "okay";
+};
+
+&eth0 {
+	pinctrl-0 = <&eth0_rmii_default>;
+	pinctrl-names = "default";
+	phy-connection-type = "rmii";
+	phy-handle = <&eth0_phy>;
+};
+
+&mdio0 {
+	pinctrl-0 = <&eth0_mdio_default_default>;
+	pinctrl-names = "default";
+
+	eth0_phy: ethernet-phy@0 {
+		compatible = "ethernet-phy";
+		reg = <0>;
+		status = "disabled";
+	};
+};
+
+&can00 {
+	bus-speed = <500000>;
+	bus-speed-data = <2000000>;
+	pinctrl-0 = <&can0_default>;
+	pinctrl-names = "default";
+	phys = <&can_phy0>;
+	status = "okay";
+};
