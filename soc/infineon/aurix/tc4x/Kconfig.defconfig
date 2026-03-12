@@ -20,11 +20,8 @@ config AURIX_NEXT_CORE_START_ADDRESS
 	default 0x81200000 if (AURIX_NEXT_CORE_ID=5)
 	default 0
 
-#config ETH_DWC_ETHER_XGMAC_DMA_PER_CH_IRQ
-#	default y
-
-#config ETH_DWC_ETHER_QOS_DMA_PER_CH_IRQ
-#	default y
+config ETH_QOS_SHARED_DMA
+	default y
 
 config TRICORE_MPU_CODE_REGIONS
 	default 16
