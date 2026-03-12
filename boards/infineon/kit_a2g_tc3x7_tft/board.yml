@@ -1,0 +1,6 @@
+board:
+  name: kit_a2g_tc3x7_tft
+  full_name: Application Kit TC3X7
+  vendor: infineon
+  socs:
+    - name: tc387qp

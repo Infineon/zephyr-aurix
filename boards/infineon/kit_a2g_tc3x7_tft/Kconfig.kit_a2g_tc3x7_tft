@@ -1,0 +1,13 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_KIT_A2G_TC3X7_TFT
+	bool "Infineon TC387 Application Kit"
+	select SOC_TC387QP
+
+config TRICORE_CORE_ID
+	int
+	default 0 if BOARD_KIT_A2G_TC3X7_TFT_TC387QP_CPU0
+	default 1 if BOARD_KIT_A2G_TC3X7_TFT_TC387QP_CPU1
+	default 2 if BOARD_KIT_A2G_TC3X7_TFT_TC387QP_CPU2
+	default 3 if BOARD_KIT_A2G_TC3X7_TFT_TC387QP_CPU3

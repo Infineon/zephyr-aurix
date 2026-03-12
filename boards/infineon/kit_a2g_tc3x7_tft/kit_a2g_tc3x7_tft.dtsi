@@ -1,0 +1,163 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include <zephyr/dt-bindings/display/ili9xxx.h>
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "kit_a2g_tc3x7_tft-pinctrl.dtsi"
+
+/ {
+	leds: leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&p13 0 GPIO_ACTIVE_LOW>;
+		};
+		led1: led_1 {
+			gpios = <&p13 1 GPIO_ACTIVE_LOW>;
+		};
+		led2: led_2 {
+			gpios = <&p13 2 GPIO_ACTIVE_LOW>;
+		};
+		led3: led_3 {
+			gpios = <&p13 3 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	aliases {
+		led0 = &led0;
+	};
+
+	can_phy0: can-phy0 {
+		compatible = "infineon,tle9251v", "can-transceiver-gpio";
+		max-bitrate = <5000000>;
+		#phy-cells = <0>;
+	};
+
+	mipi_dbi: mipi_dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&qspi0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ili9341: ili9341@8 {
+			compatible = "ilitek,ili9341";
+			mipi-max-frequency = <20000000>;
+			reg = <8>;
+			rotation = <90>;
+			width = <320>;
+			height = <240>;
+			pixel-format = <ILI9XXX_PIXEL_FORMAT_RGB565>;
+			pwctrla = [ 39 2c 00 34 02  ];
+			pwctrlb = [ 00 83 30  ];
+			timctrla = [ 85 00 78  ];
+			timctrlb = [ 00 00  ];
+			pwseqctrl = [ 64 03 12 81  ];
+			pumpratioctrl = [ 20  ];
+			disctrl = [ 0A A2 27 00  ];
+			vmctrl1 = [ 31 3C  ];
+			vmctrl2 = [ B0  ];
+			enable3g = [ 00  ];
+			ifctl = [ 01 30 00  ];
+			ifmode = [ C2  ];
+			gamset = [ 01  ];
+			frmctr1 = [ 00 17  ];
+			pwctrl1 = [ 19  ];
+			pwctrl2 = [ 11  ];
+			pgamctrl = [ 0F 26 22 0A 10 0A 4C CA 36 00 15 00 10 10 00  ];
+			ngamctrl = [ 00 19 1B 05 0F 05 33 35 49 0F 1F 0F 3F 3F 0F  ];
+		};
+	};
+
+	touch_input: analog_axis {
+		compatible = "analog-axis";
+		poll-period-ms = <100>;
+		status = "disabled";
+		pressed-gpios = <&p20 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		axis-x {
+			io-channels = <&touch_controller 0>;
+			in-min = <57>;
+			in-max = <3717>;
+			out-min = <0>;
+			out-max = <240>;
+			zephyr,axis = <INPUT_ABS_X>;
+		};
+		axis-y {
+			io-channels = <&touch_controller 1>;
+			in-min = <219>;
+			in-max = <3706>;
+			out-min = <0>;
+			out-max = <320>;
+			zephyr,axis = <INPUT_ABS_Y>;
+		};
+	};
+};
+
+&fosc {
+	clock-frequency = <DT_FREQ_M(20)>;
+	status = "okay";
+};
+
+&qspi0 {
+	status = "okay";
+	pinctrl-0 = <&display_spi_default>;
+	pinctrl-names = "default";
+	clock-frequency = <50000000>;
+
+	touch_controller: adc@9 {
+		compatible = "ti,ads7843";
+		status = "disabled";
+		reg = <9>;
+		#io-channel-cells = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		spi-max-frequency = <2000000>;
+		channel@0 {
+			reg = <0>;
+			zephyr,gain = "ADC_GAIN_1";
+			zephyr,reference = "ADC_REF_EXTERNAL0";
+			zephyr,vref-mv = <3300>;
+			zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+			zephyr,resolution = <12>;
+		};
+		channel@1 {
+			reg = <1>;
+			zephyr,gain = "ADC_GAIN_1";
+			zephyr,reference = "ADC_REF_EXTERNAL0";
+			zephyr,vref-mv = <3300>;
+			zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+			zephyr,resolution = <12>;
+		};
+	};
+};
+
+&uart0 {
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-names = "default";
+};
+
+&eth0 {
+	pinctrl-0 = <&eth0_rgmii_default>;
+	pinctrl-names = "default";
+	phy-connection-type = "rgmii";
+	phy-handle = <&phy>;
+};
+
+&mdio0 {
+	pinctrl-0 = <&eth0_mdio_default_default>;
+	pinctrl-names = "default";
+
+	phy: ethernet-phy@1 {
+		compatible = "ethernet-phy";
+		reg = <1>;
+	};
+};
+
+&can00 {
+	bitrate = <500000>;
+	bitrate-data = <2000000>;
+	pinctrl-0 = <&can0_default>;
+	pinctrl-names = "default";
+	phys = <&can_phy0>;
+};
