@@ -119,7 +119,7 @@ struct net_pkt {
 
 	/** @cond ignore */
 
-#if defined(CONFIG_NET_TCP)
+#if defined(CONFIG_NET_TCP) || defined(CONFIG_NET_PKT_LINKING)
 	/** Allow placing the packet into sys_slist_t */
 	sys_snode_t next;
 #endif
