@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <infineon/tc3x/tc387qp.dtsi>
+#include "kit_a2g_tc3x7_tft.dtsi"
+
+/ {
+	model = "Infineon TC387QP TFT Application Kit";
+	compatible = "infineon,kit_a2g_tc3x7_tft",
+	             "infineon,tc387qp",
+	             "infineon,tc3x";
+
+	chosen {
+		zephyr,flash = &flash0;
+		zephyr,sram = &dsram0;
+		zephyr,itcm = &psram0;
+		zephyr,console = &uart0;
+		zephyr,display = &ili9341;
+		infineon,system-timer = &stm0;
+	};
+	#address-cells = <1>;
+	#size-cells = <1>;
+};
+
+&stm0 {
+	status = "okay";
+	freeze;
+};
+
+&p13 {
+	status = "okay";
+};
+&p15 {
+	status = "okay";
+};
+
+&p20 {
+	status = "okay";
+};
+
+
+&uart0 {
+	status = "okay";
+};
+
+&geth {
+	status = "okay";
+};
+
+&ptp_clock0 {
+	status = "okay";
+};
+
+&eth0 {
+	status = "okay";
+};
+
+&mdio0 {
+	status = "okay";
+};
+
+&mcmcan0 {
+	status = "okay";
+};
+
+&can00 {
+	status = "okay";
+};
+
+&touch_controller {
+	status = "okay";
+};
+
+&touch_input {
+	status = "okay";
+};

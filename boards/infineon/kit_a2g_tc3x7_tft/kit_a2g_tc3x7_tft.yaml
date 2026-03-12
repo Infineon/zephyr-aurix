@@ -1,0 +1,14 @@
+identifier: kit_a2g_tc3x7_tft
+name: Application Kit TC3X7
+type: mcu
+arch: tricore
+toolchain:
+  - llvm
+  - cross-compile
+supported:
+  - gpio
+  - uart
+  - netif:eth0
+ram: 256
+flash: 2048
+vendor: infineon
