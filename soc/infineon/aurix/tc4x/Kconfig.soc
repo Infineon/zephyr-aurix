@@ -11,17 +11,17 @@ config SOC_SERIES_TC4X
 config SOC_SERIES
     default "tc4x" if SOC_SERIES_TC4X
 
-config SOC_TC4DA
+config SOC_TC4D
 	bool
 	select SOC_SERIES_TC4X
 
 config SOC_TC4D7XP
 	bool
-	select SOC_TC4DA
+	select SOC_TC4D
 
 config SOC_TC4D9XP
 	bool
-	select SOC_TC4DA
+	select SOC_TC4D
 
 config SOC
 	default "tc4d7xp" if SOC_TC4D7XP
