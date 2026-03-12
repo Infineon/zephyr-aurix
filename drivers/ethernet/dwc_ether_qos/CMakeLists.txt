@@ -1,0 +1,1 @@
+zephyr_library_sources_ifdef(CONFIG_ETH_DWC_ETHER_QOS eth_qos.c)

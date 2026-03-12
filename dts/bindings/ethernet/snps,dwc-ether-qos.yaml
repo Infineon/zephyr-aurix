@@ -1,0 +1,59 @@
+# Copyright (c) 2021, BayLibre SAS
+# SPDX-License-Identifier: Apache-2.0
+
+description: Synopsys DesignWare Ethernet
+
+compatible: "snps,dwc-ether-qos"
+
+include: 
+  - ethernet-controller.yaml
+  - pinctrl-device.yaml
+properties:
+  reg:
+    required: true
+  snps,skip-reset:
+    type: boolean
+  snps,skip-init:
+    type: boolean
+  snps,dma:
+    type: phandle
+  snps,ptp-clock:
+    type: phandle
+  snps,tx-queue-sources:
+    type: phandle-array
+    ignore-dependencies: True
+  snps,rx-channel-targets:
+    type: phandle-array
+    ignore-dependencies: True
+  snps,rx-channels-to-use:
+    type: int
+    default: 1
+  snps,rx-descriptors:
+    type: array
+  snps,tx-descriptors:
+    type: array
+  snps,channel-nr:
+    type: array
+  snps,address-aligned-burst:
+    type: boolean
+  snps,fixed-burst-length:
+    type: boolean
+  snps,burst-length:
+    type: int
+    enum: [ 1, 2, 4, 8, 16, 32, 64, 128, 256]
+    default: 1
+  snps,loopback:
+    type: boolean
+  snps,da-duplication:
+    type: boolean
+  '#snps,tx-queue-source-cells':
+    type: int
+    const: 1
+  '#snps,rx-channel-target-cells':
+    type: int
+    const: 1
+
+snps,tx-queue-source-cells:
+  - channel
+snps,rx-channel-target-cells:
+  - channel
