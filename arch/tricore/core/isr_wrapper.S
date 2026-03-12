@@ -72,7 +72,11 @@ no_stack_guard:
 	addsc.a	%a13, %a13, %d2, 3
 	
 	/* Load arg and function ptr */
+#if __GCC__
+	ld.da	%a4, [%a13]
+#else
 	ld.da	%p4, [%a13]
+#endif
 
 	/* Call ISR */
 	calli	%a5
