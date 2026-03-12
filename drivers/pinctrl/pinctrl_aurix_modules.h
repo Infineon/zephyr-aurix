@@ -41,6 +41,11 @@ void pinctrl_configure_geth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin
 		pinctrl_configure_leth_mac_pins(pins, pin_cnt, reg);                               \
 		break;
 void pinctrl_configure_leth_mac_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base);
+#define LETH_MDIO_ENABLED_CASE(n)                                                                   \
+	case DT_REG_ADDR(n):                                                                       \
+		pinctrl_configure_leth_mdio_pins(pins, pin_cnt, reg);                               \
+		break;
+void pinctrl_configure_leth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base);
 #define GETH_MDIO_ENABLED_CASE(n)                                                                  \
 	case DT_REG_ADDR(n):                                                                       \
 		pinctrl_configure_geth_mdio_pins(pins, pin_cnt, reg);                              \
