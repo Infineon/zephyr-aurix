@@ -1,6 +1,9 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
 board:
   name: kit_tc4x7_com_trb
-  full_name: KIT TC4x7 COM TRB
+  full_name: TriBoard TC4x7 COM 
   vendor: infineon
   socs:
     - name: tc4d7xp
