@@ -103,7 +103,9 @@ static int uart_asclin_err_check(const struct device *dev)
 		return UART_ERROR_COLLISION;
 	}
 
-	config->base->FLAGSCLEAR.U = BIT(16) | BIT(18) | BIT(21) | BIT(25) | BIT(26);
+	config->base->FLAGSCLEAR.U =
+		(Ifx_ASCLIN_FLAGSCLEAR){.B.PEC = 1, .B.FEC = 1, .B.BDC = 1, .B.RFOC = 1, .B.CEC = 1}
+			.U;
 
 	return 0;
 }
@@ -217,7 +219,7 @@ static void uart_asclin_poll_out(const struct device *dev, unsigned char c)
 		k_spin_unlock(&data->lock, key);
 	}
 
-	config->base->TXDATA[0].U = c;
+	uart_asclin_tx_fifo_write(config->base, c);
 
 	k_spin_unlock(&data->lock, key);
 }
@@ -490,7 +492,7 @@ static int uart_asclin_init(const struct device *dev)
 	return 0;
 }
 
-static const struct uart_driver_api uart_asclin_driver_api = {
+static DEVICE_API(uart, uart_asclin_driver_api) = {
 	.poll_in = uart_asclin_poll_in,
 	.poll_out = uart_asclin_poll_out,
 	.err_check = uart_asclin_err_check,
