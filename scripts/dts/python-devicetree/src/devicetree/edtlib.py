@@ -495,7 +495,7 @@ class Binding:
 
         ok_prop_keys = {"description", "type", "required",
                         "enum", "const", "default", "deprecated",
-                        "specifier-space"}
+                        "specifier-space", "ignore-dependencies"}
 
         for prop_name, options in raw["properties"].items():
             for key in options:
@@ -585,6 +585,9 @@ class PropertySpec:
 
     specifier_space:
       The specifier space for the property as given in the binding, or None.
+    
+    ignore_dependencies:
+      Ignore circular dependencies for graph generation.
     """
 
     def __init__(self, name: str, binding: Binding):
@@ -670,6 +673,11 @@ class PropertySpec:
     def specifier_space(self) -> Optional[str]:
         "See the class docstring"
         return self._raw.get("specifier-space")
+
+    @property
+    def ignore_dependencies(self) -> bool:
+        "See the class docstring"
+        return self._raw.get("ignore-dependencies")
 
     def _check_special_properties(self):
         # Add checks for properties which have special meaning
@@ -2405,6 +2413,8 @@ class EDT:
         # A Node depends on any Nodes present in 'phandle',
         # 'phandles', or 'phandle-array' property values.
         for prop in props_node.props.values():
+            if prop.spec.ignore_dependencies:
+                continue
             if prop.type == 'phandle':
                 # According to the DT spec, a property named 'phy-handle' is required when
                 # the Ethernet device is connected a physical layer device (PHY).
@@ -3671,6 +3681,7 @@ def _raw_default_property_for(
     ret: dict[str, Union[str, bool, list[str]]] = {
         'type': _DEFAULT_PROP_TYPES[name],
         'required': False,
+        'ignore-dependencies': False
     }
     if name == 'status':
         ret['enum'] = _STATUS_ENUM
