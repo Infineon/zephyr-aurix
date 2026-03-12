@@ -58,9 +58,8 @@
 #define PLL_FREQ(pll, id) (PLL_DCO_FREQ(pll) / PLL_K_PRE_DIV(pll, id) / PLL_K_DIV(pll, id))
 
 /* Dividers & Select*/
-#define CLOCK_DIV_WITH_INST(clock, compat)                                                         \
-	((DT_HAS_COMPAT_STATUS_OKAY(compat)) ? clock##_div : 0)
-#define CLOCK_DIV_WITH_STATUS(clock) (DT_NODE_HAS_STATUS(CLOCK(clock), okay) ? clock##_div : 0)
+#define CLOCK_DIV_WITH_INST(clock, compat) ((DT_HAS_COMPAT_STATUS_OKAY(compat)) ? clock##_div : 0)
+#define CLOCK_DIV_WITH_STATUS(clock)       (DT_NODE_HAS_STATUS(CLOCK(clock), okay) ? clock##_div : 0)
 #define CLOCK_SEL_WITH_INST(clock, source0, source1, compat)                                       \
 	(IS_ENABLED(DT_CAT3(DT_N_INST_, compat, _NUM_OKAY))                                        \
 		 ? CLOCK_SOURCE_IS(clock, source0) ? 1 : 0x2                                       \
@@ -88,7 +87,6 @@ enum ccu_div {
 	fsri_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fsri)),
 	ffsi_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(ffsi)),
 	fstm_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fstm)),
-	fgeth_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fgeth)),
 	fmcanh_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fmcanh)),
 	fmcani_div = DIV_ROUND_UP(fsource1_freq, CLOCK_FREQ(fmcani)),
 	fqspi_div =
@@ -106,11 +104,23 @@ enum ccu_div {
 #if CONFIG_SOC_SERIES_TC4X
 	ftpb_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(ftpb)),
 	fleth_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fleth)),
+	fleth100_div = DIV_ROUND_UP(fsource2_freq, CLOCK_FREQ(fleth100)),
+#if DT_NODE_EXISTS(DT_NODELABEL(fgeth))
+	fgeth_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fgeth)),
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fcpb))
+	fcpb_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fcpb)),
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fcanxl))
 	fcanxl_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fcanxl)),
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fppu))
 	fppu_div = DIV_ROUND_UP(fsourceppu_freq, CLOCK_FREQ(fppu)),
-#if 0
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fgtm))
 	fgtm_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fgtm)),
-#else
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(fegtm))
 	fegtm_div = DIV_ROUND_UP(fsource0_freq, CLOCK_FREQ(fegtm)),
 #endif
 #endif
