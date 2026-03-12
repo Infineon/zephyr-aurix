@@ -13,7 +13,6 @@
 #include "soc.h"
 #include "soc_prot.h"
 
-
 static inline void wdt_disable(mm_reg_t base)
 {
 	volatile Ifx_WTU_WDTCPU *wdt = (Ifx_WTU_WDTCPU *)base;
@@ -61,7 +60,12 @@ void z_tricore_wdt_boot()
 #endif
 }
 
-void *__memcpy_assume_aligned(void *dst, const void *src, size_t n)
+/* Function for Hightec LLVM */
+void __memcpy_assume_aligned(void *dst, const void *src, size_t n)
 {
-	return memcpy(dst, src, n);
+	if (n == 4) {
+		*(uint32_t *)dst = *(uint32_t *)src;
+		return;
+	}
+	memcpy(dst, src, n);
 }
