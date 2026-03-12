@@ -434,6 +434,20 @@ struct net_buf *net_buf_slist_get(sys_slist_t *list)
 	return buf;
 }
 
+void net_buf_slist_remove(sys_slist_t *list, struct net_buf *prev_buf, struct net_buf *buf)
+{
+	k_spinlock_key_t key;
+
+	__ASSERT_NO_MSG(list);
+	__ASSERT_NO_MSG(buf);
+
+	key = k_spin_lock(&net_buf_slist_lock);
+
+	sys_slist_remove(list, prev_buf ? &prev_buf->node : NULL, &buf->node);
+
+	k_spin_unlock(&net_buf_slist_lock, key);
+}
+
 #if defined(CONFIG_NET_BUF_LOG)
 void net_buf_unref_debug(struct net_buf *buf, const char *func, int line)
 #else
