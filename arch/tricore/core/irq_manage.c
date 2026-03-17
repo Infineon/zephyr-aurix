@@ -1,11 +1,16 @@
 /*
  * Copyright (c) 2024 Infineon Technologies AG
- * 
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sw_isr_table.h>
+#include <zephyr/pm/pm.h>
 #include <zephyr/drivers/interrupt_controller/intc_aurix_ir.h>
+
+LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
 void arch_irq_enable(unsigned int irq)
 {
@@ -27,21 +32,6 @@ void z_tricore_irq_config(unsigned int irq, unsigned int prio, unsigned int flag
 	intc_aurix_ir_irq_config(irq, prio, flags);
 }
 
-/*
- * Copyright (c) 2016 Jean-Paul Etienne <fractalclone@gmail.com>
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
-#include <zephyr/kernel.h>
-#include <kernel_internal.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/irq_multilevel.h>
-#include <zephyr/sw_isr_table.h>
-#include <zephyr/pm/pm.h>
-
-LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
-
 FUNC_NORETURN void z_irq_spurious(const void *unused)
 {
 #ifdef CONFIG_EMPTY_IRQ_SPURIOUS
@@ -50,35 +40,22 @@ FUNC_NORETURN void z_irq_spurious(const void *unused)
 
 	CODE_UNREACHABLE;
 #else
-	unsigned long irq;
+	unsigned int irq = intc_aurix_ir_get_active();
+	LOG_ERR("Spurious interrupt detected! IRQ: %d", irq);
 
-#if IS_ENABLED(CONFIG_SOC_SERIES_TC3XX)
-
-#elif IS_ENABLED(CONFIG_SOC_SERIES_TC4XX)
-
-#endif
-
-	LOG_ERR("Spurious interrupt detected! IRQ: %ld", irq);
-	//LOG_ERR("PLIC interrupt line causing the IRQ: %d (%p)", save_irq, save_dev);
-	//z_riscv_fatal_error(K_ERR_SPURIOUS_IRQ, NULL);
-	while (1) {
-	}
+	extern void z_tricore_fatal_error(unsigned int reason, const struct arch_esf *lower);
+	z_tricore_fatal_error(K_ERR_SPURIOUS_IRQ, NULL);
+	CODE_UNREACHABLE;
 #endif /* CONFIG_EMPTY_IRQ_SPURIOUS */
 }
 
 #ifdef CONFIG_DYNAMIC_INTERRUPTS
 int arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
-			     void (*routine)(const void *parameter),
-			     const void *parameter, uint32_t flags)
+			     void (*routine)(const void *parameter), const void *parameter,
+			     uint32_t flags)
 {
-	z_isr_install(irq + CONFIG_RISCV_RESERVED_IRQ_ISR_TABLES_OFFSET, routine, parameter);
-
-#if defined(CONFIG_RISCV_HAS_PLIC) || defined(CONFIG_RISCV_HAS_CLIC)
-	z_riscv_irq_priority_set(irq, priority, flags);
-#else
-	ARG_UNUSED(flags);
-	ARG_UNUSED(priority);
-#endif
+	z_isr_install(irq, routine, parameter);
+	intc_aurix_ir_irq_config(irq, priority, flags);
 	return irq;
 }
 
