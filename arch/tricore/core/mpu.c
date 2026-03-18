@@ -169,8 +169,9 @@ void z_tricore_mpu_stackguard_disable(struct k_thread *thread)
 
 void z_tricore_mpu_stackguard_enable(struct k_thread *thread)
 {
+	const size_t stack_nr = CONFIG_SMP ? arch_proc_id() - CONFIG_TRICORE_CORE_ID : 0;
 	uint32_t guard_start =
-		thread ? thread->stack_info.start : (uintptr_t)&z_interrupt_stacks[arch_proc_id()];
+		thread ? thread->stack_info.start : (uintptr_t)&z_interrupt_stacks[stack_nr];
 	uint32_t guard_end = guard_start + Z_TRICORE_STACK_GUARD_SIZE;
 	uint32_t i;
 

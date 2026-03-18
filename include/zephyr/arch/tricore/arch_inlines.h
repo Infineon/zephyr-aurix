@@ -16,16 +16,16 @@
 static ALWAYS_INLINE uint32_t arch_proc_id(void)
 {
 #if CONFIG_SMP
-	return (cr_read(TRICORE_CORE_ID) & 0xF) - CONFIG_TRICORE_CORE_ID;
+	return (cr_read(TRICORE_CORE_ID) & 0xF);
 #else
-	return 0;
+	return CONFIG_TRICORE_CORE_ID;
 #endif
 }
 
 static ALWAYS_INLINE _cpu_t *arch_curr_cpu(void)
 {
 #if defined(CONFIG_SMP) || defined(CONFIG_USERSPACE)
-	return &_kernel.cpus[arch_proc_id()];
+	return &_kernel.cpus[arch_proc_id() - CONFIG_TRICORE_CORE_ID];
 #else
 	return &_kernel.cpus[0];
 #endif
