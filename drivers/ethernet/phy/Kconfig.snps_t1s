@@ -1,0 +1,15 @@
+# Copyright (c) 2026 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+config PHY_SNPS_T1S
+	bool "Synopsys 10BASE-T1S internal PHY driver"
+	default y
+	depends on DT_HAS_SNPS_T1S_PHY_ENABLED
+	select MDIO
+	select PHY_OA_TC14_PLCA_LIB
+	help
+	  Enable the driver for the Synopsys 10BASE-T1S internal PHY
+	  as integrated in the Infineon AURIX TC4x LETH peripheral.
+	  PMA (MMD 1) and PCS (MMD 3) are accessed via native Clause-45
+	  MDIO.  PLCA configuration uses the Open Alliance TC14 generic
+	  helper library (MMD 0x1F, registers 0xCA01-0xCA05).

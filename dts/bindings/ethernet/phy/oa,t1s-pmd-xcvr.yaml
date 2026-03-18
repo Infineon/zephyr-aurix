@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+description: OpenAlliance TC14 PMD XCVR PHY
+compatible: "oa,t1s-pmd-xcvr"
+include: phy.yaml
+
+properties:
+  reg:
+    required: true
+    description: PHY address
+    const:
+      - 1
