@@ -445,6 +445,10 @@ static int clock_control_tc4x_ccu_init(const struct device *dev)
 {
 	int ret;
 
+	if (CONFIG_TRICORE_CORE_ID != 0) {
+		return 0;
+	}
+
 	WAIT_FOR_CCUSTAT_UNLOCKED_OR_ERR(fback);
 
 	if (CLOCK_IS_CLOCK_SOURCE(fosc, FOSC_SOURCES)) {
