@@ -11,15 +11,15 @@ config SOC_SERIES_TC3X
 config SOC_SERIES
     default "tc3x" if SOC_SERIES_TC3X
 
-config SOC_TC37A
+config SOC_TC33x
 	bool
 	select SOC_SERIES_TC3X
 
-config SOC_TC37AED
+config SOC_TC33xED
 	bool
 	select SOC_SERIES_TC3X
 
-config SOC_TC38A
+config SOC_TC35x
 	bool
 	select SOC_SERIES_TC3X
 
@@ -45,19 +45,19 @@ config SOC_TC39xB
 
 config SOC_TC375TP
 	bool
-	select SOC_TC37A
+	select SOC_TC37x
 
 config SOC_TC377TX
 	bool
-	select SOC_TC37AED
+	select SOC_TC37xED
 
 config SOC_TC387QP
 	bool
-	select SOC_TC38A
+	select SOC_TC38x
 	
 config SOC_TC397XP 
 	bool
-	select SOC_TC39B
+	select SOC_TC39xB
 
 config SOC
 	default "tc375tp" if SOC_TC375TP
