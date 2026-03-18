@@ -185,7 +185,7 @@ static int sys_clock_driver_init(void)
 
 	aurix_prot_own(&CPU_MODULE.PROTSTMSE);
 	aurix_apu_enable_write(&CPU_MODULE.PROTSTMSE, &CPU_MODULE.ACCENSTMCFG.WRA,
-			       STM_VM_ID * 2);
+			       CONFIG_TRICORE_CORE_ID * 2);
 	aurix_apu_enable_write_select(&CPU_MODULE.PROTSTMSE, &CPU_MODULE.ACCENSTM.WRA, STM_VM_ID,
 				      CONFIG_TRICORE_CORE_ID * 2);
 
