@@ -42,6 +42,7 @@ struct eth_tc4x_leth_config {
 	const struct eth_tc4x_leth_port ports[4];
 	uint8_t num_ports;
 	bool single_port;
+	bool skip_init;
 };
 
 static int eth_tc4x_leth_reset(const struct device *dev)
@@ -59,6 +60,10 @@ static int eth_tc4x_leth_init(const struct device *dev)
 {
 	const struct eth_tc4x_leth_config *cfg = dev->config;
 	int ret;
+
+	if (cfg->skip_init) {
+		return 0;
+	}
 
 	if (!device_is_ready(cfg->clkctrl)) {
 		return -EIO;
@@ -89,6 +94,7 @@ static int eth_tc4x_leth_init(const struct device *dev)
 		}
 
 		MODULE_LETH0.P[i].PORTCTRL0.B.EPR = cfg->ports[i].interface;
+		MODULE_LETH0.P[i].PORTCTRL0.B.TC14EN = 1;
 		if (cfg->ports[i].eth_pins) {
 			pinctrl_apply_state(cfg->ports[i].eth_pins, PINCTRL_STATE_DEFAULT);
 		}
@@ -229,6 +235,7 @@ static int eth_tc4x_leth_init(const struct device *dev)
 		.clkctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR_BY_NAME(n, app)),                     \
 		.clk = DT_INST_CLOCKS_CELL_BY_NAME(n, app, id),                                    \
 		.ports = ETH_TC4X_LETH_PORT_CONFIGS(n),                                            \
+		.skip_init = DT_INST_PROP(n, skip_init),                                           \
 		.num_ports = (DT_INST_CHILD_NUM(n) - 1) / 3,                                       \
 		.single_port = DT_NUM_INST_STATUS_OKAY(snps_dwc_ether_qos) ==                      \
 			       1 DT_INST_FOREACH_CHILD(n, __PORT_TARGET),                          \
