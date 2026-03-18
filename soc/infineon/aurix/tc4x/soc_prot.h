@@ -50,8 +50,7 @@ static inline void aurix_prot_own(volatile void *prot)
 	prot_val.B.ODEF = 1;
 	prot_val.B.VM = COND_CODE_1(CONFIG_TRICORE_VIRTUALIZATION, (CONFIG_TRICORE_VM_ID), (0));
 	prot_val.B.VMEN = IS_ENABLED(CONFIG_TRICORE_VIRTUALIZATION) ? 1 : 0;
-	prot_val.B.TAGID = (AURIX_TAGID_CPU0 +
-			    2 * COND_CODE_1(CONFIG_SMP, (arch_proc_id()), (CONFIG_TRICORE_CORE_ID)));
+	prot_val.B.TAGID = AURIX_TAGID_CPU0 + 2 * arch_proc_id();
 	*(volatile uint32_t *)prot = prot_val.U;
 	barrier_dsync_fence_full();
 }

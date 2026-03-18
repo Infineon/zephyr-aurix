@@ -142,10 +142,11 @@ K_KERNEL_STACK_ARRAY_DECLARE(z_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS, CONFIG_
 static bool bad_stack_pointer(struct z_tricore_upper_context *upper)
 {
 #if CONFIG_MPU_STACK_GUARD
+	const size_t stack_nr = CONFIG_SMP ? arch_proc_id() - CONFIG_TRICORE_CORE_ID : 0;
 	if ((upper->psw & BIT(9)) != 0 &&
-	    upper->a10 >= POINTER_TO_UINT(z_interrupt_stacks[arch_proc_id()]) &&
-	    upper->a10 < POINTER_TO_UINT(z_interrupt_stacks[arch_proc_id()]) +
-				 Z_TRICORE_STACK_GUARD_SIZE) {
+	    upper->a10 >= POINTER_TO_UINT(z_interrupt_stacks[stack_nr]) &&
+	    upper->a10 <
+		    POINTER_TO_UINT(z_interrupt_stacks[stack_nr]) + Z_TRICORE_STACK_GUARD_SIZE) {
 		return true;
 	} else if ((upper->psw & BIT(11)) != 0 &&
 		   (upper->a10 >= _current->stack_info.start &&

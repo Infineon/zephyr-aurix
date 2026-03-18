@@ -91,8 +91,7 @@ static inline void aurix_start_core(uint8_t core_id, uint32_t pc)
 
 void aurix_cpu_endinit_enable(bool enabled)
 {
-	uint8_t cpu = IS_ENABLED(CONFIG_SMP) ? arch_proc_id() : CONFIG_TRICORE_CORE_ID;
-	uintptr_t wdtcpucon0 = 0xf0036000 + 0x24C + 12 * cpu;
+	uintptr_t wdtcpucon0 = 0xf0036000 + 0x24C + 12 * arch_proc_id();
 	uint32_t t = sys_read32(wdtcpucon0);
 	uint32_t pw = (t & 0xFFFF) >> 2;
 	pw ^= 0x003F;
