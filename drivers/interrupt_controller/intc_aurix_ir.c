@@ -15,8 +15,7 @@ void intc_aurix_ir_irq_config(unsigned int irq, unsigned int priority, unsigned 
 {
 	SRCR reg = {
 		.B.SRPN = priority,
-		.B.TOS =
-			(flags & IRQ_USE_TOS) ? FIELD_GET(IRQ_TOS, flags) : CONFIG_AURIX_CORE_TOS,
+		.B.TOS = (flags & IRQ_USE_TOS) ? FIELD_GET(IRQ_TOS, flags) : CONFIG_AURIX_CORE_TOS,
 		.B.CLRR = 1,
 		.B.IOVCLR = 1,
 #if IS_ENABLED(CONFIG_SOC_SERIES_TC4X)
@@ -94,5 +93,5 @@ int intc_aurix_ir_init(const struct device *dev)
 	return 0;
 }
 
-DEVICE_DT_INST_DEFINE(0, intc_aurix_ir_init, NULL, NULL, NULL, PRE_KERNEL_1, CONFIG_INTC_INIT_PRIORITY,
-		      NULL);
+DEVICE_DT_INST_DEFINE(0, intc_aurix_ir_init, NULL, NULL, NULL, PRE_KERNEL_1,
+		      CONFIG_INTC_INIT_PRIORITY, NULL);
