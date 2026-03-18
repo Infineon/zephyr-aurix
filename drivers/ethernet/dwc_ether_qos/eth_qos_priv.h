@@ -121,6 +121,8 @@ struct eth_qos_config {
 	/** Interface stops RX and TX clocks during link changes */
 	bool clocks_stop;
 	/** skip init for MAC and MTL */
+	bool dma_only;
+	/** Skip init completely */
 	bool skip_init;
 	/** Skip reseting during init */
 	bool skip_reset;
@@ -1045,6 +1047,7 @@ static inline void eth_qos_set_mac_addr(const struct device *dev, uint8_t nr, ui
 	 .mtl_tx = eth_qos##n##_mtl_tx_config,                                                     \
 	 .skip_reset = DT_INST_PROP(n, snps_skip_reset),                                           \
 	 .skip_init = DT_INST_PROP(n, snps_skip_init),                                             \
+	 .dma_only = DT_INST_PROP(n, snps_dma_only),                                               \
 	 .da_duplication = DT_INST_PROP(n, snps_da_duplication),                                   \
 	 .loopback = DT_INST_PROP(n, snps_loopback),                                               \
 	 IF_ENABLED(CONFIG_ETH_QOS_SHARED_DMA, (.dma_base = DT_REG_ADDR(DT_INST_PHANDLE(n, snps_dma)) - DMA_MODE,))                                                                                \

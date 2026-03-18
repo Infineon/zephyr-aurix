@@ -288,7 +288,7 @@ static void eth_qos_dma_init(const struct device *dev)
 	const struct eth_qos_config *cfg = dev->config;
 	uint8_t ch;
 
-	if (!cfg->skip_init) {
+	if (!cfg->dma_only) {
 		eth_qos_dma_set_sysbus(dev);
 	}
 
@@ -600,6 +600,7 @@ static void eth_qos_link_state_changed(const struct device *phy_dev,
 		if (cfg->clocks_stop) {
 			eth_qos_mac_wait_idle(dev);
 		} else {
+			/* TODO: ?*/
 		}
 		eth_qos_set_link_state(dev, link_state);
 		net_if_carrier_on(data->iface);
@@ -621,7 +622,7 @@ void eth_qos_iface_init(struct net_if *iface)
 	data->started = false;
 
 	net_if_set_link_addr(iface, data->mac_addr, sizeof(data->mac_addr), NET_LINK_ETHERNET);
-	if (!cfg->skip_init) {
+	if (!cfg->dma_only) {
 		struct eth_qos_mac_filter filter = {.addr = {0},
 						    cfg->da_duplication ? (1 << cfg->dma_rx->nr)
 									: cfg->dma_rx->nr,
@@ -661,7 +662,7 @@ int eth_qos_start(const struct device *dev)
 		eth_qos_dma_rx_start(dev, dma_ch);
 	}
 	/* Start Tx operation only if clock stops or slave mode */
-	if (cfg->skip_init || cfg->clocks_stop) {
+	if (cfg->dma_only || cfg->clocks_stop) {
 		for (dma_ch = 0; dma_ch < cfg->dma_tx_channel; dma_ch++) {
 			eth_qos_dma_tx_start(dev, dma_ch);
 		}
@@ -957,7 +958,11 @@ int eth_qos_init(const struct device *dev)
 	struct eth_qos_data *data = dev->data;
 	uint32_t dma_ch;
 
-	if (!cfg->skip_init && cfg->phy != NULL && !device_is_ready(cfg->phy)) {
+	if (cfg->skip_init) {
+		return 0;
+	}
+
+	if (!cfg->dma_only && cfg->phy != NULL && !device_is_ready(cfg->phy)) {
 		LOG_ERR("%s: PHY device is not ready", dev->name);
 		return -EFAULT;
 	}
@@ -992,7 +997,7 @@ int eth_qos_init(const struct device *dev)
 	k_sem_init(&data->ptp_pkt_sem, 1, 1);
 #endif
 
-	if (!cfg->skip_init) {
+	if (!cfg->dma_only) {
 		sys_write32(0xFFFFFFFF, cfg->base + MMC_FPE_RX_INTERRUPT_MASK);
 		sys_write32(0xFFFFFFFF, cfg->base + MMC_FPE_TX_INTERRUPT_MASK);
 		sys_write32(0xFFFFFFFF, cfg->base + MMC_IPC_RX_INTERRUPT_MASK);
