@@ -11,7 +11,7 @@ if CLOCK_CONTROL_TC3X_CCU
 
 config CLOCK_CONTROL_TC3X_CCU_INIT_CHECK_ONLY
 	bool "Only check CCU configuration during initialization."
-	default y if AURIX_CORE_ID != 0
+	default y if TRICORE_CORE_ID != 0
 	default n
 
 endif
@@ -26,7 +26,7 @@ if CLOCK_CONTROL_TC4X_CCU
 
 config CLOCK_CONTROL_TC4X_CCU_INIT_CHECK_ONLY
 	bool "Only check CCU configuration during initialization."
-	default y if AURIX_CORE_ID != 0
+	default y if TRICORE_CORE_ID != 0
 	default n
 
 endif
