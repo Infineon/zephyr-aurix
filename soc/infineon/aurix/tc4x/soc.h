@@ -43,6 +43,7 @@ static inline void aurix_start_core(uint8_t core_id, uint32_t pc)
 	Ifx_CPU *cpu = &MODULE_CPU0 + core_id;
 
 	cpu->HRA_PC.U = pc;
+	cpu->HRHV_PC.U = pc;
 	cpu->HRA_BOOTCON.U = 0;
 }
 
