@@ -91,20 +91,28 @@ void pinctrl_configure_leth_mac_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_
 	uintptr_t offset = base - DT_REG_ADDR(DT_NODELABEL(leth0)) - 0x10000;
 	uint8_t id = offset / 0x2000;
 	uint32_t portctrl0 = MODULE_LETH0.P[id].PORTCTRL0.U;
+	uint32_t portctrl1 = MODULE_LETH0.P[id].PORTCTRL1.U;
 	uint32_t j;
 
 	for (j = 0; j < pin_cnt; j++) {
 		if (pins[j].output) {
 			continue;
 		}
-		if (pins[j].type == 0 || pins[j].type > 12) {
+		if (pins[j].type > 12 && pins[j].type != 15) {
 			continue;
 		}
-		portctrl0 = (portctrl0 & ~(0x3 << pins[j].type * 2)) |
-			    FIELD_PREP(0x3 << pins[j].type * 2, pins[j].alt);
+		if (pins[j].type == 0) {
+			portctrl0 |= BIT(3) | FIELD_PREP(0x7, pins[j].alt);
+		} else if (pins[j].type == 15) {
+			portctrl1 |= BIT(3) | FIELD_PREP(0x7, pins[j].alt);
+		} else {
+			portctrl0 = (portctrl0 & ~(0x3 << pins[j].type * 2)) |
+				    FIELD_PREP(0x3 << pins[j].type * 2, pins[j].alt);
+		}
 	}
 
 	MODULE_LETH0.P[id].PORTCTRL0.U = portctrl0;
+	MODULE_LETH0.P[id].PORTCTRL1.U = portctrl1;
 }
 
 void pinctrl_configure_leth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base)
