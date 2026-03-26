@@ -23,7 +23,7 @@ SECTION_FUNC(TEXT, tricore_cpu_endinit_disable)
 
 	/* Load current password and invert */
 	ld.w	%d15, [%a15]
-	xor	%d15, %d15, 0x3C
+	xor	%d15, %d15, 0xFC
 
 	/* Execute Password access */
 	insert	%d15, %d15, 1, 0, 2
@@ -44,7 +44,7 @@ SECTION_FUNC(TEXT, tricore_cpu_endinit_enable)
 
 	/* Load current password and invert */
 	ld.w	%d15, [%a15]
-	xor	%d15, %d15, 0x3C
+	xor	%d15, %d15, 0xFC
 
 	/* Execute Password access */
 	insert	%d15, %d15, 1, 0, 2
@@ -65,7 +65,7 @@ SECTION_FUNC(TEXT, tricore_safety_endinit_enable)
 
 	/* Load current password and invert */
 	ld.w	%d15, [%a15]
-	xor	%d15, %d15, 0x3C
+	xor	%d15, %d15, 0xFC
 
 	/* Execute Password access */
 	insert	%d15, %d15, 1, 0, 2
