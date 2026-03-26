@@ -15,6 +15,7 @@
 
 #include "soc.h"
 #include "IfxAsclin_regdef.h"
+#include "uart_asclin_regs.h"
 
 #define DT_DRV_COMPAT infineon_asclin_uart
 
@@ -64,12 +65,12 @@ static inline uint32_t uart_asclin_tx_fifo_fill_level(Ifx_ASCLIN *base)
 
 static inline uint8_t uart_asclin_rx_fifo_read(Ifx_ASCLIN *base)
 {
-	return base->RXDATA[0].U;
+	return ASCLIN_RXDATA_READ(base);
 }
 
 static inline void uart_asclin_tx_fifo_write(Ifx_ASCLIN *base, uint8_t c)
 {
-	base->TXDATA[0].U = c;
+	ASCLIN_TXDATA_WRITE(base, c);
 }
 
 static inline void uart_asclin_set_bittime(Ifx_ASCLIN *base, uint8_t oversampling,
