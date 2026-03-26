@@ -127,3 +127,12 @@ static int aurix_start_next_core()
 SYS_INIT(aurix_start_next_core, PRE_KERNEL_1, CONFIG_AURIX_NEXT_CORE_INIT_PRIORITY);
 
 #endif
+
+void __memcpy_assume_aligned(void *dst, const void *src, size_t n)
+{
+	if (n == 4) {
+		*(uint32_t *)dst = *(uint32_t *)src;
+		return;
+	}
+	memcpy(dst, src, n);
+}
