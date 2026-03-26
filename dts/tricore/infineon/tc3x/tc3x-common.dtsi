@@ -318,7 +318,7 @@
 		interrupt-parent = <&ir>;
 		
 		ir: interrupt_controller@f0037000 {
-			compatible = "infineon,tc-ir";
+			compatible = "infineon,aurix-ir";
 			reg = <0xF0037000 0x10000 0xF0038000 0x10000>;
 			#address-cells = <0>;
 			#interrupt-cells = <2>;
