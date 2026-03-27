@@ -20,3 +20,5 @@ config SOC_TC4X_CPUAPP
 	bool
 	default y if TRICORE_CORE_ID < 6
 	default n
+
+source "soc/infineon/aurix/tc4x/Kconfig.amp"

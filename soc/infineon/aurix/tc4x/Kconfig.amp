@@ -1,0 +1,15 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+config TRICORE_AMP
+	bool "TriCore AMP support"
+	depends on SOC_SERIES_TC4XX
+	help
+	  CPU0 starts secondary CPUs after clock init.
+
+config TRICORE_AMP_CPU_MASK
+	hex "Secondary CPU bitmask"
+	default 0x02
+	depends on TRICORE_AMP
+	help
+	  Bit 1 = CPU1, Bit 2 = CPU2, etc.
