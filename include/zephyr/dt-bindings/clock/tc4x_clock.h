@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef ZEPHYR_INCLUDE_DT_BINDINGS_CLOCK_TC4X_CLOCK_H_
 #define ZEPHYR_INCLUDE_DT_BINDINGS_CLOCK_TC4X_CLOCK_H_
 

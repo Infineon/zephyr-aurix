@@ -1,3 +1,6 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 description: LETH wrapper module
 compatible: infineon,tc4x-leth

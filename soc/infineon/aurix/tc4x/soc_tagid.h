@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef ZEPHYR_SOC_INFINEON_AURIX_TC4X_SOC_TAGID_H_
 #define ZEPHYR_SOC_INFINEON_AURIX_TC4X_SOC_TAGID_H_
 

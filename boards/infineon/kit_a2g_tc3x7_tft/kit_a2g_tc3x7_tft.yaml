@@ -1,3 +1,6 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
 identifier: kit_a2g_tc3x7_tft
 name: Application Kit TC3X7
 type: mcu

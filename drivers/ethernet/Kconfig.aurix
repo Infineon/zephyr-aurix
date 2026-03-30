@@ -1,3 +1,6 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
 config ETH_TC4X_LETH
     bool
     depends on DT_HAS_INFINEON_TC4X_LETH_ENABLED

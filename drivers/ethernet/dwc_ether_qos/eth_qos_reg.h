@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef ZEPHYR_DRIVERS_ETHERNET_DWMAC_ETH_EQOS_REG_H
 #define ZEPHYR_DRIVERS_ETHERNET_DWMAC_ETH_EQOS_REG_H
 
