@@ -129,7 +129,8 @@
 };
 
 /* arduino_spi: &qspi1 {}; */
-arduino_serial: &uart0 {
+arduino_serial: &asclin0 {
+	compatible = "infineon,asclin-uart";
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-names = "default";
 };
