@@ -342,6 +342,14 @@
         compatible = "simple-bus";
         ranges;
 
+        ir: interrupt_controller@f4430000 {
+			compatible = "infineon,aurix-ir";
+			reg = <0xf4430000 0x20000 0xf4432000 0x40000>;
+			#address-cells = <1>;
+			#interrupt-cells = <2>;
+			interrupt-controller;
+		};
+
         cpu0_wdt: wdt@f0000018 {
             compatible = "infineon,tc-wdt";
             reg = <0xF0000018 0x30>;
