@@ -730,7 +730,14 @@ static int eth_qos_send(const struct device *dev, struct net_pkt *pkt)
 	frag = pkt->frags;
 	prev_frag = SYS_SLIST_CONTAINER(sys_slist_peek_tail(&dma_data->frags), prev_frag, node);
 
-	do {
+	while (frag != NULL) {
+		/* Check for zero length frags, which would freeze the DMA.*/
+		if (frag->len == 0) {
+			LOG_WRN("%s: skipping zero-length fragment", dev->name);
+			frag = frag->frags;
+			continue;
+		}
+
 		/* Reserve a free descriptor  */
 		if (k_sem_take(&dma_data->desc_used, K_MSEC(1000)) != 0) {
 			LOG_ERR("%s: DMA CH%d: Timeout waiting for free TX", dev->name, dma_ch);
@@ -748,7 +755,9 @@ static int eth_qos_send(const struct device *dev, struct net_pkt *pkt)
 		net_buf_slist_put(&data->dma_tx[dma_ch].frags, net_buf_ref(frag));
 
 		dma_data->tail = (dma_data->tail + 1) % (dma_cfg->descs_count);
-	} while ((frag = frag->frags));
+
+		frag = frag->frags;
+	}
 
 	barrier_dsync_fence_full();
 
