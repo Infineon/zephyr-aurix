@@ -268,409 +268,241 @@
 
 		asclin0: asclin@f0000600 {
 			reg = <0xF0000600 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart0: uart@f0000600 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000600 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN0_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN0_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN0_ERR 4>;
+			interrupts = <IRQ_ASCLIN0_TX 2>,
+			             <IRQ_ASCLIN0_RX 3>,
+			             <IRQ_ASCLIN0_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin1: asclin@f0000700 {
 			reg = <0xF0000700 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart1: uart@f0000700 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000700 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN1_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN1_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN1_ERR 4>;
+			interrupts = <IRQ_ASCLIN1_TX 2>,
+			             <IRQ_ASCLIN1_RX 3>,
+			             <IRQ_ASCLIN1_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin2: asclin@f0000800 {
 			reg = <0xF0000800 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart2: uart@f0000800 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000800 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN2_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN2_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN2_ERR 4>;
+			interrupts = <IRQ_ASCLIN2_TX 2>,
+			             <IRQ_ASCLIN2_RX 3>,
+			             <IRQ_ASCLIN2_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin3: asclin@f0000900 {
 			reg = <0xF0000900 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart3: uart@f0000900 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000900 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN3_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN3_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN3_ERR 4>;
+			interrupts = <IRQ_ASCLIN3_TX 2>,
+			             <IRQ_ASCLIN3_RX 3>,
+			             <IRQ_ASCLIN3_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin4: asclin@f0000a00 {
 			reg = <0xF0000A00 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart4: uart@f0000a00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000A00 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN4_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN4_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN4_ERR 4>;
+			interrupts = <IRQ_ASCLIN4_TX 2>,
+			             <IRQ_ASCLIN4_RX 3>,
+			             <IRQ_ASCLIN4_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin5: asclin@f0000b00 {
 			reg = <0xF0000B00 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart5: uart@f0000b00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000B00 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN5_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN5_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN5_ERR 4>;
+			interrupts = <IRQ_ASCLIN5_TX 2>,
+			             <IRQ_ASCLIN5_RX 3>,
+			             <IRQ_ASCLIN5_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin6: asclin@f0000c00 {
 			reg = <0xF0000C00 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart6: uart@f0000c00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000C00 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN6_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN6_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN6_ERR 4>;
+			interrupts = <IRQ_ASCLIN6_TX 2>,
+			             <IRQ_ASCLIN6_RX 3>,
+			             <IRQ_ASCLIN6_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin7: asclin@f0000d00 {
 			reg = <0xF0000D00 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart7: uart@f0000d00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000D00 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN7_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN7_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN7_ERR 4>;
+			interrupts = <IRQ_ASCLIN7_TX 2>,
+			             <IRQ_ASCLIN7_RX 3>,
+			             <IRQ_ASCLIN7_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin8: asclin@f0000e00 {
 			reg = <0xF0000E00 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart8: uart@f0000e00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000E00 256>;
-				interrupts = <IRQ_ASCLIN_ASCLIN8_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN8_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN8_ERR 4>;
+			interrupts = <IRQ_ASCLIN8_TX 2>,
+			             <IRQ_ASCLIN8_RX 3>,
+			             <IRQ_ASCLIN8_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin9: asclin@f0000f00 {
 			reg = <0xF0000F00 256>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart9: uart@f0000f00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF0000F00 256>;
-				interrupts = <47 2>, <48 3>, <49 4>;
+			interrupts = <IRQ_ASCLIN9_TX 2>, <IRQ_ASCLIN9_RX 3>, <IRQ_ASCLIN9_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin10: asclin@f02c0a00 {
 			reg = <0xF02C0A00 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart10: uart@f02c0a00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C0A00 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN10_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN10_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN10_ERR 4>;
+			interrupts = <IRQ_ASCLIN10_TX 2>,
+			             <IRQ_ASCLIN10_RX 3>,
+			             <IRQ_ASCLIN10_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin11: asclin@f02c0b00 {
 			reg = <0xF02C0B00 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart11: uart@f02c0b00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C0B00 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN11_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN11_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN11_ERR 4>;
+			interrupts = <IRQ_ASCLIN11_TX 2>,
+			             <IRQ_ASCLIN11_RX 3>,
+			             <IRQ_ASCLIN11_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin12: asclin@f02c0c00 {
 			reg = <0xF02C0C00 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart12: uart@f02c0c00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C0C00 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN12_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN12_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN12_ERR 4>;
+			interrupts = <IRQ_ASCLIN12_TX 2>,
+			             <IRQ_ASCLIN12_RX 3>,
+			             <IRQ_ASCLIN12_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin13: asclin@f02c0d00 {
 			reg = <0xF02C0D00 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart13: uart@f02c0d00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C0D00 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN13_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN13_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN13_ERR 4>;
+			interrupts = <IRQ_ASCLIN13_TX 2>,
+			             <IRQ_ASCLIN13_RX 3>,
+			             <IRQ_ASCLIN13_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin14: asclin@f02c0e00 {
 			reg = <0xF02C0E00 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart14: uart@f02c0e00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C0E00 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN14_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN14_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN14_ERR 4>;
+			interrupts = <IRQ_ASCLIN14_TX 2>,
+			             <IRQ_ASCLIN14_RX 3>,
+			             <IRQ_ASCLIN14_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin15: asclin@f02c0f00 {
 			reg = <0xF02C0F00 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart15: uart@f02c0f00 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C0F00 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN15_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN15_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN15_ERR 4>;
+			interrupts = <IRQ_ASCLIN15_TX 2>,
+			             <IRQ_ASCLIN15_RX 3>,
+			             <IRQ_ASCLIN15_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin16: asclin@f02c1000 {
 			reg = <0xF02C1000 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart16: uart@f02c1000 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1000 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN16_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN16_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN16_ERR 4>;
+			interrupts = <IRQ_ASCLIN16_TX 2>,
+			             <IRQ_ASCLIN16_RX 3>,
+			             <IRQ_ASCLIN16_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin17: asclin@f02c1100 {
 			reg = <0xF02C1100 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart17: uart@f02c1100 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1100 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN17_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN17_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN17_ERR 4>;
+			interrupts = <IRQ_ASCLIN17_TX 2>,
+			             <IRQ_ASCLIN17_RX 3>,
+			             <IRQ_ASCLIN17_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin18: asclin@f02c1200 {
 			reg = <0xF02C1200 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart18: uart@f02c1200 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1200 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN18_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN18_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN18_ERR 4>;
+			interrupts = <IRQ_ASCLIN18_TX 2>,
+			             <IRQ_ASCLIN18_RX 3>,
+			             <IRQ_ASCLIN18_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin19: asclin@f02c1300 {
 			reg = <0xF02C1300 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart19: uart@f02c1300 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1300 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN19_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN19_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN19_ERR 4>;
+			interrupts = <IRQ_ASCLIN19_TX 2>,
+			             <IRQ_ASCLIN19_RX 3>,
+			             <IRQ_ASCLIN19_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin20: asclin@f02c1400 {
 			reg = <0xF02C1400 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart20: uart@f02c1400 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1400 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN20_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN20_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN20_ERR 4>;
+			interrupts = <IRQ_ASCLIN20_TX 2>,
+			             <IRQ_ASCLIN20_RX 3>,
+			             <IRQ_ASCLIN20_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin21: asclin@f02c1500 {
 			reg = <0xF02C1500 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart21: uart@f02c1500 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1500 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN21_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN21_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN21_ERR 4>;
+			interrupts = <IRQ_ASCLIN21_TX 2>,
+			             <IRQ_ASCLIN21_RX 3>,
+			             <IRQ_ASCLIN21_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin22: asclin@f02c1600 {
 			reg = <0xF02C1600 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart22: uart@f02c1600 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1600 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN22_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN22_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN22_ERR 4>;
+			interrupts = <IRQ_ASCLIN22_TX 2>,
+			             <IRQ_ASCLIN22_RX 3>,
+			             <IRQ_ASCLIN22_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 		asclin23: asclin@f02c1700 {
 			reg = <0xF02C1700 0x100>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			uart23: uart@f02c1700 {
-				compatible = "infineon,asclin-uart";
-				reg = <0xF02C1700 0x100>;
-				interrupts = <IRQ_ASCLIN_ASCLIN23_TX 2>,
-				             <IRQ_ASCLIN_ASCLIN23_RX 3>,
-				             <IRQ_ASCLIN_ASCLIN23_ERR 4>;
+			interrupts = <IRQ_ASCLIN23_TX 2>,
+			             <IRQ_ASCLIN23_RX 3>,
+			             <IRQ_ASCLIN23_ERR 4>;
 				interrupt-names = "tx", "rx", "err";
 				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
 				clock-names = "fasclinf", "fasclins";
 				status = "disabled";
-			};
 		};
 
 		geth: geth@f001d000 {

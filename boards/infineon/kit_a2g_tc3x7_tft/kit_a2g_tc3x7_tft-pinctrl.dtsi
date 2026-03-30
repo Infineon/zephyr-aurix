@@ -19,14 +19,14 @@
 
 	display_spi_default: display_spi_default {
 		group1 {
-			pinmux = <QSPI0_SCLK_P20_13>,
-			         <QSPI0_MTSR_P20_14>,
-			         <QSPI0_SLSO8_P20_6>,
-			         <QSPI0_SLSO9_P20_3>;
+			pinmux = <QSPI0_M_SCLK_P20_13>,
+			         <QSPI0_M_MTSR_P20_14>,
+			         <QSPI0_M_SLSO8_P20_6>,
+			         <QSPI0_M_SLSO9_P20_3>;
 			output-enable;
 		};
 		group2 {
-			pinmux = <QSPI0_MRST_P20_12>
+			pinmux = <QSPI0_M_MRST_P20_12>;
 		};
 	};
 
@@ -66,11 +66,11 @@
 	
 	can0_default: can0_default {
 		group1 {
-			pinmux = <CAN00_TX_P10_3>;
+			pinmux = <CAN00_TX_P20_8>;
 			output-enable;
 		};
 		group2 {
-			pinmux = <CAN00_RX_P10_2>;
+			pinmux = <CAN00_RX_P20_7>;
 		};
 	};
 };
