@@ -56,12 +56,12 @@
 			compatible = "infineon,tc3x-nv-flash","soc-nv-flash";
 			write-block-size = <256>;
 			reg = <0x80300000 DT_SIZE_M(3)>;
-	};
+		};
 		flash2: flash@80600000 {
 			compatible = "infineon,tc3x-nv-flash","soc-nv-flash";
 			write-block-size = <256>;
 			reg = <0x80600000 DT_SIZE_M(3)>;
-	};
+		};
 		flash3: flash@80900000 {
 			compatible = "infineon,tc3x-nv-flash","soc-nv-flash";
 			write-block-size = <256>;
@@ -122,21 +122,21 @@
 			compatible = "infineon,tc3x-stm";
 			reg = <0xF0001000 256>;
 			clocks = <&fstm>;
-			interrupts = <192 1>;
+			interrupts = <IRQ_STM0_SR0 1>;
 		};
 
 		stm1: timer@f0001100 {
 			compatible = "infineon,tc3x-stm";
 			reg = <0xF0001100 256>;
 			clocks = <&fstm>;
-			interrupts = <194 1>;
+			interrupts = <IRQ_STM1_SR0 1>;
 		};
 
 		stm2: timer@f0001200 {
 			compatible = "infineon,tc3x-stm";
 			reg = <0xF0001200 256>;
 			clocks = <&fstm>;
-			interrupts = <196 1>;
+			interrupts = <IRQ_STM2_SR0 1>;
 		};
 
 		pinctrl: pinctrl@f003a000 {
@@ -271,238 +271,238 @@
 			interrupts = <IRQ_ASCLIN0_TX 2>,
 			             <IRQ_ASCLIN0_RX 3>,
 			             <IRQ_ASCLIN0_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin1: asclin@f0000700 {
 			reg = <0xF0000700 256>;
 			interrupts = <IRQ_ASCLIN1_TX 2>,
 			             <IRQ_ASCLIN1_RX 3>,
 			             <IRQ_ASCLIN1_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin2: asclin@f0000800 {
 			reg = <0xF0000800 256>;
 			interrupts = <IRQ_ASCLIN2_TX 2>,
 			             <IRQ_ASCLIN2_RX 3>,
 			             <IRQ_ASCLIN2_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin3: asclin@f0000900 {
 			reg = <0xF0000900 256>;
 			interrupts = <IRQ_ASCLIN3_TX 2>,
 			             <IRQ_ASCLIN3_RX 3>,
 			             <IRQ_ASCLIN3_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin4: asclin@f0000a00 {
 			reg = <0xF0000A00 256>;
 			interrupts = <IRQ_ASCLIN4_TX 2>,
 			             <IRQ_ASCLIN4_RX 3>,
 			             <IRQ_ASCLIN4_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin5: asclin@f0000b00 {
 			reg = <0xF0000B00 256>;
 			interrupts = <IRQ_ASCLIN5_TX 2>,
 			             <IRQ_ASCLIN5_RX 3>,
 			             <IRQ_ASCLIN5_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin6: asclin@f0000c00 {
 			reg = <0xF0000C00 256>;
 			interrupts = <IRQ_ASCLIN6_TX 2>,
 			             <IRQ_ASCLIN6_RX 3>,
 			             <IRQ_ASCLIN6_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin7: asclin@f0000d00 {
 			reg = <0xF0000D00 256>;
 			interrupts = <IRQ_ASCLIN7_TX 2>,
 			             <IRQ_ASCLIN7_RX 3>,
 			             <IRQ_ASCLIN7_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin8: asclin@f0000e00 {
 			reg = <0xF0000E00 256>;
 			interrupts = <IRQ_ASCLIN8_TX 2>,
 			             <IRQ_ASCLIN8_RX 3>,
 			             <IRQ_ASCLIN8_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin9: asclin@f0000f00 {
 			reg = <0xF0000F00 256>;
 			interrupts = <IRQ_ASCLIN9_TX 2>, <IRQ_ASCLIN9_RX 3>, <IRQ_ASCLIN9_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin10: asclin@f02c0a00 {
 			reg = <0xF02C0A00 0x100>;
 			interrupts = <IRQ_ASCLIN10_TX 2>,
 			             <IRQ_ASCLIN10_RX 3>,
 			             <IRQ_ASCLIN10_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin11: asclin@f02c0b00 {
 			reg = <0xF02C0B00 0x100>;
 			interrupts = <IRQ_ASCLIN11_TX 2>,
 			             <IRQ_ASCLIN11_RX 3>,
 			             <IRQ_ASCLIN11_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin12: asclin@f02c0c00 {
 			reg = <0xF02C0C00 0x100>;
 			interrupts = <IRQ_ASCLIN12_TX 2>,
 			             <IRQ_ASCLIN12_RX 3>,
 			             <IRQ_ASCLIN12_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin13: asclin@f02c0d00 {
 			reg = <0xF02C0D00 0x100>;
 			interrupts = <IRQ_ASCLIN13_TX 2>,
 			             <IRQ_ASCLIN13_RX 3>,
 			             <IRQ_ASCLIN13_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin14: asclin@f02c0e00 {
 			reg = <0xF02C0E00 0x100>;
 			interrupts = <IRQ_ASCLIN14_TX 2>,
 			             <IRQ_ASCLIN14_RX 3>,
 			             <IRQ_ASCLIN14_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin15: asclin@f02c0f00 {
 			reg = <0xF02C0F00 0x100>;
 			interrupts = <IRQ_ASCLIN15_TX 2>,
 			             <IRQ_ASCLIN15_RX 3>,
 			             <IRQ_ASCLIN15_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin16: asclin@f02c1000 {
 			reg = <0xF02C1000 0x100>;
 			interrupts = <IRQ_ASCLIN16_TX 2>,
 			             <IRQ_ASCLIN16_RX 3>,
 			             <IRQ_ASCLIN16_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin17: asclin@f02c1100 {
 			reg = <0xF02C1100 0x100>;
 			interrupts = <IRQ_ASCLIN17_TX 2>,
 			             <IRQ_ASCLIN17_RX 3>,
 			             <IRQ_ASCLIN17_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin18: asclin@f02c1200 {
 			reg = <0xF02C1200 0x100>;
 			interrupts = <IRQ_ASCLIN18_TX 2>,
 			             <IRQ_ASCLIN18_RX 3>,
 			             <IRQ_ASCLIN18_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin19: asclin@f02c1300 {
 			reg = <0xF02C1300 0x100>;
 			interrupts = <IRQ_ASCLIN19_TX 2>,
 			             <IRQ_ASCLIN19_RX 3>,
 			             <IRQ_ASCLIN19_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin20: asclin@f02c1400 {
 			reg = <0xF02C1400 0x100>;
 			interrupts = <IRQ_ASCLIN20_TX 2>,
 			             <IRQ_ASCLIN20_RX 3>,
 			             <IRQ_ASCLIN20_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin21: asclin@f02c1500 {
 			reg = <0xF02C1500 0x100>;
 			interrupts = <IRQ_ASCLIN21_TX 2>,
 			             <IRQ_ASCLIN21_RX 3>,
 			             <IRQ_ASCLIN21_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin22: asclin@f02c1600 {
 			reg = <0xF02C1600 0x100>;
 			interrupts = <IRQ_ASCLIN22_TX 2>,
 			             <IRQ_ASCLIN22_RX 3>,
 			             <IRQ_ASCLIN22_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 		asclin23: asclin@f02c1700 {
 			reg = <0xF02C1700 0x100>;
 			interrupts = <IRQ_ASCLIN23_TX 2>,
 			             <IRQ_ASCLIN23_RX 3>,
 			             <IRQ_ASCLIN23_ERR 4>;
-				interrupt-names = "tx", "rx", "err";
-				clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
-				clock-names = "fasclinf", "fasclins";
-				status = "disabled";
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
 		};
 
 		geth: geth@f001d000 {
@@ -531,15 +531,15 @@
 			eth0: geth@f001d000 {
 				compatible = "snps,dwc-ether-qos";
 				reg = <0xF001D000 0x2000>;
-				interrupts = <IRQ_GETH_GETH0_SR0 10>,
-				             <IRQ_GETH_GETH0_SR2 12>,
-				             <IRQ_GETH_GETH0_SR3 13>,
-				             <IRQ_GETH_GETH0_SR4 14>,
-				             <IRQ_GETH_GETH0_SR5 15>,
-				             <IRQ_GETH_GETH0_SR6 16>,
-				             <IRQ_GETH_GETH0_SR7 17>,
-				             <IRQ_GETH_GETH0_SR8 18>,
-				             <IRQ_GETH_GETH0_SR9 19>;
+				interrupts = <IRQ_GETH0_SR0 10>,
+				             <IRQ_GETH0_SR2 12>,
+				             <IRQ_GETH0_SR3 13>,
+				             <IRQ_GETH0_SR4 14>,
+				             <IRQ_GETH0_SR5 15>,
+				             <IRQ_GETH0_SR6 16>,
+				             <IRQ_GETH0_SR7 17>,
+				             <IRQ_GETH0_SR8 18>,
+				             <IRQ_GETH0_SR9 19>;
 				interrupt-names = "common",
 				                  "tx0",
 				                  "tx1",
@@ -569,7 +569,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0208200 0x200>, <0xF0200000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN0_INT0 10>, <IRQ_CAN_CAN0_INT1 11>;
+				interrupts = <IRQ_CAN0_INT0 10>, <IRQ_CAN0_INT1 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -582,7 +582,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0208600 0x200>, <0xF0200000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN0_INT2 10>, <IRQ_CAN_CAN0_INT3 11>;
+				interrupts = <IRQ_CAN0_INT2 10>, <IRQ_CAN0_INT3 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -595,7 +595,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0208A00 0x200>, <0xF0200000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN0_INT4 10>, <IRQ_CAN_CAN0_INT5 11>;
+				interrupts = <IRQ_CAN0_INT4 10>, <IRQ_CAN0_INT5 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -608,7 +608,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0208E00 0x200>, <0xF0200000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN0_INT6 10>, <IRQ_CAN_CAN0_INT7 11>;
+				interrupts = <IRQ_CAN0_INT6 10>, <IRQ_CAN0_INT7 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -631,7 +631,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0218200 0x200>, <0xF0210000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN1_INT0 10>, <IRQ_CAN_CAN1_INT1 11>;
+				interrupts = <IRQ_CAN1_INT0 10>, <IRQ_CAN1_INT1 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -644,7 +644,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0218600 0x200>, <0xF0210000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN1_INT2 10>, <IRQ_CAN_CAN1_INT3 11>;
+				interrupts = <IRQ_CAN1_INT2 10>, <IRQ_CAN1_INT3 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -657,7 +657,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0218A00 0x200>, <0xF0210000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN1_INT4 10>, <IRQ_CAN_CAN1_INT5 11>;
+				interrupts = <IRQ_CAN1_INT4 10>, <IRQ_CAN1_INT5 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -670,7 +670,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0218E00 0x200>, <0xF0210000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN1_INT6 10>, <IRQ_CAN_CAN1_INT7 11>;
+				interrupts = <IRQ_CAN1_INT6 10>, <IRQ_CAN1_INT7 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -692,7 +692,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0228200 0x200>, <0xF0220000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN2_INT0 10>, <IRQ_CAN_CAN2_INT1 11>;
+				interrupts = <IRQ_CAN2_INT0 10>, <IRQ_CAN2_INT1 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -705,7 +705,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0228600 0x200>, <0xF0220000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN2_INT2 10>, <IRQ_CAN_CAN2_INT3 11>;
+				interrupts = <IRQ_CAN2_INT2 10>, <IRQ_CAN2_INT3 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -718,7 +718,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0228A00 0x200>, <0xF0220000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN2_INT4 10>, <IRQ_CAN_CAN2_INT5 11>;
+				interrupts = <IRQ_CAN2_INT4 10>, <IRQ_CAN2_INT5 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -731,7 +731,7 @@
 				compatible = "infineon,mcmcan-node";
 				reg = <0xF0228E00 0x200>, <0xF0220000 0x8000>;
 				reg-names = "m_can", "message_ram";
-				interrupts = <IRQ_CAN_CAN2_INT6 10>, <IRQ_CAN_CAN2_INT7 11>;
+				interrupts = <IRQ_CAN2_INT6 10>, <IRQ_CAN2_INT7 11>;
 				interrupt-names = "line0", "line1";
 				bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
 				sample-point = <875>;
@@ -747,9 +747,9 @@
 			reg = <0xF0001C00 0x100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			interrupts = <IRQ_QSPI_QSPI0_TX 0x2>,
-			             <IRQ_QSPI_QSPI0_RX 0x3>,
-			             <IRQ_QSPI_QSPI0_ERR 0x3>;
+			interrupts = <IRQ_QSPI0_TX 0x2>,
+			             <IRQ_QSPI0_RX 0x3>,
+			             <IRQ_QSPI0_ERR 0x3>;
 			interrupt-names = "tx", "rx", "err";
 			clocks = <&ccu CLOCK_FQSPI>;
 			status = "disabled";
@@ -759,9 +759,9 @@
 			reg = <0xF0001d00 0x100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			interrupts = <IRQ_QSPI_QSPI1_TX 0x2>,
-			             <IRQ_QSPI_QSPI1_RX 0x3>,
-			             <IRQ_QSPI_QSPI1_ERR 0x3>;
+			interrupts = <IRQ_QSPI1_TX 0x2>,
+			             <IRQ_QSPI1_RX 0x3>,
+			             <IRQ_QSPI1_ERR 0x3>;
 			interrupt-names = "tx", "rx", "err";
 			clocks = <&ccu CLOCK_FQSPI>;
 			status = "disabled";
@@ -771,9 +771,9 @@
 			reg = <0xF0001E00 0x100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			interrupts = <IRQ_QSPI_QSPI2_TX 0x2>,
-			             <IRQ_QSPI_QSPI2_RX 0x3>,
-			             <IRQ_QSPI_QSPI2_ERR 0x3>;
+			interrupts = <IRQ_QSPI2_TX 0x2>,
+			             <IRQ_QSPI2_RX 0x3>,
+			             <IRQ_QSPI2_ERR 0x3>;
 			interrupt-names = "tx", "rx", "err";
 			clocks = <&ccu CLOCK_FQSPI>;
 			status = "disabled";
@@ -783,9 +783,9 @@
 			reg = <0xF0001f00 0x100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			interrupts = <IRQ_QSPI_QSPI3_TX 0x2>,
-			             <IRQ_QSPI_QSPI3_RX 0x3>,
-			             <IRQ_QSPI_QSPI3_ERR 0x3>;
+			interrupts = <IRQ_QSPI3_TX 0x2>,
+			             <IRQ_QSPI3_RX 0x3>,
+			             <IRQ_QSPI3_ERR 0x3>;
 			interrupt-names = "tx", "rx", "err";
 			clocks = <&ccu CLOCK_FQSPI>;
 			status = "disabled";
@@ -795,9 +795,9 @@
 			reg = <0xF0002000 0x100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			interrupts = <IRQ_QSPI_QSPI4_TX 0x2>,
-			             <IRQ_QSPI_QSPI4_RX 0x3>,
-			             <IRQ_QSPI_QSPI4_ERR 0x3>;
+			interrupts = <IRQ_QSPI4_TX 0x2>,
+			             <IRQ_QSPI4_RX 0x3>,
+			             <IRQ_QSPI4_ERR 0x3>;
 			interrupt-names = "tx", "rx", "err";
 			clocks = <&ccu CLOCK_FQSPI>;
 			status = "disabled";
