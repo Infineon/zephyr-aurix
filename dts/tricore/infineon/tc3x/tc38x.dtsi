@@ -9,8 +9,8 @@
 #include <skeleton.dtsi>
 #include <zephyr/dt-bindings/clock/tc3x_clock.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
-#include <infineon/tc3x/tc3x-common.dtsi>
 #include <infineon/tc3x/tc38x-irq.h>
+#include <infineon/tc3x/tc3x-common.dtsi>
 
 / {
 	model = "infineon,tc38x";
@@ -109,6 +109,30 @@
 		compatible = "zephyr,memory-region","mmio-sram";
 		reg = <0x40100000 DT_SIZE_K(64)>;
 		zephyr,memory-region = "PSRAM3";
+	};
+
+	dlmu0: memory@90000000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90000000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU0";
+	};
+
+	dlmu1: memory@90010000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90010000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU1";
+	};
+
+	dlmu2: memory@90020000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90020000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU2";
+	};
+
+	dlmu3: memory@90030000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90030000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU3";
 	};
 
 	soc {
@@ -236,6 +260,41 @@
 				#gpio-cells = <2>;
 				status = "disabled";
 			};
+			p24: gpio@f003b800 {
+				compatible = "infineon,tc3x-gpio";
+				reg = <0xF003B800 0x100>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				status = "disabled";
+			};
+			p25: gpio@f003b900 {
+				compatible = "infineon,tc3x-gpio";
+				reg = <0xF003B900 0x100>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				status = "disabled";
+			};
+			p26: gpio@f003ba00 {
+				compatible = "infineon,tc3x-gpio";
+				reg = <0xF003BA00 0x100>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				status = "disabled";
+			};
+			p30: gpio@f003be00 {
+				compatible = "infineon,tc3x-gpio";
+				reg = <0xF003BE00 0x100>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				status = "disabled";
+			};
+			p31: gpio@f003bf00 {
+				compatible = "infineon,tc3x-gpio";
+				reg = <0xF003BF00 0x100>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				status = "disabled";
+			};
 			p32: gpio@f003c000 {
 				compatible = "infineon,tc3x-gpio";
 				reg = <0xF003C000 0x100>;
@@ -260,6 +319,13 @@
 			p40: gpio@f003c800 {
 				compatible = "infineon,tc3x-gpio";
 				reg = <0xF003C800 0x100>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				status = "disabled";
+			};
+			p41: gpio@f003c900 {
+				compatible = "infineon,tc3x-gpio";
+				reg = <0xF003C900 0x100>;
 				gpio-controller;
 				#gpio-cells = <2>;
 				status = "disabled";
@@ -740,6 +806,27 @@
 				bitrate-data = <2000000>;
 				status = "disabled";
 			};
+		};
+
+		i2c0: i2c@f00c0000 {
+			compatible = "infineon,aurix-i2c";
+			reg = <0xF00C0000 0x20000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&ccu CLOCK_FI2C>;
+			interrupts = <IRQ_I2C0_DTR 5>, <IRQ_I2C0_ERR 6>, <IRQ_I2C0_P 5>;
+			interrupt-names = "data_transfer", "error", "protocol";
+			status = "disabled";
+		};
+		i2c1: i2c@f00e0000 {
+			compatible = "infineon,aurix-i2c";
+			reg = <0xF00E0000 0x20000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&ccu CLOCK_FI2C>;
+			interrupts = <IRQ_I2C1_DTR 5>, <IRQ_I2C1_ERR 6>, <IRQ_I2C1_P 5>;
+			interrupt-names = "data_transfer", "error", "protocol";
+			status = "disabled";
 		};
 
 		qspi0: spi@f0001c00 {
