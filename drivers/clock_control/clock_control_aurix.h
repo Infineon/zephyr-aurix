@@ -75,8 +75,10 @@ enum base_clock {
 	fsource1_freq = CLOCK_SOURCE_IS(fsource1, fpll1) ? fpll1_freq : fback_freq,
 	fsource2_freq = CLOCK_SOURCE_IS(fsource2, fpll2) ? fpll2_freq : fback_freq,
 #if CONFIG_SOC_SERIES_TC4X
+#if DT_NODE_EXISTS(DT_NODELABEL(fpllppu))
 	fpllppu_freq = (uint32_t)PLL_FREQ(sys_pll, 3),
 	fsourceppu_freq = CLOCK_SOURCE_IS(fsourceppu, fpllppu) ? fpllppu_freq : fback_freq,
+#endif
 	fpll3_freq = (uint32_t)PLL_FREQ(per_pll, 4),
 	fsource3_freq = CLOCK_SOURCE_IS(fsource3, fpll3) ? fpll3_freq : fback_freq,
 #endif

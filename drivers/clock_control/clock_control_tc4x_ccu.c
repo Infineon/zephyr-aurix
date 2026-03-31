@@ -99,7 +99,7 @@ static inline int clock_control_tc4x_ccu_syspll_divider()
 {
 	Ifx_CLOCK_SYSPLLCON1 con1 = CLOCK_SYSPLLCON1;
 
-#if 1
+#if DT_NODE_EXISTS(DT_NODELABEL(fpllppu))
 	if (PLL_K_PRE_DIV(sys_pll, 3) != 2.0) {
 		con1.B.K3PREDIV = PLL_K_PRE_DIV_REG(sys_pll, 3);
 		CLOCK_SYSPLLCON1 = con1;
@@ -109,7 +109,7 @@ static inline int clock_control_tc4x_ccu_syspll_divider()
 #endif
 
 	con1.B.K2DIV = PLL_K_DIV(sys_pll, 2) - 1;
-#if 1
+#if DT_NODE_EXISTS(DT_NODELABEL(fpllppu))
 	con1.B.K3DIV = PLL_K_DIV(sys_pll, 3) - 1;
 #endif
 	CLOCK_SYSPLLCON1 = con1;
