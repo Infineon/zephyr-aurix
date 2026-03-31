@@ -9,8 +9,8 @@
 #include <skeleton.dtsi>
 #include <zephyr/dt-bindings/clock/tc3x_clock.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
-#include <infineon/tc3x/tc3x-common.dtsi>
 #include <infineon/tc3x/tc37xEXT-irq.h>
+#include <infineon/tc3x/tc3x-common.dtsi>
 
 / {
 	model = "infineon,tc37x_ext";
@@ -39,27 +39,20 @@
 		};
 	};
 
-	flash_controller: flash_controller@A8080000 {
+	flash_controller: flash_controller@af000000 {
 		compatible = "infineon,tc3x-flash-controller";
 		#address-cells = <1>;
 		#size-cells = <1>;
-		reg = <0xA8080000 0x100000>;
+		reg = <0xaf000000 DT_SIZE_K(256)>;
 		flash0: flash@80000000 {
 			compatible = "infineon,tc3x-nv-flash","soc-nv-flash";
 			write-block-size = <256>;
-			reg = <0x80000000 DT_SIZE_M(2)>;
+			reg = <0x80000000 DT_SIZE_M(3)>;
 		};
-	};
-
-	flash_controller1: flash_controller@A8380000 {
-		compatible = "infineon,tc3x-flash-controller";
-		reg = <0xA8380000 0x100000>;
-		#address-cells = <1>;
-		#size-cells = <1>;
 		flash1: flash@80300000 {
 			compatible = "infineon,tc3x-nv-flash","soc-nv-flash";
 			write-block-size = <256>;
-			reg = <0x80300000 DT_SIZE_M(2)>;
+			reg = <0x80300000 DT_SIZE_M(3)>;
 		};
 	};
 
@@ -97,6 +90,24 @@
 		compatible = "zephyr,memory-region","mmio-sram";
 		reg = <0x50100000 DT_SIZE_K(64)>;
 		zephyr,memory-region = "PSRAM2";
+	};
+
+	dlmu0: memory@90000000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90000000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU0";
+	};
+
+	dlmu1: memory@90010000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90010000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU1";
+	};
+
+	dlmu2: memory@90020000 {
+		compatible = "zephyr,memory-region","mmio-sram";
+		reg = <0x90020000 DT_SIZE_K(64)>;
+		zephyr,memory-region = "DLMU2";
 	};
 
 	soc {
@@ -352,6 +363,26 @@
 			clock-names = "fasclinf", "fasclins";
 			status = "disabled";
 		};
+		asclin10: asclin@f02c0a00 {
+			reg = <0xF02C0A00 256>;
+			interrupts = <IRQ_ASCLIN10_TX 2>,
+			             <IRQ_ASCLIN10_RX 3>,
+			             <IRQ_ASCLIN10_ERR 4>;
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
+		};
+		asclin11: asclin@f02c0b00 {
+			reg = <0xF02C0B00 256>;
+			interrupts = <IRQ_ASCLIN11_TX 2>,
+			             <IRQ_ASCLIN11_RX 3>,
+			             <IRQ_ASCLIN11_ERR 4>;
+			interrupt-names = "tx", "rx", "err";
+			clocks = <&ccu CLOCK_FASCLINF>, <&ccu CLOCK_FASCLINS>;
+			clock-names = "fasclinf", "fasclins";
+			status = "disabled";
+		};
 
 		geth0: geth@f001d000 {
 			reg = <0xF001D000 0x2100>;
@@ -577,6 +608,17 @@
 				bitrate-data = <2000000>;
 				status = "disabled";
 			};
+		};
+
+		i2c0: i2c@f00c0000 {
+			compatible = "infineon,aurix-i2c";
+			reg = <0xF00C0000 0x20000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&ccu CLOCK_FI2C>;
+			interrupts = <IRQ_I2C0_DTR 5>, <IRQ_I2C0_ERR 6>, <IRQ_I2C0_P 5>;
+			interrupt-names = "data_transfer", "error", "protocol";
+			status = "disabled";
 		};
 
 		qspi0: spi@f0001c00 {
