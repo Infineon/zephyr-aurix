@@ -31,17 +31,9 @@ enum {
 #error "This code doesn't work properly with multiple CPUs enabled"
 #endif
 
-/* Forward-compatibility notes: 1) Only append items to this table; otherwise
- * debugger plugin versions that expect fewer items will read garbage values.
- * 2) Avoid incompatible changes that affect the interpretation of existing
- * items. But if you have to do them, increment THREAD_INFO_OFFSET_VERSION
- * and submit a patch for debugger plugins to deal with both the old and new
- * scheme.
- * Only version 1 is backward compatible to version 0.
- */
 __attribute__((used, section(".dbg_thread_info")))
 const size_t _kernel_thread_info_offsets[] = {
-	/* Version 0 starts */
+	
 	[THREAD_INFO_OFFSET_VERSION] = 1,
 	[THREAD_INFO_OFFSET_K_CURR_THREAD] = offsetof(struct _cpu, current),
 	[THREAD_INFO_OFFSET_K_THREADS] = offsetof(struct z_kernel, threads),
@@ -54,7 +46,7 @@ const size_t _kernel_thread_info_offsets[] = {
 						   user_options),
 	[THREAD_INFO_OFFSET_T_PRIO] = offsetof(struct _thread_base, prio),
 #if defined(CONFIG_ARM64)
-	/* We are assuming that the SP of interest is SP_EL1 */
+	
 	[THREAD_INFO_OFFSET_T_STACK_PTR] = offsetof(struct k_thread,
 						callee_saved.sp_elx),
 #elif defined(CONFIG_CPU_CORTEX_M) && defined(CONFIG_USE_SWITCH)
@@ -93,27 +85,22 @@ const size_t _kernel_thread_info_offsets[] = {
 	[THREAD_INFO_OFFSET_T_STACK_PTR] = offsetof(struct k_thread,
 						callee_saved.thread_status),
 #elif defined(CONFIG_XTENSA)
-/* Xtensa does not store stack pointers inside thread objects.
- * The registers are saved in thread stack where there is
- * no fixed location for this to work. It needs arch_switch in
- * order to work on Xtensa.
- */
+
 #ifdef CONFIG_USE_SWITCH
 	[THREAD_INFO_OFFSET_T_STACK_PTR] = offsetof(struct k_thread, switch_handle),
 #else
 	[THREAD_INFO_OFFSET_T_STACK_PTR] = THREAD_INFO_UNIMPLEMENTED,
 #endif
 #elif defined(CONFIG_RX)
-	/* RX doesn't store *anything* inside thread objects yet */
+	
+	[THREAD_INFO_OFFSET_T_STACK_PTR] = THREAD_INFO_UNIMPLEMENTED,
+#elif defined(CONFIG_TRICORE)
 	[THREAD_INFO_OFFSET_T_STACK_PTR] = THREAD_INFO_UNIMPLEMENTED,
 #else
-	/* Use a special value so that OpenOCD knows that obtaining the stack
-	 * pointer is not possible on this particular architecture.
-	 */
+	
 #warning Please define THREAD_INFO_OFFSET_T_STACK_PTR for this architecture
 	[THREAD_INFO_OFFSET_T_STACK_PTR] = THREAD_INFO_UNIMPLEMENTED,
 #endif
-	/* Version 0 ends */
 
 	[THREAD_INFO_OFFSET_T_NAME] = offsetof(struct k_thread, name),
 	[THREAD_INFO_OFFSET_T_ARCH] = offsetof(struct k_thread, arch),
@@ -138,25 +125,20 @@ const size_t _kernel_thread_info_offsets[] = {
 	[THREAD_INFO_OFFSET_T_PREEMPT_FLOAT] = THREAD_INFO_UNIMPLEMENTED,
 	[THREAD_INFO_OFFSET_T_COOP_FLOAT] = THREAD_INFO_UNIMPLEMENTED,
 #endif
-	/* Version is still 1, but existence of following elements must be
-	 * checked with _kernel_thread_info_num_offsets.
-	 */
+	
 #ifdef CONFIG_ARM_STORE_EXC_RETURN
-	/* ARM overwrites the LSB of the Link Register on the stack when
-	 * this option is enabled. If this offset is not THREAD_INFO_UNIMPLEMENTED
-	 * then the LSB needs to be restored from mode_exc_return.
-	 */
+	
 	[THREAD_INFO_OFFSET_T_ARM_EXC_RETURN] = offsetof(struct _thread_arch,
 							 mode_exc_return),
 #else
 	[THREAD_INFO_OFFSET_T_ARM_EXC_RETURN] = THREAD_INFO_UNIMPLEMENTED,
-#endif /* CONFIG_ARM_STORE_EXC_RETURN */
+#endif 
 #if defined(CONFIG_ARC)
 	[THREAD_INFO_OFFSET_T_ARC_RELINQUISH_CAUSE] = offsetof(struct _thread_arch,
 						relinquish_cause),
 #else
 	[THREAD_INFO_OFFSET_T_ARC_RELINQUISH_CAUSE] = THREAD_INFO_UNIMPLEMENTED,
-#endif /* CONFIG_ARC */
+#endif 
 };
 
 extern const size_t __attribute__((alias("_kernel_thread_info_offsets")))
