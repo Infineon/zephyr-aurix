@@ -46,11 +46,19 @@
 	status = "okay";
 };
 
+&geth {
+	status = "okay";
+};
+
 &eth0 {
 	status = "okay";
 };
 
 &mdio0 {
+	status = "okay";
+};
+
+&ptp_clock0 {
 	status = "okay";
 };
 

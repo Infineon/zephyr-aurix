@@ -396,6 +396,8 @@
 			mdio0: mdio@f001d200 {
 				compatible = "snps,dwc-ether-qos-mdio";
 				reg = <0xF001D200 0x8>;
+				clocks = <&ccu CLOCK_FSPB>;
+				clock-names = "csr";
 				#address-cells = <1>;
 				#size-cells = <0>;
 				status = "disabled";
@@ -403,6 +405,7 @@
 
 			ptp_clock0: ptp@f001db00 {
 				compatible = "snps,dwc-ether-qos-ptp-clock";
+				clocks = <&ccu CLOCK_FGETH>;
 				reg = <0xF001DB00 0x20>;
 				status = "disabled";
 			};
@@ -420,14 +423,14 @@
 				             <IRQ_GETH0_SR8 18>,
 				             <IRQ_GETH0_SR9 19>;
 				interrupt-names = "common",
-				                  "tx0",
-				                  "tx1",
-				                  "tx2",
-				                  "tx3",
-				                  "rx0",
-				                  "rx1",
-				                  "rx2",
-				                  "rx3";
+				                  "tx_ch0",
+				                  "tx_ch1",
+				                  "tx_ch2",
+				                  "tx_ch3",
+				                  "rx_ch0",
+				                  "rx_ch1",
+				                  "rx_ch2",
+				                  "rx_ch3";
 				ptp-clock = <&ptp_clock0>;
 				snps,address-aligned-burst;
 				snps,fixed-burst-length;
@@ -447,6 +450,8 @@
 			mdio1: mdio@f0019200 {
 				compatible = "snps,dwc-ether-qos-mdio";
 				reg = <0xF0019200 0x8>;
+				clocks = <&ccu CLOCK_FSPB>;
+				clock-names = "csr";
 				#address-cells = <1>;
 				#size-cells = <0>;
 				status = "disabled";
@@ -454,6 +459,7 @@
 
 			ptp_clock1: ptp@f0019b00 {
 				compatible = "snps,dwc-ether-qos-ptp-clock";
+				clocks = <&ccu CLOCK_FGETH>;
 				reg = <0xF0019B00 0x20>;
 				status = "disabled";
 			};
@@ -471,14 +477,14 @@
 				             <IRQ_GETH1_SR8 18>,
 				             <IRQ_GETH1_SR9 19>;
 				interrupt-names = "common",
-				                  "tx0",
-				                  "tx1",
-				                  "tx2",
-				                  "tx3",
-				                  "rx0",
-				                  "rx1",
-				                  "rx2",
-				                  "rx3";
+				                  "tx_ch0",
+				                  "tx_ch1",
+				                  "tx_ch2",
+				                  "tx_ch3",
+				                  "rx_ch0",
+				                  "rx_ch1",
+				                  "rx_ch2",
+				                  "rx_ch3";
 				ptp-clock = <&ptp_clock0>;
 				snps,address-aligned-burst;
 				snps,fixed-burst-length;

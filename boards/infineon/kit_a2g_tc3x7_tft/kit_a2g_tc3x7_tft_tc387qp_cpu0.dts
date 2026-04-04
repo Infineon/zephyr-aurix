@@ -20,6 +20,7 @@
 		zephyr,sram = &dsram0;
 		zephyr,itcm = &psram0;
 		zephyr,console = &asclin0;
+		zephyr,shell-uart = &asclin0;
 		zephyr,display = &ili9341;
 		infineon,system-timer = &stm0;
 	};

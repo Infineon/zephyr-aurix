@@ -20,6 +20,7 @@
 		zephyr,sram = &dsram0;
 		zephyr,itcm = &psram0;
 		zephyr,console = &asclin0;
+		zephyr,shell-uart = &asclin0;
 		infineon,system-timer = &stm0;
 	};
 };
@@ -30,5 +31,21 @@
 };
 
 &asclin0 {
+	status = "okay";
+};
+
+&geth {
+	status = "okay";
+};
+
+&eth0 {
+	status = "okay";
+};
+
+&mdio0 {
+	status = "okay";
+};
+
+&ptp_clock0 {
 	status = "okay";
 };
