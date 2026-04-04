@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Infineon Technologies AG
 # SPDX-License-Identifier: Apache-2.0
 
-config MDIO_QOS
+config MDIO_DWC_ETHER_QOS
 	bool "Synopsys DWC Ether QoS MDIO driver"
 	depends on DT_HAS_SNPS_DWC_ETHER_QOS_MDIO_ENABLED
 	default y
