@@ -358,6 +358,8 @@ static void eth_qos_dma_rx_fill_desc(const struct device *dev, uint8_t dma_ch)
 	if (descs != 0) {
 		eth_qos_dma_rx_set_tail(dev, dma_ch);
 	}
+
+	sys_write32(DMA_CHi_STATUS_RBU, cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_rx[dma_ch].nr));
 }
 
 static void eth_qos_dma_rx_process(const struct device *dev, uint8_t dma_ch)
@@ -440,7 +442,7 @@ static void eth_qos_dma_rx_process(const struct device *dev, uint8_t dma_ch)
 
 		/* Packet reception error */
 		if (eth_qos_rdes_pkt_error(desc)) {
-			eth_stats_update_errors_rx(p->iface);
+			eth_stats_update_errors_rx(data->iface);
 			net_pkt_unref(pkt);
 			pkt = NULL;
 			goto next;
@@ -835,22 +837,33 @@ void eth_qos_common_isr(const struct device *dev)
 		} while (ts_status & MAC_TIMESTAMP_STATUS_TXTSSIS);
 	}
 	if (dma_status) {
-		while (dma_status) {
-			uint8_t dma_ch = find_msb_set(dma_status) - 1;
-			uint32_t dma_ch_status = sys_read32(cfg->DMA_BASE + DMA_CHi_STATUS(dma_ch));
-#if !IS_ENABLED(CONFIG_ETH_DWC_ETHER_QOS_DMA_PER_CH_IRQ)
+		uint8_t dma_ch;
+		for (dma_ch = 0; dma_ch < cfg->dma_tx_channel; dma_ch++) {
+			if ((dma_status & (1 << cfg->dma_tx[dma_ch].nr)) == 0) {
+				continue;
+			}
+			uint32_t dma_ch_status =
+				sys_read32(cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_tx[dma_ch].nr));
 			if (dma_ch_status & DMA_CHi_STATUS_TI) {
 				eth_qos_dma_tx_process(dev, dma_ch);
 			}
-
+			sys_write32(DMA_CHi_STATUS_NIS | DMA_CHi_STATUS_ETI | DMA_CHi_STATUS_TBU,
+				    cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_tx[dma_ch].nr));
+		}
+		for (dma_ch = 0; dma_ch < cfg->dma_rx_channel; dma_ch++) {
+			if ((dma_status & (1 << cfg->dma_rx[dma_ch].nr)) == 0) {
+				continue;
+			}
+			uint32_t dma_ch_status =
+				sys_read32(cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_rx[dma_ch].nr));
 			if (dma_ch_status & DMA_CHi_STATUS_RI) {
 				/* Process descriptors */
 				eth_qos_dma_rx_process(dev, dma_ch);
 				/* Fill up descriptors again */
 				eth_qos_dma_rx_fill_desc(dev, dma_ch);
 			}
-#endif
-			dma_ch_status &= ~(1 << dma_ch);
+			sys_write32(DMA_CHi_STATUS_NIS | DMA_CHi_STATUS_ERI,
+				    cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_rx[dma_ch].nr));
 		}
 	}
 	if (mtl_status) {
