@@ -11,7 +11,7 @@ include:
 properties:
   reg:
     required: true
-  snps,skip-reset:
+  snps,do-reset:
     type: boolean
   snps,skip-init:
     type: boolean

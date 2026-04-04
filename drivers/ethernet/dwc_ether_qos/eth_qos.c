@@ -976,7 +976,7 @@ int eth_qos_init(const struct device *dev)
 		return -EFAULT;
 	}
 
-	if (!cfg->skip_reset) {
+	if (cfg->do_reset) {
 		sys_write32(DMA_MODE_SWR, cfg->DMA_BASE + DMA_MODE);
 	}
 	if (!WAIT_FOR((sys_read32(cfg->DMA_BASE + DMA_MODE) & DMA_MODE_SWR) == 0, 1000,
