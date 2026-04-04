@@ -8,5 +8,8 @@ compatible: "snps,dwc-ether-qos-ptp-clock"
 include: ["base.yaml"]
 
 properties:
+  clocks:
+    type: phandle-array
+    required: true
   resolution:
     type: int
