@@ -304,7 +304,7 @@ static inline bool eth_qos_rdes_pkt_finish(struct eth_qos_rdes_wb *rdes)
 {
 	return rdes->rdes3.ctxt == 1 ||
 	       (rdes->rdes3.ld == 1 && (!IS_ENABLED(CONFIG_NET_PKT_TIMESTAMP) ||
-					(rdes->rdes3.rs1v == 1 && rdes->rdes1.tsa == 1)));
+					!(rdes->rdes3.rs1v == 1 && rdes->rdes1.tsa == 1)));
 }
 
 static inline bool eth_qos_rdes_desc_error(struct eth_qos_rdes_wb *rdes)
@@ -540,9 +540,10 @@ static inline void eth_qos_dma_set_sysbus(const struct device *dev)
 static inline struct net_pkt *eth_qos_dma_ts_get_pkt(const struct device *dev, uint8_t dma_ch)
 {
 	struct eth_qos_data *data = dev->data;
+	sys_snode_t *node = sys_slist_get(&data->ptp_pkts[dma_ch]);
 	struct net_pkt *pkt;
 
-	pkt = (struct net_pkt *)sys_slist_get_not_empty(&data->ptp_pkts[dma_ch]);
+	pkt = SYS_SLIST_CONTAINER(node, pkt, next);
 
 	return pkt;
 }
@@ -1051,7 +1052,7 @@ static inline void eth_qos_set_mac_addr(const struct device *dev, uint8_t nr, ui
 	 .da_duplication = DT_INST_PROP(n, snps_da_duplication),                                   \
 	 .loopback = DT_INST_PROP(n, snps_loopback),                                               \
 	 IF_ENABLED(CONFIG_ETH_QOS_SHARED_DMA, (.dma_base = DT_REG_ADDR(DT_INST_PHANDLE(n, snps_dma)) - DMA_MODE,))                                                                                \
-			     IF_ENABLED(CONFIG_PTP_CLOCK, (.ptp_clock = DEVICE_DT_GET(DT_INST_PHANDLE(n, snps_ptp_clock)),))}
+			     IF_ENABLED(CONFIG_PTP_CLOCK, (.ptp_clock = DEVICE_DT_GET(DT_INST_PHANDLE(n, ptp_clock)),))}
 
 #define ETH_QOS_DMA_DATA(n)                                                                        \
 	struct eth_qos_dma_rx_ch_data eth_qos##n##_dma_rx_data[ETH_QOS_RX_CHANNELS_TO_USE(n)];     \
