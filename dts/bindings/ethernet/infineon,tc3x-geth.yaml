@@ -1,0 +1,12 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+---
+description: TC3x GETH wrapper module
+compatible: infineon,tc3x-geth
+
+include: [base.yaml]
+
+properties:
+  skip-init:
+    type: boolean

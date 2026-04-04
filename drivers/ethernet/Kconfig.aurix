@@ -10,3 +10,8 @@ config ETH_TC4X_GETH
     bool
     depends on DT_HAS_INFINEON_TC4X_GETH_ENABLED
     default y
+
+config ETH_TC3X_GETH
+    bool
+    depends on DT_HAS_INFINEON_TC3X_GETH_ENABLED
+    default y
