@@ -26,6 +26,9 @@
 		led0 = &led0;
 	};
 
+	/* On-board TLE9251VSJ on M_CAN node 2 (P10.2/P10.3). No software
+	 * enable/standby line, so no can-transceiver-gpio node is needed.
+	 */
 };
 
 &fosc {
@@ -60,6 +63,7 @@
 	};
 };
 
+/* CAN module 0 node 2 - default board config */
 &mcmcan0 {
 	status = "okay";
 };
