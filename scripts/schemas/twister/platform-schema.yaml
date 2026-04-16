@@ -1,6 +1,3 @@
-#
-# Schema to validate a YAML file describing a Zephyr test platform
-#
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $defs:
   platform:
@@ -60,6 +57,7 @@ $defs:
           - riscv
           - rx
           - sparc
+          - tricore
           - x86
           - xtensa
           - unit
