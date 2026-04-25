@@ -78,6 +78,10 @@ csa_loop:
 	lea	%a15, [%a15], 64
 	jne.a	%a15, %a14, csa_loop
 
+	/* Null-terminate last CSA in free list */
+	mov	%d14, 0
+	st.w	[%a14]-64, %d14
+
 	/* Store LCX with 3 less entries for context depletion trap */
 	addi	%d15, %d15, -3
 	mtcr	0xFE3C, %d15
