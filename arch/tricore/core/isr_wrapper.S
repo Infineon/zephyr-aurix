@@ -65,22 +65,22 @@ no_stack_guard:
 
 	/* Get current irq number */
 	call	intc_aurix_ir_get_active
-	
+
 	/* Load isr table entry */
 	movh.a	%a13, hi:_sw_isr_table
 	lea	%a13, [%a13], lo:_sw_isr_table
 	addsc.a	%a13, %a13, %d2, 3
-	
+
 	/* Load arg and function ptr */
-#if __GCC__
-	ld.da	%a4, [%a13]
+#if defined(__clang__)
+        ld.da   %p4, [%a13]
 #else
-	ld.da	%p4, [%a13]
+        ld.da   %a4, [%a13]
 #endif
 
 	/* Call ISR */
 	calli	%a5
-	
+
 #ifdef CONFIG_TRACING_ISR
 	call	sys_trace_isr_exit
 #endif
