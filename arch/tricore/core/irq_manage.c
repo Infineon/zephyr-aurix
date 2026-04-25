@@ -41,6 +41,7 @@ FUNC_NORETURN void z_irq_spurious(const void *unused)
 	CODE_UNREACHABLE;
 #else
 	unsigned int irq = intc_aurix_ir_get_active();
+
 	LOG_ERR("Spurious interrupt detected! IRQ: %d", irq);
 
 	extern void z_tricore_fatal_error(unsigned int reason, const struct arch_esf *lower);
@@ -67,8 +68,7 @@ int arch_irq_disconnect_dynamic(unsigned int irq, unsigned int priority,
 	ARG_UNUSED(priority);
 	ARG_UNUSED(flags);
 
-	return z_isr_uninstall(irq + CONFIG_RISCV_RESERVED_IRQ_ISR_TABLES_OFFSET, routine,
-			       parameter);
+	return z_isr_uninstall(irq, routine, parameter);
 }
 #endif /* CONFIG_SHARED_INTERRUPTS */
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
