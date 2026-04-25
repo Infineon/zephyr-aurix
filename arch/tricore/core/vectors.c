@@ -9,6 +9,7 @@
 extern void _irq_wrapper();
 extern void _syscall_wrapper();
 extern void z_tricore_fault(uint8_t trap_class, uint8_t tin);
+extern void z_tricore_fault_fcu(void);
 
 void __attribute((naked, section(".vectors.trap"))) __trap_vector_tc0_class0()
 {
@@ -43,6 +44,7 @@ void __attribute((naked, section(".vectors.trap"))) __trap_vector_tc0_class3()
 	__asm volatile("svlcx\n"
 		       "mov %d4, 3\n"
 		       "mov %d5, %d15\n"
+		       "jeq %d5, 4, z_tricore_fault_fcu\n"
 		       "j z_tricore_fault\n");
 }
 
