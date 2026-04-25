@@ -17,6 +17,7 @@ SECTION_FUNC(TEXT, _syscall_wrapper)
 	/* Syscall table */
 	jeq	%d15, 0, dispatch_syscall
 	jeq	%d15, 1, switch_syscall
+	jeq	%d15, 2, except_syscall
 	j 	syscall_return
 
 dispatch_syscall:
@@ -47,6 +48,14 @@ dispatch_syscall:
 	/* Restore stack */
 	lea	%a10, [%a10], 8
 #endif
+	j syscall_return
+
+except_syscall:
+	mfcr  %d15, 0xFE00
+	sh    %d5, %d15, 12
+	insert %d5, %d5, %d15, 6, 16
+	mov.a %a4, %d5
+	call  z_tricore_fatal_error
 	j syscall_return
 
 switch_syscall:
