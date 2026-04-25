@@ -17,6 +17,7 @@ GEN_OFFSET_SYM(_callee_saved_t, pcxi);
 #if defined(CONFIG_SMP)
 GEN_OFFSET_SYM(_thread_arch_t, arg_mem);
 #endif
+GEN_OFFSET_SYM(_thread_base_t, thread_state);
 
 /* CSA offsets */
 GEN_OFFSET_SYM(z_tricore_lower_context_t, a4);
