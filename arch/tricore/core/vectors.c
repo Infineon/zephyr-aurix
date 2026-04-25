@@ -6,8 +6,11 @@
 
 #include <zephyr/sys/util.h>
 
-extern void _irq_wrapper();
-extern void _syscall_wrapper();
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+
+extern void _irq_wrapper(void);
+extern void _syscall_wrapper(void);
 extern void z_tricore_fault(uint8_t trap_class, uint8_t tin);
 extern void z_tricore_fault_fcu(void);
 
@@ -91,3 +94,5 @@ void __attribute((naked, section(".vectors.trap"))) __trap_vector_tc0_class7()
 	}
 
 LISTIFY(256, VECTOR_FUNC, ())
+
+#pragma GCC diagnostic pop
