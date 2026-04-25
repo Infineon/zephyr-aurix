@@ -14,13 +14,6 @@
 
 union z_tricore_context __kstackmem __aligned(4 * 16) z_tricore_csa[CONFIG_TRICORE_CSA_COUNT];
 
-#ifdef CONFIG_USERSPACE
-/*
- * Per-thread (TLS) variable indicating whether execution is in user mode.
- */
-//__thread uint8_t is_user_mode;
-#endif
-
 int arch_coprocessors_disable(struct k_thread *thread)
 {
 	return -ENOTSUP;
@@ -57,6 +50,7 @@ unsigned int z_tricore_create_context(struct k_thread *thread, k_thread_entry_t 
 				      void *p2, void *p3, char *stack_ptr)
 {
 	uint32_t icr = cr_read(TRICORE_ICR);
+
 	__asm volatile("disable" ::: "memory");
 	uint32_t fcx = cr_read(TRICORE_FCX);
 	z_tricore_lower_context_t *lower =
@@ -81,11 +75,15 @@ unsigned int z_tricore_create_context(struct k_thread *thread, k_thread_entry_t 
 	upper->psw = (1 << 7); /* Set CDE bit*/
 	upper->pcxi = 0;
 
+#if defined(CONFIG_USERSPACE)
 	if (thread->base.user_options & K_USER) {
 		upper->psw |= (1 << 10); /* User-1 mode */
 	} else {
+#endif
 		upper->psw |= (1 << 8) | (2 << 10); /* GW & Privileged mode */
+#if defined(CONFIG_USERSPACE)
 	}
+#endif
 
 	return fcx;
 }
@@ -111,7 +109,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 	thread->arch.arg_mem[4] = (uint32_t)stack_ptr;
 #endif
 
-	/* Set protection set value, if MPU is enabled, the PRS 0 is reseverd for ISR, SYSCALL */
+	/* Set protection set value, if MPU is enabled, the PRS 0 is reserved for ISR, SYSCALL */
 	thread->arch.prs =
 #if defined(CONFIG_TRICORE_MPU)
 		MAX(1, FIELD_GET(K_PROTECTION_SET_MASK, thread->base.user_options));
