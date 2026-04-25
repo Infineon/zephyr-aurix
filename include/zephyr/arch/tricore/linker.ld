@@ -390,6 +390,7 @@ GROUP_END(DTCM)
 
 #include <zephyr/linker/debug-sections.ld>
 
+	/DISCARD/ : { *(.callinfo) }
 	/DISCARD/ : { *(.note.GNU-stack) }
 
 /* Output section descriptions are needed for these sections to suppress
