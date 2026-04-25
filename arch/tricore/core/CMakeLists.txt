@@ -8,7 +8,6 @@ zephyr_library_sources(
     switch.S
     syscall_wrapper.S
     isr_wrapper.S
-    syscall_wrapper.S
     cache.c
     fatal.c
     irq_manage.c
