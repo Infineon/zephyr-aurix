@@ -88,10 +88,11 @@ no_stack_guard:
 	ld.w %d15, [%a15]+___cpu_t_nested_OFFSET
 	addi %d15, %d15, -1
 	st.w [%a15]+___cpu_t_nested_OFFSET, %d15
+
+#if defined(CONFIG_MULTITHREADING)
 	/* Check nesting */
 	jnz	%d15, no_reschedule
 
-#if defined(CONFIG_MULTITHREADING)
 	/* Check pending irq for reschedule */
 	mfcr	%d15, TRICORE_ICR
 	extr.u	%d15, %d15, 16, 8
