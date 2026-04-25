@@ -226,7 +226,7 @@
 #define cr_read(cr)                                                                                \
 	({                                                                                         \
 		register unsigned long __rv;                                                       \
-		__asm__ volatile("mfcr %0, " STRINGIFY(cr) : "=r"(__rv));                                     \
+		__asm__ volatile("mfcr %0, " STRINGIFY(cr) : "=d"(__rv));                          \
 		__rv;                                                                              \
 	})
 
