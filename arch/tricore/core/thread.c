@@ -10,6 +10,7 @@
 #include <zephyr/kernel.h>
 #include <ksched.h>
 #include <sys/cdefs.h>
+#include <zephyr/tracing/tracing.h>
 
 union z_tricore_context __kstackmem __aligned(4 * 16) z_tricore_csa[CONFIG_TRICORE_CSA_COUNT];
 
@@ -23,6 +24,33 @@ union z_tricore_context __kstackmem __aligned(4 * 16) z_tricore_csa[CONFIG_TRICO
 int arch_coprocessors_disable(struct k_thread *thread)
 {
 	return -ENOTSUP;
+}
+
+void z_tricore_reclaim_csa(struct k_thread *thread)
+{
+	uint32_t pcxi = thread->callee_saved.pcxi & 0xFFFFF;
+	struct z_tricore_lower_context *csa;
+	unsigned int key;
+
+	if (pcxi == 0) {
+		return;
+	}
+
+	csa = UINT_TO_POINTER(((pcxi & 0xF0000) << 12) | ((pcxi & 0xFFFF) << 6));
+	key = irq_lock();
+	__asm volatile("dsync" ::: "memory");
+
+	while (csa->pcxi != 0) {
+		csa->pcxi &= 0xFFFFF;
+		csa = UINT_TO_POINTER(((csa->pcxi & 0xF0000) << 12) |
+				      ((csa->pcxi & 0xFFFF) << 6));
+	}
+
+	csa->pcxi = cr_read(TRICORE_FCX);
+	cr_write(TRICORE_FCX, pcxi);
+	thread->callee_saved.pcxi = 0;
+
+	irq_unlock(key);
 }
 
 unsigned int z_tricore_create_context(struct k_thread *thread, k_thread_entry_t entry, void *p1,
@@ -97,6 +125,24 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 
 	/* our switch handle is the thread pointer itself */
 	thread->switch_handle = thread;
+}
+
+/*
+ * TriCore-specific k_thread_abort to reclaim CSAs.
+ * For self-abort: z_thread_abort swaps away, switch.S reclaims.
+ * For external abort: z_thread_abort returns, we reclaim here.
+ */
+void z_impl_k_thread_abort(k_tid_t thread)
+{
+	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_thread, abort, thread);
+
+	z_thread_abort(thread);
+
+	if (thread != _current) {
+		z_tricore_reclaim_csa(thread);
+	}
+
+	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_thread, abort, thread);
 }
 
 #ifdef CONFIG_USERSPACE
