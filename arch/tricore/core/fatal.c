@@ -211,6 +211,13 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 	z_tricore_fatal_error(reason, lower);
 }
 
+void __weak z_tricore_fault_fcu(void)
+{
+	while (1) {
+		/* FCU faults are not expected to be recoverable, so just loop here. */
+	}
+}
+
 #ifdef CONFIG_USERSPACE
 FUNC_NORETURN void arch_syscall_oops(void *ssf_ptr)
 {
