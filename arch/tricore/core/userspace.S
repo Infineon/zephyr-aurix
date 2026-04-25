@@ -1,7 +1,5 @@
 /*
- * Userspace and service handler hooks
- *
- * Copyright (c) 2020 BayLibre, SAS
+ * Copyright (c) 2024 Infineon Technologies AG
  *
  * SPDX-License-Identifier: Apache-2.0
  */
