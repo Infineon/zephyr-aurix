@@ -29,6 +29,26 @@
 		led1 = &led1;
 		sw0 = &button0;
 	};
+
+	chosen {
+		zephyr,canbus = &can01;
+	};
+};
+
+&p01 {
+	status = "okay";
+};
+
+&mcmcan0 {
+	status = "okay";
+};
+
+&can01 {
+	bitrate = <500000>;
+	bitrate-data = <2000000>;
+	pinctrl-0 = <&can1_default>;
+	pinctrl-names = "default";
+	status = "okay";
 };
 
 &i2c0 {
