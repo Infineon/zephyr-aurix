@@ -6,7 +6,7 @@
 
 /dts-v1/;
 
-#include <infineon/tc4x/tc4d7xp_cpu0.dtsi>
+#include <infineon/tc4x/tc4d7xp.dtsi>
 #include "qemu_tc4x-pinctrl.dtsi"
 
 / {
