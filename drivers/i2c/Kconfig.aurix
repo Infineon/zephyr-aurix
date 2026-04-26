@@ -11,3 +11,4 @@ menuconfig I2C_AURIX
 	  Enable the Aurix I2C driver. The driver uses the AURIX HAL SFR
 	  register layout (Ifx_I2C) and implements polling-style transfer
 	  with k_event signalling from the protocol/data-transfer ISRs.
+

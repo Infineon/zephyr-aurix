@@ -1,11 +1,7 @@
-# CAN configuration options
 
 # Copyright (c) 2018 Alexander Wachter
 # SPDX-License-Identifier: Apache-2.0
 
-#
-# CAN options
-#
 menuconfig CAN
 	bool "Controller Area Network (CAN) drivers"
 	help
@@ -76,7 +72,7 @@ config CAN_SHELL_SCRIPTING_FRIENDLY
 	  bypasses the shell when printing certain outputs to ensure the output is not interleaved
 	  with the shell prompt.
 
-endif # CAN_SHELL
+endif
 
 config CAN_STATS
 	bool "CAN controller device statistics"
@@ -120,7 +116,6 @@ config CAN_QEMU_IFACE_NAME
 
 source "drivers/can/transceiver/Kconfig"
 
-# zephyr-keep-sorted-start
 source "drivers/can/Kconfig.esp32"
 source "drivers/can/Kconfig.fake"
 source "drivers/can/Kconfig.infineon"
@@ -128,6 +123,7 @@ source "drivers/can/Kconfig.kvaser"
 source "drivers/can/Kconfig.loopback"
 source "drivers/can/Kconfig.max32"
 source "drivers/can/Kconfig.mcan"
+source "drivers/can/Kconfig.mcmcan"
 source "drivers/can/Kconfig.mcp2515"
 source "drivers/can/Kconfig.mcp251xfd"
 source "drivers/can/Kconfig.mcux"
@@ -146,6 +142,5 @@ source "drivers/can/Kconfig.sja1000"
 source "drivers/can/Kconfig.stm32"
 source "drivers/can/Kconfig.tcan4x5x"
 source "drivers/can/Kconfig.xmc4xxx"
-# zephyr-keep-sorted-stop
 
-endif # CAN
+endif

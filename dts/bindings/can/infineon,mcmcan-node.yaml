@@ -1,0 +1,30 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Single AURIX CAN-FD channel inside an MCMCAN module.
+
+  Each channel exposes a Bosch M_CAN register block plus a slice of the
+  shared module Message RAM.  The driver wires this node up to the
+  generic Zephyr can_mcan core.
+
+compatible: "infineon,mcmcan-node"
+
+include: ["bosch,m_can-base.yaml", "pinctrl-device.yaml"]
+
+properties:
+  reg:
+    required: true
+    description: |
+      Two register regions:
+        m_can:       channel-specific M_CAN register block.
+        message_ram: base of the (shared) module Message RAM. The
+                     "bosch,mram-cfg" property below selects the per-channel
+                     offsets within this region.
+  reg-names:
+    required: true
+  interrupts:
+    required: true
+  interrupt-names:
+    required: true
+    description: Two named lines, "line0" and "line1".
