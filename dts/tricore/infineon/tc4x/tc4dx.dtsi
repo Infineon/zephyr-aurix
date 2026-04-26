@@ -931,6 +931,130 @@
             status = "disabled";
         };
 
+        mcmcan0: mcmcan0@f4710000 {
+            compatible = "infineon,mcmcan";
+            #address-cells = <1>;
+            #size-cells = <1>;
+            reg = <0xF4710000 0x10000>;
+            clocks = <&ccu CLOCK_FMCAN>, <&ccu CLOCK_FMCANH>;
+            status = "disabled";
+
+            can00: can@f4710200 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4710200 0x200>, <0xF4700000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN0_INT0 10>, <IRQ_CAN0_INT1 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+            can01: can@f4710600 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4710600 0x200>, <0xF4700000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN0_INT2 10>, <IRQ_CAN0_INT3 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+            can02: can@f4710a00 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4710A00 0x200>, <0xF4700000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN0_INT4 10>, <IRQ_CAN0_INT5 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+            can03: can@f4710e00 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4710E00 0x200>, <0xF4700000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN0_INT6 10>, <IRQ_CAN0_INT7 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+        };
+
+        mcmcan1: mcmcan1@f4730000 {
+            compatible = "infineon,mcmcan";
+            #address-cells = <1>;
+            #size-cells = <1>;
+            reg = <0xF4730000 0x10000>;
+            clocks = <&ccu CLOCK_FMCAN>, <&ccu CLOCK_FMCANH>;
+            status = "disabled";
+
+            can10: can@f4730200 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4730200 0x200>, <0xF4720000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN1_INT0 10>, <IRQ_CAN1_INT1 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+            can11: can@f4730600 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4730600 0x200>, <0xF4720000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN1_INT2 10>, <IRQ_CAN1_INT3 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+            can12: can@f4730a00 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4730A00 0x200>, <0xF4720000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN1_INT4 10>, <IRQ_CAN1_INT5 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+            can13: can@f4730e00 {
+                compatible = "infineon,mcmcan-node";
+                reg = <0xF4730E00 0x200>, <0xF4720000 0x10000>;
+                reg-names = "m_can", "message_ram";
+                interrupts = <IRQ_CAN1_INT6 10>, <IRQ_CAN1_INT7 11>;
+                interrupt-names = "line0", "line1";
+                bosch,mram-cfg = <0x0 32 32 32 32 0 16 16>;
+                sample-point = <875>;
+                sample-point-data = <875>;
+                bitrate = <500000>;
+                bitrate-data = <2000000>;
+                status = "disabled";
+            };
+        };
+
         qspi0: spi@f4401000 {
 			compatible = "infineon,aurix-qspi";
 			reg = <0xF4401000 0x200>;

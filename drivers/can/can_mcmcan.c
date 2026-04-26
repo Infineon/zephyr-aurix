@@ -190,10 +190,23 @@ DT_INST_FOREACH_STATUS_OKAY(MCMCAN_NODE_INIT)
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT infineon_mcmcan
 
-#define MCMCAN_MCR          0x008030
-#define MCMCAN_GRINT1(node) (0x008114 + node * 0x400)
-#define MCMCAN_GRINT2(node) (0x008118 + node * 0x400)
-#define MCMCAN_NPCR(node)   (0x008140 + node * 0x400)
+#if defined(CONFIG_SOC_SERIES_TC4X)
+#define MCMCAN_CTRL_OFF     0x0000
+#define MCMCAN_NODE_NPCR    0x004C
+#else
+#define MCMCAN_CTRL_OFF     0x8000
+#define MCMCAN_NODE_GRINT1  0x0014
+#define MCMCAN_NODE_GRINT2  0x0018
+#define MCMCAN_NODE_NPCR    0x0040
+#endif
+
+#define MCMCAN_MCR          (MCMCAN_CTRL_OFF + 0x30)
+#define MCMCAN_NODE(node)   (MCMCAN_CTRL_OFF + 0x100 + (node) * 0x400)
+#define MCMCAN_NPCR(node)   (MCMCAN_NODE(node) + MCMCAN_NODE_NPCR)
+#if !defined(CONFIG_SOC_SERIES_TC4X)
+#define MCMCAN_GRINT1(node) (MCMCAN_NODE(node) + MCMCAN_NODE_GRINT1)
+#define MCMCAN_GRINT2(node) (MCMCAN_NODE(node) + MCMCAN_NODE_GRINT2)
+#endif
 
 static int mcmcan_set_node_pinctrl(const struct device *dev, uint8_t node)
 {
@@ -228,7 +241,10 @@ static int mcmcan_init(const struct device *dev)
 {
 	const struct mcmcan_config *mcmcan_config = dev->config;
 	int i, err;
-	uint32_t mcr, grint1, grint2;
+	uint32_t mcr;
+#if !defined(CONFIG_SOC_SERIES_TC4X)
+	uint32_t grint1, grint2;
+#endif
 
 	if (!device_is_ready(mcmcan_config->clock_dev)) {
 		LOG_ERR("clock control device not ready");
@@ -244,7 +260,7 @@ static int mcmcan_init(const struct device *dev)
 		}
 	}
 
-	if (!aurix_enable_clock(mcmcan_config->base + 0x8000, 1000)) {
+	if (!aurix_enable_clock(mcmcan_config->base + MCMCAN_CTRL_OFF, 1000)) {
 		LOG_ERR("failed to enable clock gate");
 		return -ETIMEDOUT;
 	}
@@ -277,6 +293,8 @@ static int mcmcan_init(const struct device *dev)
 			return err;
 		}
 
+#if !defined(CONFIG_SOC_SERIES_TC4X)
+		
 		grint1 = ((i * 2) << 28) | ((i * 2) << 24) | ((i * 2) << 20) | ((i * 2) << 16) |
 			 ((i * 2) << 12) | ((i * 2) << 8) | ((i * 2) << 4) | ((i * 2) << 0);
 		grint2 = ((i * 2) << 28) | ((i * 2) << 24) | ((i * 2) << 20) | ((i * 2 + 1) << 16) |
@@ -284,6 +302,7 @@ static int mcmcan_init(const struct device *dev)
 			 ((i * 2) << 0);
 		sys_write32(grint1, mcmcan_config->base + MCMCAN_GRINT1(i));
 		sys_write32(grint2, mcmcan_config->base + MCMCAN_GRINT2(i));
+#endif
 	}
 
 	sys_write32(0xC0000000 | mcr, mcmcan_config->base + MCMCAN_MCR);
