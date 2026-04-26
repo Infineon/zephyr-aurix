@@ -26,11 +26,6 @@
 		led0 = &led0;
 	};
 
-	can_phy0: can-phy0 {
-		compatible = "infineon,tle9251v", "can-transceiver-gpio";
-		max-bitrate = <5000000>;
-		#phy-cells = <0>;
-	};
 };
 
 &fosc {
@@ -65,11 +60,14 @@
 	};
 };
 
-/* CAN module 0 node 2 - default board config */
+&mcmcan0 {
+	status = "okay";
+};
+
 &can02 {
 	bitrate = <500000>;
 	bitrate-data = <2000000>;
 	pinctrl-0 = <&can0_default>;
 	pinctrl-names = "default";
-	phys = <&can_phy0>;
+	status = "okay";
 };
