@@ -14,7 +14,8 @@
 #define PINCTRL_BASE DT_REG_ADDR_BY_IDX(DT_NODELABEL(pinctrl), 0)
 #define PORT_BASE(x) (&MODULE_P00 + x)
 
-static void ALWAYS_INLINE atomic_ldmst_pdr(void *addr, uint32_t offset, uint32_t value)
+__maybe_unused static void ALWAYS_INLINE atomic_ldmst_pdr(void *addr, uint32_t offset,
+							  uint32_t value)
 {
 	__asm("	imask %%e14, %0, %1, 4\n"
 	      "	ldmst [%2]+0, %%e14\n"
@@ -23,7 +24,8 @@ static void ALWAYS_INLINE atomic_ldmst_pdr(void *addr, uint32_t offset, uint32_t
 	      : "e14");
 }
 
-static void ALWAYS_INLINE atomic_ldmst_bit(void *addr, uint32_t offset, uint32_t value)
+__maybe_unused static void ALWAYS_INLINE atomic_ldmst_bit(void *addr, uint32_t offset,
+							  uint32_t value)
 {
 	__asm("	imask %%e14, %0, %1, 1\n"
 	      "	ldmst [%2]+0, %%e14\n"

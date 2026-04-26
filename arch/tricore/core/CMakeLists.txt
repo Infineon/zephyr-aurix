@@ -20,6 +20,7 @@ if(CONFIG_TRICORE_MPU AND NOT CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS)
     zephyr_library_sources(mpu_regions.c)
 endif()
 zephyr_library_sources_ifdef(CONFIG_USERSPACE userspace.S)
+zephyr_library_sources_ifdef(CONFIG_IRQ_OFFLOAD irq_offload.c)
 zephyr_library_sources_ifdef(CONFIG_CPU_TC162 tc16/lib.S)
 zephyr_library_sources_ifdef(CONFIG_CPU_TC18 tc18/lib.S)
 
