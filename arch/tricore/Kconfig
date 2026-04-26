@@ -10,6 +10,7 @@ config ARCH
 
 config CPU_TC162
 	select ARCH_HAS_NOCACHE_MEMORY_SUPPORT
+	select ARCH_HAS_IRQ_OFFLOAD
 	select CPU_HAS_DCACHE
 	select CPU_HAS_ICACHE
 	select CPU_CACHE_INCOHERENT
@@ -19,6 +20,7 @@ config CPU_TC162
 
 config CPU_TC18
 	select ARCH_HAS_NOCACHE_MEMORY_SUPPORT
+	select ARCH_HAS_IRQ_OFFLOAD
 	select CPU_HAS_DCACHE
 	select CPU_HAS_ICACHE
 	select CPU_CACHE_INCOHERENT
@@ -64,10 +66,8 @@ config TRICORE_MPU
 	select ARCH_HAS_USERSPACE
 	select ARCH_HAS_STACK_PROTECTION
 	select ARCH_MEM_DOMAIN_SUPPORTS_ISOLATED_STACKS
-#	select ARCH_MEM_DOMAIN_SYNCHRONOUS_API if USERSPACE
 	select ARCH_MEM_DOMAIN_DATA if USERSPACE
 	select SRAM_REGION_PERMISSIONS
-#	select THREAD_LOCAL_STORAGE if USERSPACE
 	help
 	  Tricore implements Memory Protection Unit.
 
@@ -89,7 +89,7 @@ config TRICORE_MPU_PROTECTION_SETS
 	default 4
 	help
 	  Number of protection sets supported by the MPU.
-endif # TRICORE_MPU
+endif
 
 config MPU_STACK_GUARD
 	def_bool y
