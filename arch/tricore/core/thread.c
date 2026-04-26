@@ -68,19 +68,19 @@ unsigned int z_tricore_create_context(struct k_thread *thread, k_thread_entry_t 
 	lower->a6 = (uint32_t)p2;
 	lower->a7 = (uint32_t)p3;
 	lower->a11 = (uint32_t)z_thread_entry;
-	lower->pcxi |= (1 << 21) | (1 << 20); 
+	lower->pcxi |= (1 << 21) | (1 << 20); /* Set PIE and UL bits */
 
 	upper->a10 = (uint32_t)stack_ptr;
 	upper->a11 = (uint32_t)z_thread_entry;
-	upper->psw = (1 << 7); 
+	upper->psw = (1 << 7); /* Set CDE bit*/
 	upper->pcxi = 0;
 
 #if defined(CONFIG_USERSPACE)
 	if (thread->base.user_options & K_USER) {
-		upper->psw |= (1 << 10); 
+		upper->psw |= (1 << 10); /* User-1 mode */
 	} else {
 #endif
-		upper->psw |= (1 << 8) | (2 << 10); 
+		upper->psw |= (1 << 8) | (2 << 10); /* GW & Privileged mode */
 #if defined(CONFIG_USERSPACE)
 	}
 #endif
@@ -109,6 +109,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 	thread->arch.arg_mem[4] = (uint32_t)stack_ptr;
 #endif
 
+	/* Set protection set value, if MPU is enabled, the PRS 0 is reserved for ISR, SYSCALL */
 	thread->arch.prs =
 #if defined(CONFIG_TRICORE_MPU)
 		MAX(1, FIELD_GET(K_PROTECTION_SET_MASK, thread->base.user_options));
@@ -120,9 +121,15 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 	thread->callee_saved.pprs = thread->arch.prs;
 #endif
 
+	/* our switch handle is the thread pointer itself */
 	thread->switch_handle = thread;
 }
 
+/*
+ * TriCore-specific k_thread_abort to reclaim CSAs.
+ * For self-abort: z_thread_abort swaps away, switch.S reclaims.
+ * For external abort: z_thread_abort returns, we reclaim here.
+ */
 void z_impl_k_thread_abort(k_tid_t thread)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_thread, abort, thread);
@@ -137,7 +144,13 @@ void z_impl_k_thread_abort(k_tid_t thread)
 }
 
 #ifdef CONFIG_USERSPACE
-
+/*
+ * User space entry function
+ *
+ * This function is the entry point to user mode from privileged execution.
+ * The conversion is one way, and threads which transition to user mode do
+ * not transition back later, unless they are doing system calls.
+ */
 FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry, void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(user_entry);
@@ -145,6 +158,10 @@ FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry, void *p1, v
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
+	/*
+	 * Drop to user mode is not implemented yet on TriCore.  Block the
+	 * thread instead of returning so the FUNC_NORETURN contract holds.
+	 */
 	__ASSERT(false, "arch_user_mode_enter not implemented for TriCore");
 	for (;;) {
 		k_cpu_idle();
@@ -152,7 +169,7 @@ FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry, void *p1, v
 	CODE_UNREACHABLE;
 }
 
-#endif 
+#endif /* CONFIG_USERSPACE */
 
 #ifndef CONFIG_MULTITHREADING
 
@@ -160,4 +177,4 @@ FUNC_NORETURN void z_tricore_switch_to_main_no_multithreading(k_thread_entry_t m
 							    void *p2, void *p3)
 {
 }
-#endif
+#endif /* !CONFIG_MULTITHREADING */

@@ -13,6 +13,15 @@
 #include <zephyr/arch/arch_interface.h>
 #include <kernel_internal.h>
 
+/*
+ * Slot indices reserved by the user-thread MPU plumbing:
+ *  - last DPR slot: per-user-thread stack range
+ *  - last CPR slot: per-user-thread text range
+ * The kernel-side region allocator (mpu_configure_region) walks dpr_free /
+ * cpr_free from the LSB up, so reserving the top slot keeps the
+ * partition-loading paths in z_tricore_mpu_configure_user_thread() and the
+ * stack-guard slot at z_tricore_mpu_init() out of each other's way.
+ */
 #define MPU_STACK_DPR (CONFIG_TRICORE_MPU_DATA_REGIONS - 1)
 #define MPU_TEXT_CPR  (CONFIG_TRICORE_MPU_CODE_REGIONS - 1)
 
@@ -136,7 +145,7 @@ static int mpu_configure_regions_from_dt()
 		region.start = regions[region_idx].dt_addr;
 		region.end = regions[region_idx].dt_addr + regions[region_idx].dt_size;
 		region.name = regions[region_idx].dt_name;
-		region.flags = TRICORE_MPU_ACCESS_P_RW_U_NA; 
+		region.flags = TRICORE_MPU_ACCESS_P_RW_U_NA; /* TODO: define */
 
 		if (mpu_configure_region(&region) != 0) {
 			return -1;
@@ -145,19 +154,19 @@ static int mpu_configure_regions_from_dt()
 
 	return num_regions;
 }
-#endif 
+#endif /* CONFIG_MEM_ATTR */
 
 void z_tricore_mpu_enable(void)
 {
 	uint32_t corecon = cr_read(TRICORE_CORECON);
-	corecon |= (1 << 1); 
+	corecon |= (1 << 1); /* Enable MPU */
 	cr_write(TRICORE_CORECON, corecon);
 }
 
 void z_tricore_mpu_disable(void)
 {
 	uint32_t corecon = cr_read(TRICORE_CORECON);
-	corecon &= ~(1 << 1); 
+	corecon &= ~(1 << 1); /* Disable MPU */
 	cr_write(TRICORE_CORECON, corecon);
 }
 
@@ -198,7 +207,7 @@ void z_tricore_mpu_configure_kernel_thread(struct k_thread *thread)
 #if CONFIG_MPU_STACK_GUARD
 	z_tricore_mpu_stackguard_enable(thread);
 #endif
-	
+	/* Set region configuration for the thread prs value */
 	_set_dpre(thread->arch.prs, system_dpre);
 	_set_dpwe(thread->arch.prs, system_dpwe);
 	_set_cpxe(thread->arch.prs, system_cpxe);
@@ -212,9 +221,12 @@ void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 
 	__ASSERT((thread->base.user_options & K_USER) != 0, "User thread expected");
 
+	/* Set stack pointer protection range */
 	_set_dpr(MPU_STACK_DPR, thread->stack_info.start,
 		 thread->stack_info.start + thread->stack_info.size);
 
+	/* Mem domain is already loaded into MPU ranges. Just set the correct values
+	 * for the thread PRS */
 	if (sys_dnode_is_linked(&mem_domain->arch.loaded_node)) {
 		_set_dpre(thread->arch.prs, mem_domain->arch.dpre);
 		_set_dpwe(thread->arch.prs, mem_domain->arch.dpwe);
@@ -222,20 +234,21 @@ void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 		return;
 	}
 
+	/* Set default values for enable ranges */
 	mem_domain->arch.dpwe = user_dpwe;
 	mem_domain->arch.dpre = user_dpre;
 	mem_domain->arch.cpxe = user_cpxe;
 
 	for (i = 0; i < mem_domain->num_partitions; i++) {
 		struct k_mem_partition *partition = &mem_domain->partitions[i];
-		
+		/* Skip empty partitions */
 		if (partition->size == 0) {
 			continue;
 		}
 
 		if (partition->attr.access_rights &
 		    (TRICORE_MPU_ACCESS_U_R | TRICORE_MPU_ACCESS_U_W)) {
-			
+			/* Fetch a free dprs from the list of loaded */
 			if (dpr_free == 0) {
 				sys_dnode_t *node = sys_dlist_get(&loaded_mem_domains);
 				struct k_mem_domain *empty_domain =
@@ -257,7 +270,7 @@ void z_tricore_mpu_configure_user_thread(struct k_thread *thread)
 			}
 		}
 		if (partition->attr.access_rights & (TRICORE_MPU_ACCESS_U_X)) {
-			
+			/* Fetch a free cpr from the list of loaded */
 			if (cpr_free == 0) {
 				sys_dnode_t *node = sys_dlist_get(&loaded_mem_domains);
 				struct k_mem_domain *empty_domain =
@@ -301,12 +314,12 @@ void z_tricore_mpu_init(void)
 		mpu_configure_region(&mpu_config.regions[i]);
 	}
 #ifdef CONFIG_MEM_ATTR
-	
+	/* DT-defined MPU regions. */
 	if (mpu_configure_regions_from_dt(&static_regions_num) == -EINVAL) {
 		__ASSERT(0, "Failed to allocate MPU regions from DT\n");
 		return -EINVAL;
 	}
-#endif 
+#endif /* CONFIG_MEM_ATTR */
 #if CONFIG_MPU_STACK_GUARD
 	stack_guard_dpr = __builtin_ctz(dpr_free);
 	dpr_free &= ~(1 << stack_guard_dpr);
@@ -316,6 +329,7 @@ void z_tricore_mpu_init(void)
 	z_tricore_mpu_stackguard_enable(NULL);
 #endif
 
+	/* Set regions for the default PRS value */
 	_set_dpre(0, system_dpre);
 	_set_dpwe(0, system_dpwe);
 	_set_cpxe(0, system_cpxe);
@@ -337,7 +351,7 @@ int arch_mem_domain_init(struct k_mem_domain *domain)
 
 int arch_mem_domain_max_partitions_get()
 {
-	
+	/* TODO: Dynamic */
 	return 32;
 }
 
@@ -347,5 +361,6 @@ int arch_buffer_validate(const void *addr, size_t size, int write)
 	ARG_UNUSED(size);
 	ARG_UNUSED(write);
 
+	/* TODO: walk user partitions; for now defer to hardware MPU traps. */
 	return 0;
 }
