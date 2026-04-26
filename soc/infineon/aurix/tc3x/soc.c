@@ -23,27 +23,25 @@ static inline void wdt_disable(mm_reg_t base)
 
 	wtu_ctrla = wdt->CON0;
 	wtu_ctrla.B.PW ^= 0x003F;
-	/* Unlock watchdog */
+	
 	if (wtu_ctrla.B.LCK) {
 		wtu_ctrla.B.ENDINIT = 1;
 		wtu_ctrla.B.LCK = 0;
 		wdt->CON0 = wtu_ctrla;
 	}
-	/* Clear endinit */
+	
 	wtu_ctrla.B.ENDINIT = 0;
 	wtu_ctrla.B.LCK = 1;
 	wdt->CON0 = wtu_ctrla;
 	while (wdt->CON0.B.ENDINIT == 1)
 		;
 
-	/* Disable watchdog */
 	wdt->CON1 = wtu_ctrlb;
 
-	/* Unlock watchdog */
 	wtu_ctrla.B.ENDINIT = 1;
 	wtu_ctrla.B.LCK = 0;
 	wdt->CON0 = wtu_ctrla;
-	/* Set endinit */
+	
 	wtu_ctrla.B.ENDINIT = 1;
 	wtu_ctrla.B.LCK = 1;
 	wdt->CON0 = wtu_ctrla;
@@ -78,7 +76,7 @@ void z_tricore_wdt_boot()
 #endif
 }
 
-static inline void aurix_start_core(uint8_t core_id, uint32_t pc)
+__maybe_unused static inline void aurix_start_core(uint8_t core_id, uint32_t pc)
 {
 	uint32_t syscon;
 	sys_write32(pc, CPU_BASE_ADDR(core_id) + CPU_PC);
