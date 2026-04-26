@@ -5,6 +5,9 @@ menuconfig I2C_AURIX
 	bool "I2C support for Aurix SoCs"
 	default y
 	depends on DT_HAS_INFINEON_AURIX_I2C_ENABLED
+	select EVENTS
+	select PINCTRL
 	help
-	  Enable the Aurix I2C driver
-
+	  Enable the Aurix I2C driver. The driver uses the AURIX HAL SFR
+	  register layout (Ifx_I2C) and implements polling-style transfer
+	  with k_event signalling from the protocol/data-transfer ISRs.
