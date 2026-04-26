@@ -34,6 +34,8 @@ static inline int clock_control_tc4x_ccu_osc_init()
 {
 	Ifx_CLOCK_OSCCON osc = CLOCK_OSCCON;
 
+	/* TODO: Enable oscillator */
+	/* TODO: extclk needed*/
 	osc.B.MODE = 0;
 	osc.B.INSEL = 1;
 	CLOCK_OSCCON = osc;
@@ -211,13 +213,15 @@ static inline void clock_control_tc4x_ccu_set_per_source(enum per_clock_source s
 
 static inline int clock_control_tc4x_ccu_ramposc_init()
 {
-	
+	/* Enable ramp oscillator */
 	CLOCK_RAMPCON0.B.PWR = 1;
 
+	/* Wait for Ramp Osc to be active*/
 	if (!WAIT_FOR(CLOCK_RAMPSTAT.B.ACTIVE == 1, 1000, ccu_busy_wait_fback(1))) {
 		return -EIO;
 	}
 
+	/* Wait for frequency movement disabled */
 	if (!WAIT_FOR(CLOCK_RAMPSTAT.B.FSTAT != 0, 1000, ccu_busy_wait_fback(1))) {
 		return -EIO;
 	}
@@ -251,7 +255,7 @@ static inline int clock_control_tc4x_ccu_ramposc_move(bool to_top)
 
 static inline int clock_control_tc4x_ccu_set_divider()
 {
-	
+	/* clang-format off */
 	Ifx_CLOCK_SYSCCUCON0 sysccu0 = {
 		.B.SRIDIV = fsri_div, .B.SRICSDIV = 0, .B.SPBDIV = fspb_div,
 		.B.TPBDIV = ftpb_div, .B.FSI2DIV = 1,  .B.FSIDIV = ffsi_div,
@@ -291,11 +295,11 @@ static inline int clock_control_tc4x_ccu_set_divider()
 		.B.ASCLINSDIV = CLOCK_DIV_WITH_INST(fasclinsi, infineon_asclin_uart),
 		.B.LETH100PERON = CLOCK_DIV_WITH_STATUS(fleth100),
 	};
-	
+	/* clang-format on */
 	CLOCK_SYSCCUCON1 = sysccu1;
 	CLOCK_SYSCCUCON0 = sysccu0;
 	WAIT_FOR_CCUSTAT_UNLOCKED_OR_ERR(fback_div);
-	
+	/* Disable all peripheral clocks befor setting them again to change clock sources. */
 	CLOCK_PERCCUCON0.U = 0;
 	WAIT_FOR_CCUSTAT_UNLOCKED_OR_ERR(fback_div);
 	CLOCK_PERCCUCON0 = perccu0;
@@ -330,7 +334,7 @@ static int clock_control_tc4x_ccu_on(const struct device *dev, clock_control_sub
 #endif
 	case CLOCK_FSTM:
 		return fstm_div != 0 ? 0 : -ENOSYS;
-		
+		/* case CLOCK_FMSC: return fmsc_div != 0 ? 0 : -ENOSYS; */
 #if DT_NODE_EXISTS(DT_NODELABEL(fgeth))
 	case CLOCK_FGETH:
 		return fgeth_div != 0 ? 0 : -ENOSYS;
@@ -347,7 +351,7 @@ static int clock_control_tc4x_ccu_on(const struct device *dev, clock_control_sub
 		return fasclinsi_div != 0 ? 0 : -ENOSYS;
 	case CLOCK_FQSPI:
 		return fqspi_div != 0 ? 0 : -ENOSYS;
-	
+	/*case CLOCK_FADC: return fadc_div != 0 ? 0 : -ENOSYS; */
 	case CLOCK_FI2C:
 		return fi2c_div != 0 ? 0 : -ENOSYS;
 	default:
@@ -398,7 +402,9 @@ static int clock_control_tc4x_ccu_get_rate(const struct device *dev, clock_contr
 	case CLOCK_FSTM:
 		*rate = data->fsource0 / fstm_div;
 		return 0;
-		
+		/* case CLOCK_FMSC:
+			*rate = data->fsource0 / fmsc_div;
+			return 0; */
 #if DT_NODE_EXISTS(DT_NODELABEL(fgeth))
 	case CLOCK_FGETH:
 		*rate = data->fsource0 / fgeth_div;
@@ -423,7 +429,10 @@ static int clock_control_tc4x_ccu_get_rate(const struct device *dev, clock_contr
 		*rate = (CLOCK_SOURCE_IS(fsourceqspi, fsource1) ? data->fsource1 : data->fsource2) /
 			fqspi_div;
 		return 0;
-		
+		/*
+	case CLOCK_FADC:
+		*rate = data->fsource1 / fadc_div;
+		return 0; */
 	case CLOCK_FI2C:
 		*rate = data->fsource2 / fi2c_div;
 		return 0;
@@ -460,7 +469,7 @@ static int clock_control_tc4x_ccu_init(const struct device *dev)
 	}
 
 	if (CLOCK_SOURCE_IS(fsource0, fpll0)) {
-		
+		/* TODO: Check for App Reset and Clock config */
 		ret = clock_control_tc4x_ccu_syspll_power(false);
 		if (ret) {
 			return ret;
@@ -477,10 +486,11 @@ static int clock_control_tc4x_ccu_init(const struct device *dev)
 		}
 	}
 
+	/* Switch to peripherals to backup source for runtime/pll configuration */
 	clock_control_tc4x_ccu_set_per_source(PER_SOURCE_FBACK);
 
 	if (CLOCK_SOURCE_IS(fsource1, fpll1)) {
-		
+		/* TODO: Check for App Reset and Clock config */
 		ret = clock_control_tc4x_ccu_perpll_power(false);
 		if (ret) {
 			return ret;

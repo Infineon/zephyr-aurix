@@ -34,7 +34,6 @@ static void ALWAYS_INLINE atomic_ldmst_bit(void *addr, uint32_t offset, uint32_t
 
 static void pinctrl_configure_pin(const pinctrl_soc_pin_t *pin)
 {
-	uint32_t iocr;
 	void *protse = (void *)&PORT_BASE(pin->port)->PROTSE;
 	if (pin->analog) {
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_CONFIG);
