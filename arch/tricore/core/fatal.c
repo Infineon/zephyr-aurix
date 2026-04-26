@@ -20,72 +20,70 @@ Z_EXC_DECLARE(z_tricore_user_string_nlen);
 static const struct z_exc_handle exceptions[] = {
 	Z_EXC_HANDLE(z_tricore_user_string_nlen),
 };
-#endif /* CONFIG_USERSPACE */
+#endif 
 
 static const char *const z_tricore_trap_cause_str(uint8_t trap_class, uint8_t tin)
 {
-	/* Trap description tables indexed by trap class and TIN.
-	 * For classes where TIN numbering starts at 1, index 0 is reserved.
-	 */
+	
 	static const char *const trap_class0_cause_str[] = {
-		/* TIN 0 */ "Virtual Address Fill",
-		/* TIN 1 */ "Virtual Address Protection",
+		 "Virtual Address Fill",
+		 "Virtual Address Protection",
 	};
 
 	static const char *const trap_class1_cause_str[] = {
-		/* TIN 0 */ "Reserved",
-		/* TIN 1 */ "Privileged Instruction",
-		/* TIN 2 */ "Memory Protection Read",
-		/* TIN 3 */ "Memory Protection Write",
-		/* TIN 4 */ "Memory Protection Execute",
-		/* TIN 5 */ "Memory Protection Peripheral Access",
-		/* TIN 6 */ "Memory Protection Null Address",
-		/* TIN 7 */ "Global Register Write Protection",
+		 "Reserved",
+		 "Privileged Instruction",
+		 "Memory Protection Read",
+		 "Memory Protection Write",
+		 "Memory Protection Execute",
+		 "Memory Protection Peripheral Access",
+		 "Memory Protection Null Address",
+		 "Global Register Write Protection",
 	};
 
 	static const char *const trap_class2_cause_str[] = {
-		/* TIN 0 */ "Reserved",
-		/* TIN 1 */ "Illegal Opcode",
-		/* TIN 2 */ "Unimplemented Opcode",
-		/* TIN 3 */ "Invalid Operand specification",
-		/* TIN 4 */ "Data Address Alignment",
-		/* TIN 5 */ "Invalid Local Memory Address",
+		 "Reserved",
+		 "Illegal Opcode",
+		 "Unimplemented Opcode",
+		 "Invalid Operand specification",
+		 "Data Address Alignment",
+		 "Invalid Local Memory Address",
 	};
 
 	static const char *const trap_class3_cause_str[] = {
-		/* TIN 0 */ "Reserved",
-		/* TIN 1 */ "Free Context List Depletion (FCX = LCX)",
-		/* TIN 2 */ "Call Depth Overflow (CALL with PSW.CDC.COUNT at maximum level)",
-		/* TIN 3 */ "Call Depth Underflow (RET with PSW.CDC.COUNT == zero)",
-		/* TIN 4 */ "Free Context List Underflow (FCX = 0)",
-		/* TIN 5 */ "Call Stack Underflow (PCX = 0)",
-		/* TIN 6 */ "Context Type (PCXI.UL wrong)",
-		/* TIN 7 */ "Nesting Error: RFE with non-zero call depth",
+		 "Reserved",
+		 "Free Context List Depletion (FCX = LCX)",
+		 "Call Depth Overflow (CALL with PSW.CDC.COUNT at maximum level)",
+		 "Call Depth Underflow (RET with PSW.CDC.COUNT == zero)",
+		 "Free Context List Underflow (FCX = 0)",
+		 "Call Stack Underflow (PCX = 0)",
+		 "Context Type (PCXI.UL wrong)",
+		 "Nesting Error: RFE with non-zero call depth",
 	};
 
 	static const char *const trap_class4_cause_str[] = {
-		/* TIN 0 */ "Reserved",
-		/* TIN 1 */ "Program Fetch Synchronous Error",
-		/* TIN 2 */ "Data Access Synchronous Error",
-		/* TIN 3 */ "Data Access Asynchronous Error",
-		/* TIN 4 */ "Coprocessor Trap Asynchronous Error",
-		/* TIN 5 */ "Program Memory Integrity Error",
-		/* TIN 6 */ "Data Memory Integrity Error",
-		/* TIN 7 */ "Temporal Asynchronous Error",
+		 "Reserved",
+		 "Program Fetch Synchronous Error",
+		 "Data Access Synchronous Error",
+		 "Data Access Asynchronous Error",
+		 "Coprocessor Trap Asynchronous Error",
+		 "Program Memory Integrity Error",
+		 "Data Memory Integrity Error",
+		 "Temporal Asynchronous Error",
 	};
 
 	static const char *const trap_class5_cause_str[] = {
-		/* TIN 0 */ "Reserved",
-		/* TIN 1 */ "Arithmetic Overflow",
-		/* TIN 2 */ "Sticky Arithmetic Overflow",
+		 "Reserved",
+		 "Arithmetic Overflow",
+		 "Sticky Arithmetic Overflow",
 	};
 
 	static const char *const trap_class6_cause_str[] = {
-		/* TIN 0 */ "System Call",
+		 "System Call",
 	};
 
 	static const char *const trap_class7_cause_str[] = {
-		/* TIN 0 */ "Non-Maskable Interrupt",
+		 "Non-Maskable Interrupt",
 	};
 
 	static const char *const *const trap_class_cause_str[] = {
@@ -142,7 +140,8 @@ K_KERNEL_STACK_ARRAY_DECLARE(z_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS, CONFIG_
 static bool bad_stack_pointer(struct z_tricore_upper_context *upper)
 {
 #if CONFIG_MPU_STACK_GUARD
-	const size_t stack_nr = CONFIG_SMP ? arch_proc_id() - CONFIG_TRICORE_CORE_ID : 0;
+	const size_t stack_nr = IS_ENABLED(CONFIG_SMP) ?
+				arch_proc_id() - CONFIG_TRICORE_CORE_ID : 0;
 	if ((upper->psw & BIT(9)) != 0 &&
 	    upper->a10 >= POINTER_TO_UINT(z_interrupt_stacks[stack_nr]) &&
 	    upper->a10 <
@@ -156,7 +155,7 @@ static bool bad_stack_pointer(struct z_tricore_upper_context *upper)
 #endif
 
 #if CONFIG_USERSPACE
-	/* Check if the user stack pointer is outside of its allowed stack */
+	
 	if ((upper->psw & BIT(11)) == 0) {
 		if (upper->a10 < _current->stack_info.start ||
 		    upper->a10 >= _current->stack_info.start + _current->stack_info.size -
@@ -177,10 +176,7 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 		UINT_TO_POINTER(((lower->pcxi & 0xF0000) << 12) | ((lower->pcxi & 0xFFFF) << 6));
 
 #ifdef CONFIG_USERSPACE
-	/*
-	 * Perform an assessment whether an MPU fault shall be
-	 * treated as recoverable.
-	 */
+	
 	if (trap_class == TRICORE_TRAP_INTERNAL_PROTECTION_TRAPS &&
 	    (tin == TRICORE_TRAP1_MPR || tin == TRICORE_TRAP1_MPW)) {
 		for (int i = 0; i < ARRAY_SIZE(exceptions); i++) {
@@ -193,7 +189,7 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 			}
 		}
 	}
-#endif /* CONFIG_USERSPACE */
+#endif 
 
 	unsigned int reason = K_ERR_CPU_EXCEPTION;
 
@@ -214,7 +210,7 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 void __weak z_tricore_fault_fcu(void)
 {
 	while (1) {
-		/* FCU faults are not expected to be recoverable, so just loop here. */
+		
 	}
 }
 
