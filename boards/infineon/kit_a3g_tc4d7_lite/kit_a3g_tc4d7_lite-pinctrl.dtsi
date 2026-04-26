@@ -22,4 +22,14 @@
 			pinmux = <ASCLIN0_RX_P14_1>;
 		};
 	};
+
+	can1_default: can1_default {
+		group1 {
+			pinmux = <CAN01_TX_P1_3>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <CAN01_RX_P1_4>;
+		};
+	};
 };

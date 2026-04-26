@@ -127,7 +127,7 @@ static const struct can_driver_api mcmcan_mcan_driver_api = {
 	.remove_rx_filter = can_mcan_remove_rx_filter,
 #ifdef CONFIG_CAN_MANUAL_RECOVERY_MODE
 	.recover = can_mcan_recover,
-#endif 
+#endif /* CONFIG_CAN_MANUAL_RECOVERY_MODE */
 	.get_state = can_mcan_get_state,
 	.set_state_change_callback = can_mcan_set_state_change_callback,
 	.get_core_clock = mcmcan_mcan_get_core_clock,
@@ -138,7 +138,7 @@ static const struct can_driver_api mcmcan_mcan_driver_api = {
 	.set_timing_data = can_mcan_set_timing_data,
 	.timing_data_min = CAN_MCAN_TIMING_DATA_MIN_INITIALIZER,
 	.timing_data_max = CAN_MCAN_TIMING_DATA_MAX_INITIALIZER,
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 };
 
 static const struct can_mcan_ops mcmcan_mcan_ops = {
@@ -190,6 +190,26 @@ DT_INST_FOREACH_STATUS_OKAY(MCMCAN_NODE_INIT)
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT infineon_mcmcan
 
+/*
+ * AURIX MCMCAN module register layout differs between TC3x and TC4x.
+ *
+ * On TC3x, the controller "reg" property covers the full Ifx_CAN window
+ * (32KB Message RAM at +0x0000 followed by control registers at +0x8000),
+ * so register accesses use a +0x8000 base offset.  On TC4x the Message RAM
+ * lives in a separate sysbus window (0xF4700000 for CAN0, etc.) and the
+ * controller "reg" property points directly at the control register block,
+ * so the +0x8000 offset disappears.
+ *
+ * Within Ifx_CAN_N the per-node interrupt-routing registers also moved:
+ *   TC3x: GRINT1 @ +0x14, GRINT2 @ +0x18 (two-register routing scheme)
+ *   TC4x: G0INTR @ +0x2C, G1INTR @ +0x30, G2INTR @ +0x34 (three-register
+ *         scheme with a different field layout).
+ * NPCR/PORTCTRL also moved from +0x40 (TC3x) to +0x4C (TC4x).
+ *
+ * The driver below programs the TC3x routing registers explicitly; on TC4x
+ * the GxINTR registers are left at their reset value and IR slot wiring is
+ * done entirely through the DT "interrupts" property of each child node.
+ */
 #if defined(CONFIG_SOC_SERIES_TC4X)
 #define MCMCAN_CTRL_OFF     0x0000
 #define MCMCAN_NODE_NPCR    0x004C
@@ -246,6 +266,7 @@ static int mcmcan_init(const struct device *dev)
 	uint32_t grint1, grint2;
 #endif
 
+	/* Global clock enable */
 	if (!device_is_ready(mcmcan_config->clock_dev)) {
 		LOG_ERR("clock control device not ready");
 		return -ENODEV;
@@ -265,6 +286,7 @@ static int mcmcan_init(const struct device *dev)
 		return -ETIMEDOUT;
 	}
 
+	/* Initialize MRAM */
 	sys_write32(0xC0000000, mcmcan_config->base + MCMCAN_MCR);
 	if (!WAIT_FOR((sys_read32(mcmcan_config->base + MCMCAN_MCR) & BIT(28)) == 0, 1000,
 		      k_busy_wait(1))) {
@@ -285,16 +307,22 @@ static int mcmcan_init(const struct device *dev)
 		if (!mcmcan_config->pinctrl[i]) {
 			continue;
 		}
-		
+		/* Set local clock enable */
 		mcr |= (0x3 << i * 2);
 
+		/* Set pinctrl */
 		err = mcmcan_set_node_pinctrl(dev, i);
 		if (err) {
 			return err;
 		}
 
 #if !defined(CONFIG_SOC_SERIES_TC4X)
-		
+		/*
+		 * TC3x interrupt-compactor: program the two GRINTx registers
+		 * so rxfifo0 / rxfifo1 IRQs go to line1 and the rest to line0.
+		 * TC4x has a different (3-register) scheme; leave the GxINTR
+		 * registers at reset and rely on the IR-slot wiring from DT.
+		 */
 		grint1 = ((i * 2) << 28) | ((i * 2) << 24) | ((i * 2) << 20) | ((i * 2) << 16) |
 			 ((i * 2) << 12) | ((i * 2) << 8) | ((i * 2) << 4) | ((i * 2) << 0);
 		grint2 = ((i * 2) << 28) | ((i * 2) << 24) | ((i * 2) << 20) | ((i * 2 + 1) << 16) |
@@ -305,6 +333,7 @@ static int mcmcan_init(const struct device *dev)
 #endif
 	}
 
+	/* Enable local clocks */
 	sys_write32(0xC0000000 | mcr, mcmcan_config->base + MCMCAN_MCR);
 	sys_write32(mcr, mcmcan_config->base + MCMCAN_MCR);
 
