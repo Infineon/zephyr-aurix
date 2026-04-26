@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <zephyr/toolchain.h>
+#include <zephyr/kernel.h>
 #include <zephyr/linker/sections.h>
 #include <zephyr/arch/cpu.h>
 #include <zephyr/syscall.h>
+#include <offsets_short.h>
 
 GTEXT(_syscall_wrapper)
+GDATA(_kernel)
 #if CONFIG_USERSPACE
 GDATA(_k_syscall_table)
 #endif
@@ -61,7 +64,16 @@ except_syscall:
 switch_syscall:
 	fcall	z_tricore_switch
 #if CONFIG_MPU_STACK_GUARD
-	ld.a	%a14, [%a15]+___cpu_t_current_OFFSET
+	/* Get cpu structure base */
+	movh.a  %a15, hi:(_kernel + ___kernel_t_cpus_OFFSET)
+	lea     %a15, [%a15], lo:(_kernel + ___kernel_t_cpus_OFFSET)
+#if CONFIG_SMP
+	mfcr	%d15, TRICORE_CORE_ID
+	sub	%d15, %d15, CONFIG_TRICORE_CORE_ID
+	mul	%d15, %d15, ___cpu_t_SIZEOF
+	addsc.a %a15, %a15, %d15, 0
+#endif
+	ld.a	%a4, [%a15]+___cpu_t_current_OFFSET
 	/* Enable stack guard for thread */
 	call z_tricore_mpu_stackguard_enable
 #endif
