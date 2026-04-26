@@ -4,10 +4,15 @@ zephyr_syscall_header(${ZEPHYR_BASE}/include/zephyr/drivers/can.h)
 
 zephyr_library()
 
+# CAN subsystem common files
+# zephyr-keep-sorted-start
 zephyr_library_sources_ifdef(CONFIG_CAN can_common.c)
 zephyr_library_sources_ifdef(CONFIG_CAN_SHELL can_shell.c)
 zephyr_library_sources_ifdef(CONFIG_USERSPACE can_handlers.c)
+# zephyr-keep-sorted-stop
 
+# CAN subsystem driver files
+# zephyr-keep-sorted-start
 zephyr_library_sources_ifdef(CONFIG_CAN_ESP32_TWAI can_esp32_twai.c)
 zephyr_library_sources_ifdef(CONFIG_CAN_FAKE can_fake.c)
 zephyr_library_sources_ifdef(CONFIG_CAN_INFINEON_MCAN can_infineon.c)
@@ -35,6 +40,7 @@ zephyr_library_sources_ifdef(CONFIG_CAN_STM32_BXCAN can_stm32_bxcan.c)
 zephyr_library_sources_ifdef(CONFIG_CAN_STM32_FDCAN can_stm32_fdcan.c)
 zephyr_library_sources_ifdef(CONFIG_CAN_TCAN4X5X can_tcan4x5x.c)
 zephyr_library_sources_ifdef(CONFIG_CAN_XMC4XXX can_xmc4xxx.c)
+# zephyr-keep-sorted-stop
 
 if(CONFIG_CAN_NATIVE_LINUX)
   if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL Linux)
