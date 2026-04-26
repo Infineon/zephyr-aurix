@@ -1,0 +1,27 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Infineon AURIX MCMCAN module (TC3x/TC4x).
+
+  This is the wrapper-level node for an AURIX CAN module.  It owns the
+  shared module control register (MCR), the per-module Message RAM, the
+  module-level clock gates, and the per-channel interrupt-compactor
+  (GRINTx) registers.  Individual CAN-FD channels are described as child
+  nodes with the "infineon,mcmcan-node" compatible.
+
+compatible: "infineon,mcmcan"
+
+include: ["base.yaml"]
+
+properties:
+  reg:
+    required: true
+  clocks:
+    required: true
+    description: |
+      Two clock specifiers in this exact order:
+        0: synchronous bus clock (fmcan)
+        1: asynchronous async clock (fmcanh)
+      Both clocks are enabled by the wrapper driver before any channel
+      is brought up.

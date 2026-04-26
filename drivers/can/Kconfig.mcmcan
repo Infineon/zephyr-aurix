@@ -1,0 +1,16 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+config CAN_MCMCAN
+	bool "Infineon AURIX MCMCAN driver"
+	default y
+	depends on DT_HAS_INFINEON_MCMCAN_ENABLED
+	depends on CLOCK_CONTROL
+	select CAN_MCAN
+	select PINCTRL
+	help
+	  Enable support for the Infineon AURIX MCMCAN module (TC3x/TC4x).
+	  The driver wraps Zephyr's generic Bosch M_CAN core; the module-level
+	  controller turns on the shared clock gates, initialises the shared
+	  Message RAM, and routes the per-channel interrupts through the
+	  GRINTx interrupt-compactor.
