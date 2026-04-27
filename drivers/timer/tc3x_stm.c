@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/timer/system_timer.h>
@@ -19,9 +20,29 @@
 #define CYCLES_PER_SEC  CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC
 #define CYCLES_PER_TICK (CYCLES_PER_SEC / TICKS_PER_SEC)
 
+/* the unsigned long cast limits divisions to native CPU register width */
 #define cycle_diff_t   unsigned long
 #define CYCLE_DIFF_MAX (~(cycle_diff_t)0)
 
+/*
+ * We have two constraints on the maximum number of cycles we can wait for.
+ *
+ * 1) sys_clock_announce() accepts at most INT32_MAX ticks.
+ *
+ * 2) The number of cycles between two reports must fit in a cycle_diff_t
+ *    variable before converting it to ticks.
+ *
+ * Then:
+ *
+ * 3) Pick the smallest between (1) and (2).
+ *
+ * 4) Take into account some room for the unavoidable IRQ servicing latency.
+ *    Let's use 3/4 of the max range.
+ *
+ * Finally let's add the LSB value to the result so to clear out a bunch of
+ * consecutive set bits coming from the original max values to produce a
+ * nicer literal for assembly generation.
+ */
 #define CYCLES_MAX_1 ((uint64_t)INT32_MAX * (uint64_t)CYCLES_PER_TICK)
 #define CYCLES_MAX_2 ((uint64_t)CYCLE_DIFF_MAX)
 #define CYCLES_MAX_3 MIN(CYCLES_MAX_1, CYCLES_MAX_2)
@@ -80,6 +101,8 @@ static void sys_clock_isr()
 	if (!IS_ENABLED(CONFIG_TICKLESS_KERNEL)) {
 		uint64_t next = last_count + CYCLES_PER_TICK;
 
+		/* Even though we use only the lower 32bits for compare an overflow is
+		 * not possible as we make sure that the CYCLES_PER_TICK is smaller than 32 bits*/
 		set_compare((uint32_t)next);
 	}
 
@@ -131,13 +154,13 @@ uint32_t sys_clock_elapsed(void)
 }
 uint32_t sys_clock_cycle_get_32(void)
 {
-	
+	/* Return the current counter value */
 	return get_time32();
 }
 
 uint64_t sys_clock_cycle_get_64(void)
 {
-	
+	/* Return the current counter value */
 	return get_time64();
 }
 
@@ -152,19 +175,21 @@ static int sys_clock_driver_init(void)
 		    DT_IRQ_BY_IDX(DT_CHOSEN(infineon_system_timer), 0, priority), sys_clock_isr,
 		    NULL, 0);
 
+	/* Initialise internal states */
 	last_ticks = get_time64() / CYCLES_PER_TICK;
 	last_count = last_ticks * CYCLES_PER_TICK;
 
+	/* Set debug freeze if selected */
 #if DT_PROP(DT_CHOSEN(infineon_system_timer), freeze)
 	sys_write32(0x12000000, TIMER_BASE_ADDR + offsetof(Ifx_STM, OCS));
 #endif
-	
+	/* Set compare window */
 	Ifx_STM_CMCON cmcon = {.B.MSIZE0 = 31, .B.MSTART0 = 0};
 	sys_write32(cmcon.U, TIMER_BASE_ADDR + offsetof(Ifx_STM, CMCON));
-	
+	/* Set irq line */
 	Ifx_STM_ICR icr = {.B.CMP0OS = 0};
 	sys_write32(icr.U, TIMER_BASE_ADDR + offsetof(Ifx_STM, ICR));
-	
+	/* Clear irq */
 	Ifx_STM_ISCR iscr = {.B.CMP0IRR = 1};
 	sys_write32(iscr.U, TIMER_BASE_ADDR + offsetof(Ifx_STM, ISCR));
 
