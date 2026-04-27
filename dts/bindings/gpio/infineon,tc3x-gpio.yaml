@@ -11,6 +11,14 @@ properties:
   reg:
     required: true
 
+  irq-sources:
+    type: array
+    description: |
+      Optional list of GPIO IRQ sources (encoded GTM/ERU mapping)
+      tied to specific pins on this port. Currently parsed for
+      forwards compatibility -- the TC3x GPIO driver does not yet
+      implement pin_interrupt_configure (returns -ENOSYS).
+
   "#gpio-cells":
     const: 2
 
