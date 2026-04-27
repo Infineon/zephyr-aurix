@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import fcntl
 import logging
 import os
 import shlex
@@ -15,6 +17,48 @@ OPT_SYMBOL_FILE = '/IDE/System.Debug.Applications[0].SymbolFiles.File'
 OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
 
 log = logging.getLogger('winidea.flash')
+
+@contextlib.contextmanager
+def winidea_lock(instance_id: str, timeout: float = 600.0):
+    """Serialize hardware access keyed by the winIDEA instance id.
+
+    Lets two callers (e.g. west flash from one tree and flash.sh from
+    another) safely race for the same DAP without stepping on each other,
+    while still parallelizing flashes of *different* boards.
+    """
+    runtime = os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'
+    if not os.path.isdir(runtime):
+        runtime = '/tmp'
+    path = f'{runtime}/winidea-{instance_id}.lock'
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+    waited = False
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            waited = True
+            log.info('waiting for winIDEA lock %s', path)
+            deadline = time.monotonic() + timeout
+            while True:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise SystemExit(
+                            f'timed out after {timeout:.0f}s waiting for '
+                            f'{path}; another flasher is still holding it')
+                    time.sleep(0.5)
+        os.ftruncate(fd, 0)
+        os.write(fd, f'{os.getpid()} {time.time():.0f}\n'.encode())
+        if waited:
+            log.info('acquired winIDEA lock %s', path)
+        yield
+    finally:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
@@ -113,14 +157,11 @@ def main(argv=None):
     )
 
     elf = Path(args.elf)
-    if not elf.is_file():
+    if not args.no_scp and not elf.is_file():
         raise SystemExit(f'ELF not found: {elf}')
 
     remote_name = args.remote_name or elf.name
     remote_path = f'{args.remote_dir}/{remote_name}'
-
-    if not args.no_scp:
-        scp(elf, args.host, args.ssh_user, remote_path)
 
     try:
         import isystem.connect as ic
@@ -128,46 +169,52 @@ def main(argv=None):
         raise SystemExit("isystem.connect not importable; "
                          "pip install --user isystem.connect")
 
-    mgr = ic.ConnectionMgr()
-    cfg = (ic.CConnectionConfig()
-           .host(args.host)
-           .instanceId(args.instance_id))
-    cfg.start_existing()
-    mgr.connect(cfg)
-    if not mgr.isConnected():
-        raise SystemExit(f'could not attach to winIDEA instance '
-                         f'{args.instance_id!r} on {args.host}')
-    log.info('connected to winIDEA on %s (id=%s)', args.host, args.instance_id)
-    try:
-        exec_ctrl = ic.CExecutionController(mgr)
-        if exec_ctrl.getCPUStatus(False).isRunning():
-            log.info('CPU running -> stop()')
-            exec_ctrl.stop()
-            time.sleep(0.2)
+    with winidea_lock(args.instance_id):
+        if not args.no_scp:
+            scp(elf, args.host, args.ssh_user, remote_path)
 
-        set_path(mgr, OPT_SYMBOL_FILE, remote_path)
-        set_path(mgr, OPT_PROGRAM_FILE, remote_path)
+        mgr = ic.ConnectionMgr()
+        cfg = (ic.CConnectionConfig()
+               .host(args.host)
+               .instanceId(args.instance_id))
+        cfg.start_existing()
+        mgr.connect(cfg)
+        if not mgr.isConnected():
+            raise SystemExit(f'could not attach to winIDEA instance '
+                             f'{args.instance_id!r} on {args.host}')
+        log.info('connected to winIDEA on %s (id=%s)',
+                 args.host, args.instance_id)
+        try:
+            exec_ctrl = ic.CExecutionController(mgr)
+            if exec_ctrl.getCPUStatus(False).isRunning():
+                log.info('CPU running -> stop()')
+                exec_ctrl.stop()
+                time.sleep(0.2)
 
-        log.info('downloading %s', remote_path)
-        t0 = time.time()
-        ic.CDebugFacade(mgr).download()
-        log.info('download ok in %.1fs', time.time() - t0)
+            set_path(mgr, OPT_SYMBOL_FILE, remote_path)
+            set_path(mgr, OPT_PROGRAM_FILE, remote_path)
 
-        if args.no_run:
-            log.info('--no-run: leaving CPU stopped')
+            log.info('downloading %s', remote_path)
+            t0 = time.time()
+            ic.CDebugFacade(mgr).download()
+            log.info('download ok in %.1fs', time.time() - t0)
+
+            if args.no_run:
+                log.info('--no-run: leaving CPU stopped')
+                return 0
+
+            log.info('resetAndRun')
+            exec_ctrl.resetAndRun()
+            time.sleep(0.4)
+            log.info('CPU running: %s',
+                     exec_ctrl.getCPUStatus(False).isRunning())
+
+            if args.watch_seconds > 0:
+                if not watch_for_trap(mgr, args.watch_seconds):
+                    return 2
             return 0
-
-        log.info('resetAndRun')
-        exec_ctrl.resetAndRun()
-        time.sleep(0.4)
-        log.info('CPU running: %s', exec_ctrl.getCPUStatus(False).isRunning())
-
-        if args.watch_seconds > 0:
-            if not watch_for_trap(mgr, args.watch_seconds):
-                return 2
-        return 0
-    finally:
-        mgr.disconnect_keep()
+        finally:
+            mgr.disconnect_keep()
 
 if __name__ == '__main__':
     sys.exit(main())

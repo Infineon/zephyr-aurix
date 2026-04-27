@@ -1,31 +1,8 @@
-# Copyright (c) 2026 Parthiban Nallathambi
-#
-# SPDX-License-Identifier: Apache-2.0
 
-'''Runner that flashes Infineon AURIX targets via iSYSTEM winIDEA running
-on a remote (typically Windows) host, using the isystem.connect Python SDK.
 
-The runner copies the freshly built ELF to a path under D:/Parthiban/ on the
-remote host using ssh+scp, then drives the named winIDEA instance over TCP
-to:
-
-    1. stop the CPU
-    2. point the active session's symbol-file and program-file at the new
-       ELF
-    3. download to flash
-    4. resetAndRun
-
-If --watch is given, the runner polls the CPU state for a few seconds after
-release and dumps PC, PSW, PCXI, A10, A11, plus the call stack on
-unexpected stops, so trap diagnostics from a real crash land in the build
-log just like they would in the winIDEA UI.
-
-Required tooling on the host running west:
-    - isystem.connect              (pip install isystem.connect)
-    - sshpass                      (and SSHPASS env var with the Windows password)
-    - openssh-client               (for scp/ssh)
-'''
-
+import contextlib
+import fcntl
+import logging
 import os
 import shlex
 import subprocess
@@ -38,12 +15,53 @@ DEFAULT_WINIDEA_HOST = '10.11.176.11'
 DEFAULT_REMOTE_DIR = 'D:/Parthiban'
 DEFAULT_SSH_USER = 'bharathi'
 DEFAULT_WATCH_SECONDS = 5
+DEFAULT_LOCK_TIMEOUT = 600.0
 
 OPT_SYMBOL_FILE = '/IDE/System.Debug.Applications[0].SymbolFiles.File'
 OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
 
-# Map (board, qualifier) -> winIDEA instance id and remote ELF basename.
-# Add new boards here when wiring up extra hardware.
+@contextlib.contextmanager
+def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
+    '''Serialize hardware access keyed by the winIDEA instance id.
+
+    Lets two callers (e.g. ``west flash`` here and the NuttX
+    ``tools/winidea/flash.sh`` in the sibling tree) race for the same DAP
+    safely while still parallelizing flashes of *different* boards.
+    '''
+    runtime = os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}'
+    if not os.path.isdir(runtime):
+        runtime = '/tmp'
+    path = f'{runtime}/winidea-{instance_id}.lock'
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+    waited = False
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            waited = True
+            log.info('waiting for winIDEA lock %s', path)
+            deadline = time.monotonic() + timeout
+            while True:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError(
+                            f'timed out after {timeout:.0f}s waiting for '
+                            f'{path}; another flasher is still holding it')
+                    time.sleep(0.5)
+        os.ftruncate(fd, 0)
+        os.write(fd, f'{os.getpid()} {time.time():.0f}\n'.encode())
+        if waited:
+            log.info('acquired winIDEA lock %s', path)
+        yield
+    finally:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
 BOARD_PROFILES = {
     'kit_a3g_tc4d7_lite/tc4d7xp/cpu0': {
         'instance_id': 'com.tasking.winIDEA.instance.id-TC4D7',
@@ -55,12 +73,11 @@ BOARD_PROFILES = {
     },
 }
 
-
 class WinIDEABinaryRunner(ZephyrBinaryRunner):
     '''Flash AURIX targets via remote winIDEA + isystem.connect.'''
 
     def __init__(self, cfg, *, host, ssh_user, remote_dir, instance_id,
-                 remote_name, watch, watch_seconds):
+                 remote_name, watch, watch_seconds, lock_timeout):
         super().__init__(cfg)
         self.host = host
         self.ssh_user = ssh_user
@@ -69,6 +86,7 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         self.remote_name = remote_name
         self.watch = watch
         self.watch_seconds = watch_seconds
+        self.lock_timeout = lock_timeout
 
     @classmethod
     def name(cls):
@@ -105,6 +123,12 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                             help='How long to poll for an unexpected stop '
                                  'after resetAndRun (default: %(default)s)')
 
+        parser.add_argument('--lock-timeout', type=float,
+                            default=DEFAULT_LOCK_TIMEOUT,
+                            help='Seconds to wait for the per-board winIDEA '
+                                 'lock if another flasher (e.g. the NuttX '
+                                 'flash.sh) holds it (default: %(default)s)')
+
     @staticmethod
     def _board_target_from_build(build_dir):
         if not build_dir:
@@ -139,13 +163,14 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                    instance_id=instance_id,
                    remote_name=remote_name,
                    watch=args.watch,
-                   watch_seconds=args.watch_seconds)
+                   watch_seconds=args.watch_seconds,
+                   lock_timeout=args.lock_timeout)
 
     def do_run(self, command, **kwargs):
         if command != 'flash':
             raise RuntimeError(f'winidea runner does not support {command!r}')
         try:
-            import isystem.connect as ic  # noqa: F401
+            import isystem.connect as ic
         except ImportError as exc:
             raise RuntimeError(
                 'isystem.connect is not importable; install with '
@@ -159,11 +184,11 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             raise RuntimeError(f'ELF not found: {elf}')
 
         remote_path = f'{self.remote_dir}/{self.remote_name}'
-        # winIDEA accepts forward slashes in paths.
         remote_path_for_winidea = remote_path
 
-        self._scp(elf, remote_path)
-        self._winidea_flash(remote_path_for_winidea)
+        with _winidea_lock(self.instance_id, self.lock_timeout, self.logger):
+            self._scp(elf, remote_path)
+            self._winidea_flash(remote_path_for_winidea)
 
     def _scp(self, src: Path, dst_remote: str) -> None:
         if 'SSHPASS' not in os.environ:
