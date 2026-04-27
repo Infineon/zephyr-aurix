@@ -8,13 +8,16 @@ import fcntl
 import logging
 import os
 import shlex
+import socket
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 OPT_SYMBOL_FILE = '/IDE/System.Debug.Applications[0].SymbolFiles.File'
 OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
+DEFAULT_CONSOLE_HOST = '10.11.176.252'
 
 log = logging.getLogger('winidea.flash')
 
@@ -89,6 +92,23 @@ def parse_args(argv=None):
                    help='Poll the CPU for unexpected stops for N seconds after '
                         'resetAndRun and dump regs/stack on a trap '
                         '(default: %(default)s, set 0 to disable)')
+    p.add_argument('--no-capture-console', dest='capture_console',
+                   action='store_false', default=True,
+                   help='Skip auto-capture of the serial console during the '
+                        'lock window')
+    p.add_argument('--console-host', default=os.environ.get(
+                       'WINIDEA_CONSOLE_HOST', DEFAULT_CONSOLE_HOST),
+                   help='Lab host exposing the serial-over-TCP consoles '
+                        '(default: %(default)s; env WINIDEA_CONSOLE_HOST)')
+    p.add_argument('--console-port', type=int, default=None,
+                   help='TCP port on --console-host for this board\'s serial '
+                        'console (no default; required if capture is on)')
+    p.add_argument('--console-seconds', type=float, default=0.0,
+                   help='Capture the console for this many seconds '
+                        '(0 = use --watch-seconds)')
+    p.add_argument('--console-log', default=None,
+                   help='Path to write the captured console to '
+                        '(default: ./console-<instance-id>.log next to cwd)')
     p.add_argument('-v', '--verbose', action='store_true')
     return p.parse_args(argv)
 
@@ -149,6 +169,69 @@ def watch_for_trap(mgr, watch_seconds: int) -> bool:
         log.error('  stack frame read failed: %s', e)
     return False
 
+@contextlib.contextmanager
+def console_recorder(host, port, log_path, capture):
+    """Open a TCP-as-serial reader and copy bytes into log_path while held.
+
+    Held inside the per-board flock so two parallel testers do not race
+    on the same /dev/ttyUSB. If the connection cannot be opened, capture
+    is downgraded to a warning and the with-block continues without it.
+    """
+    if not capture or not port or not log_path:
+        yield None
+        return
+    try:
+        sock = socket.create_connection((host, port), timeout=5)
+    except OSError as e:
+        log.warning('console capture disabled: %s', e)
+        yield None
+        return
+    sock.settimeout(0.5)
+    Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+    fp = open(log_path, 'wb', buffering=0)
+    stop = threading.Event()
+
+    class _Recorder:
+        started_at = time.time()
+
+    def _pump():
+        while not stop.is_set():
+            try:
+                chunk = sock.recv(4096)
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            if not chunk:
+                break
+            fp.write(chunk)
+
+    t = threading.Thread(target=_pump, daemon=True)
+    t.start()
+    log.info('capturing console %s:%d -> %s', host, port, log_path)
+    try:
+        yield _Recorder
+    finally:
+        stop.set()
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        sock.close()
+        t.join(timeout=2)
+        fp.close()
+        try:
+            tail = Path(log_path).read_bytes().decode('utf-8',
+                                                      errors='replace')
+            lines = tail.splitlines()
+            shown = lines[-20:]
+            log.info('console.log tail (%d/%d lines):',
+                     len(shown), len(lines))
+            for line in shown:
+                log.info('| %s', line)
+        except OSError:
+            pass
+
 def main(argv=None):
     args = parse_args(argv)
     logging.basicConfig(
@@ -203,16 +286,29 @@ def main(argv=None):
                 log.info('--no-run: leaving CPU stopped')
                 return 0
 
-            log.info('resetAndRun')
-            exec_ctrl.resetAndRun()
-            time.sleep(0.4)
-            log.info('CPU running: %s',
-                     exec_ctrl.getCPUStatus(False).isRunning())
+            console_log = args.console_log or (
+                f'./console-{args.instance_id}.log')
+            with console_recorder(args.console_host, args.console_port,
+                                  console_log, args.capture_console) as rec:
+                log.info('resetAndRun')
+                exec_ctrl.resetAndRun()
+                time.sleep(0.4)
+                log.info('CPU running: %s',
+                         exec_ctrl.getCPUStatus(False).isRunning())
 
-            if args.watch_seconds > 0:
-                if not watch_for_trap(mgr, args.watch_seconds):
-                    return 2
-            return 0
+                rc = 0
+                if args.watch_seconds > 0:
+                    if not watch_for_trap(mgr, args.watch_seconds):
+                        rc = 2
+
+                if rec is not None:
+                    seconds = (args.console_seconds
+                               or args.watch_seconds or 5)
+                    elapsed = time.time() - rec.started_at
+                    remaining = seconds - elapsed
+                    if remaining > 0:
+                        time.sleep(remaining)
+                return rc
         finally:
             mgr.disconnect_keep()
 

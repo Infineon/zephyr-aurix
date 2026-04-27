@@ -5,7 +5,9 @@ import fcntl
 import logging
 import os
 import shlex
+import socket
 import subprocess
+import threading
 import time
 from pathlib import Path
 
@@ -16,6 +18,8 @@ DEFAULT_REMOTE_DIR = 'D:/Parthiban'
 DEFAULT_SSH_USER = 'bharathi'
 DEFAULT_WATCH_SECONDS = 5
 DEFAULT_LOCK_TIMEOUT = 600.0
+DEFAULT_CONSOLE_HOST = '10.11.176.252'
+DEFAULT_CONSOLE_SECONDS = 0
 
 OPT_SYMBOL_FILE = '/IDE/System.Debug.Applications[0].SymbolFiles.File'
 OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
@@ -66,10 +70,12 @@ BOARD_PROFILES = {
     'kit_a3g_tc4d7_lite/tc4d7xp/cpu0': {
         'instance_id': 'com.tasking.winIDEA.instance.id-TC4D7',
         'remote_name': 'zephyr-tc4d7-cpu0.out',
+        'console_port': 9001,
     },
     'kit_a2g_tc397xa_3v3_tft/tc397xp/cpu0': {
         'instance_id': 'com.tasking.winIDEA.instance.id-TC397',
         'remote_name': 'zephyr-tc397-cpu0.out',
+        'console_port': 9000,
     },
 }
 
@@ -77,7 +83,9 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
     '''Flash AURIX targets via remote winIDEA + isystem.connect.'''
 
     def __init__(self, cfg, *, host, ssh_user, remote_dir, instance_id,
-                 remote_name, watch, watch_seconds, lock_timeout):
+                 remote_name, watch, watch_seconds, lock_timeout,
+                 capture_console, console_host, console_port,
+                 console_seconds, console_log):
         super().__init__(cfg)
         self.host = host
         self.ssh_user = ssh_user
@@ -87,6 +95,11 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         self.watch = watch
         self.watch_seconds = watch_seconds
         self.lock_timeout = lock_timeout
+        self.capture_console = capture_console
+        self.console_host = console_host
+        self.console_port = console_port
+        self.console_seconds = console_seconds
+        self.console_log = console_log
 
     @classmethod
     def name(cls):
@@ -129,6 +142,25 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                                  'lock if another flasher (e.g. the NuttX '
                                  'flash.sh) holds it (default: %(default)s)')
 
+        parser.add_argument('--no-capture-console', dest='capture_console',
+                            action='store_false', default=True,
+                            help='Skip auto-capture of the serial console to '
+                                 '<build_dir>/console.log during the lock '
+                                 'window')
+        parser.add_argument('--console-host', default=DEFAULT_CONSOLE_HOST,
+                            help='Lab host exposing the serial-over-TCP '
+                                 'consoles (default: %(default)s)')
+        parser.add_argument('--console-port', type=int, default=None,
+                            help='Override the per-board TCP port for the '
+                                 'serial console')
+        parser.add_argument('--console-seconds', type=float,
+                            default=DEFAULT_CONSOLE_SECONDS,
+                            help='Capture the console for this many seconds '
+                                 'after resetAndRun (0 = use --watch-seconds)')
+        parser.add_argument('--console-log', default=None,
+                            help='Path to write the captured console to '
+                                 '(default: <build_dir>/console.log)')
+
     @staticmethod
     def _board_target_from_build(build_dir):
         if not build_dir:
@@ -156,6 +188,10 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         if not remote_name:
             elf = cfg.elf_file and Path(cfg.elf_file).name
             remote_name = elf or 'zephyr.out'
+        console_port = args.console_port or profile.get('console_port')
+        console_log = args.console_log
+        if console_log is None and cfg.build_dir:
+            console_log = str(Path(cfg.build_dir) / 'console.log')
         return cls(cfg,
                    host=args.winidea_host,
                    ssh_user=args.ssh_user,
@@ -164,7 +200,12 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                    remote_name=remote_name,
                    watch=args.watch,
                    watch_seconds=args.watch_seconds,
-                   lock_timeout=args.lock_timeout)
+                   lock_timeout=args.lock_timeout,
+                   capture_console=args.capture_console,
+                   console_host=args.console_host,
+                   console_port=console_port,
+                   console_seconds=args.console_seconds,
+                   console_log=console_log)
 
     def do_run(self, command, **kwargs):
         if command != 'flash':
@@ -232,16 +273,89 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             ic.CDebugFacade(mgr).download()
             self.logger.info('download ok in %.1fs', time.time() - t0)
 
-            self.logger.info('resetAndRun')
-            exec_ctrl.resetAndRun()
-            time.sleep(0.4)
-            running = exec_ctrl.getCPUStatus(False).isRunning()
-            self.logger.info('CPU running: %s', running)
+            with self._console_recorder() as console:
+                if console is not None:
+                    self.logger.info('capturing console %s:%d -> %s',
+                                     self.console_host, self.console_port,
+                                     self.console_log)
+                self.logger.info('resetAndRun')
+                exec_ctrl.resetAndRun()
+                time.sleep(0.4)
+                running = exec_ctrl.getCPUStatus(False).isRunning()
+                self.logger.info('CPU running: %s', running)
 
-            if self.watch and self.watch_seconds > 0:
-                self._watch_for_trap(mgr, exec_ctrl, ic)
+                if self.watch and self.watch_seconds > 0:
+                    self._watch_for_trap(mgr, exec_ctrl, ic)
+
+                if console is not None:
+                    seconds = self.console_seconds or self.watch_seconds or 5
+                    elapsed = time.time() - console.started_at
+                    remaining = seconds - elapsed
+                    if remaining > 0:
+                        time.sleep(remaining)
         finally:
             mgr.disconnect_keep()
+
+    @contextlib.contextmanager
+    def _console_recorder(self):
+        if not self.capture_console or not self.console_port \
+                or not self.console_log:
+            yield None
+            return
+        try:
+            sock = socket.create_connection(
+                (self.console_host, self.console_port), timeout=5)
+        except OSError as e:
+            self.logger.warning('console capture disabled: %s', e)
+            yield None
+            return
+        sock.settimeout(0.5)
+        Path(self.console_log).parent.mkdir(parents=True, exist_ok=True)
+        log_fp = open(self.console_log, 'wb', buffering=0)
+        stop = threading.Event()
+
+        class _Recorder:
+            started_at = time.time()
+
+        def _pump():
+            while not stop.is_set():
+                try:
+                    chunk = sock.recv(4096)
+                except socket.timeout:
+                    continue
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                log_fp.write(chunk)
+
+        t = threading.Thread(target=_pump, daemon=True)
+        t.start()
+        try:
+            yield _Recorder
+        finally:
+            stop.set()
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            sock.close()
+            t.join(timeout=2)
+            log_fp.close()
+            self._tail_console(self.console_log)
+
+    def _tail_console(self, path: str, lines: int = 20) -> None:
+        try:
+            data = Path(path).read_bytes()
+        except OSError:
+            return
+        text = data.decode('utf-8', errors='replace').splitlines()
+        if not text:
+            return
+        self.logger.info('console.log tail (%d/%d lines):',
+                         min(lines, len(text)), len(text))
+        for line in text[-lines:]:
+            self.logger.info('| %s', line)
 
     def _set_path(self, mgr, opt_path: str, new_path: str) -> None:
         import isystem.connect as ic
