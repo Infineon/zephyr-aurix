@@ -22,19 +22,25 @@
 
 #define DT_DRV_COMPAT infineon_tc4x_gpio
 
+/**
+ * @brief Common gpio flags to custom flags
+ */
 static int gpio_tc4x_flags_to_drvcfg(gpio_flags_t flags, Ifx_P_PADCFG_DRVCFG *drvcfg)
 {
 	bool is_input = flags & GPIO_INPUT;
 	bool is_output = flags & GPIO_OUTPUT;
 
+	/* Disconnect not supported */
 	if (!is_input && !is_output) {
 		return -ENOTSUP;
 	}
 
+	/* Open source not supported*/
 	if (flags & GPIO_OPEN_SOURCE) {
 		return -ENOTSUP;
 	}
 
+	/* Pull up & pull down not supported in output mode */
 	if (is_output && (flags & (GPIO_PULL_UP | GPIO_PULL_DOWN)) != 0) {
 		return -ENOTSUP;
 	}
@@ -148,12 +154,18 @@ static int gpio_tc4x_port_toggle_bits(const struct device *dev, gpio_port_pins_t
 	return 0;
 }
 
+/**
+ * @brief Configure pin or port
+ */
 static int gpio_tc4x_config(const struct device *dev, gpio_pin_t pin, gpio_flags_t flags)
 {
 	const struct gpio_tc4x_config *cfg = dev->config;
 	int err;
 	Ifx_P_PADCFG_DRVCFG drvcfg;
 
+	/* figure out if we can map the requested GPIO
+	 * configuration
+	 */
 	err = gpio_tc4x_flags_to_drvcfg(flags, &drvcfg);
 	if (err != 0) {
 		return err;
@@ -181,7 +193,9 @@ static int gpio_tc4x_config(const struct device *dev, gpio_pin_t pin, gpio_flags
 }
 
 #if defined(CONFIG_GPIO_GET_CONFIG)
-
+/**
+ * @brief Get configuration of pin
+ */
 static int gpio_tc4x_get_config(const struct device *dev, gpio_pin_t pin, gpio_flags_t *flags)
 {
 	const struct gpio_tc4x_config *cfg = dev->config;
@@ -235,13 +249,19 @@ static int gpio_tc4x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 			egtm_initialized = true;
 		}
 
+		/* EGTM writes below are gated by Safe Endinit (PROTSE). */
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_CONFIG);
-		
+		/* Cluster CCM.PROT.CLS_PROT defaults to 1; clear it while we
+		 * write CMU and the TIM channel.
+		 */
 		MODULE_EGTM.CLS[irq_src->cls].CCM.PROT.U = 0;
 
 		if ((cls_clk_initialized & BIT(irq_src->cls)) == 0) {
 			Ifx_EGTM_CLS_CMU_CLK_EN clk_en = {.U = 0};
-			
+			/* Force-enable all CMU resolution generators. Encoding
+			 * 0b10 latches; 0b01 (request) is dropped by TC4Dx
+			 * silicon unless the upstream CCU clock has converged.
+			 */
 			clk_en.B.EN_CLK0 = 2;
 			clk_en.B.EN_CLK1 = 2;
 			clk_en.B.EN_CLK2 = 2;
@@ -304,6 +324,9 @@ static int gpio_tc4x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 		eicr.B.LDEN = (mode == GPIO_INT_MODE_LEVEL);
 		MODULE_SCU.ERU.EICR[irq_src->ch] = eicr;
 
+		/* We use the masking of the irq via the INTFx to emulate a
+		 * level type irq behavior. The irq is retriggered from the ISR
+		 * as long as the level is present. */
 		igcr.U = mode == GPIO_INT_MODE_LEVEL ? BIT(irq_src->ch) : 0;
 		igcr.B.IGP = mode == GPIO_INT_MODE_EDGE ? 1 : 2;
 		MODULE_SCU.ERU.IGCR[irq_src->cls] = igcr;
@@ -326,7 +349,7 @@ static DEVICE_API(gpio, tc4x_gpio_driver_api) = {
 	.pin_configure = gpio_tc4x_config,
 #if defined(CONFIG_GPIO_GET_CONFIG)
 	.pin_get_config = gpio_tc4x_get_config,
-#endif 
+#endif /* CONFIG_GPIO_GET_CONFIG */
 	.port_get_raw = gpio_tc4x_port_get_raw,
 	.port_set_masked_raw = gpio_tc4x_port_set_masked_raw,
 	.port_set_bits_raw = gpio_tc4x_port_set_bits_raw,
@@ -336,6 +359,16 @@ static DEVICE_API(gpio, tc4x_gpio_driver_api) = {
 	.manage_callback = gpio_tc4x_manage_callback,
 };
 
+/**
+ * @brief Initialize GPIO port
+ *
+ * Perform basic initialization of a GPIO port. The code will
+ * enable the clock for corresponding peripheral.
+ *
+ * @param dev GPIO device struct
+ *
+ * @return 0
+ */
 static int gpio_tc4x_init(const struct device *dev)
 {
 	const struct gpio_tc4x_config *cfg = dev->config;
@@ -355,7 +388,7 @@ static int gpio_tc4x_init(const struct device *dev)
 		if (irq_src->type == TC4X_IRQ_TYPE_ERU) {                                         \
 			if (MODULE_SCU.ERU.EICR[irq_src->ch].B.LDEN) {                             \
 				if ((MODULE_SCU.ERU.EIFR.U & BIT(irq_src->ch)) != 0) {             \
-					                \
+					/* Retrigger ERU IRQ for level type irqs */                \
 					MODULE_SCU.ERU.FMR.U = BIT(irq_src->ch);                   \
 				}                                                                  \
 			} else {                                                                   \
