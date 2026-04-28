@@ -39,6 +39,10 @@
 	status = "okay";
 };
 
+/* On-board TLE9371VSJ CAN transceiver on M_CAN node 1 (P01.3/P01.4),
+ * 120 ohm terminated. TLE9371 defaults to standby; drive CAN_STB
+ * (P03.5) low for normal mode. See kit user manual section 2.5.
+ */
 &mcmcan0 {
 	status = "okay";
 };

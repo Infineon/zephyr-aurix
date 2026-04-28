@@ -151,13 +151,10 @@ void poll_state_thread(void *unused1, void *unused2, void *unused3)
 		if (err_cnt.tx_err_cnt != err_cnt_prev.tx_err_cnt ||
 		    err_cnt.rx_err_cnt != err_cnt_prev.rx_err_cnt ||
 		    state_prev != state) {
-
 			err_cnt_prev.tx_err_cnt = err_cnt.tx_err_cnt;
 			err_cnt_prev.rx_err_cnt = err_cnt.rx_err_cnt;
 			state_prev = state;
-			printf("state: %s\n"
-			       "rx error count: %d\n"
-			       "tx error count: %d\n",
+			printf("state: %s rx_err_cnt=%d tx_err_cnt=%d\n",
 			       state_to_str(state),
 			       err_cnt.rx_err_cnt, err_cnt.tx_err_cnt);
 		} else {
@@ -215,7 +212,8 @@ int main(void)
 	}
 
 #ifdef CONFIG_LOOPBACK_MODE
-	ret = can_set_mode(can_dev, CAN_MODE_LOOPBACK);
+	
+	ret = can_set_mode(can_dev, CAN_MODE_LOOPBACK | CAN_MODE_LISTENONLY);
 	if (ret != 0) {
 		printf("Error setting CAN mode [%d]", ret);
 		return 0;
@@ -283,7 +281,7 @@ int main(void)
 
 	while (1) {
 		change_led_frame.data[0] = toggle++ & 0x01 ? SET_LED : RESET_LED;
-		/* This sending call is none blocking. */
+		
 		can_send(can_dev, &change_led_frame, K_FOREVER,
 			 tx_irq_callback,
 			 "LED change");
@@ -292,7 +290,7 @@ int main(void)
 		UNALIGNED_PUT(sys_cpu_to_be16(counter),
 			      (uint16_t *)&counter_frame.data[0]);
 		counter++;
-		/* This sending call is blocking until the message is sent. */
+		
 		can_send(can_dev, &counter_frame, K_MSEC(100), NULL, NULL);
 		k_sleep(SLEEP_TIME);
 	}
