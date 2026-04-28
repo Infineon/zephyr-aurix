@@ -212,7 +212,10 @@ int main(void)
 	}
 
 #ifdef CONFIG_LOOPBACK_MODE
-	
+	/* Internal loopback (LBCK + MON): the M_CAN core loops TX->RX inside
+	 * the controller and does not drive the bus pins.  Avoids needing a
+	 * second node on the bus to ACK frames.
+	 */
 	ret = can_set_mode(can_dev, CAN_MODE_LOOPBACK | CAN_MODE_LISTENONLY);
 	if (ret != 0) {
 		printf("Error setting CAN mode [%d]", ret);
@@ -281,7 +284,7 @@ int main(void)
 
 	while (1) {
 		change_led_frame.data[0] = toggle++ & 0x01 ? SET_LED : RESET_LED;
-		
+		/* This sending call is none blocking. */
 		can_send(can_dev, &change_led_frame, K_FOREVER,
 			 tx_irq_callback,
 			 "LED change");
@@ -290,7 +293,7 @@ int main(void)
 		UNALIGNED_PUT(sys_cpu_to_be16(counter),
 			      (uint16_t *)&counter_frame.data[0]);
 		counter++;
-		
+		/* This sending call is blocking until the message is sent. */
 		can_send(can_dev, &counter_frame, K_MSEC(100), NULL, NULL);
 		k_sleep(SLEEP_TIME);
 	}

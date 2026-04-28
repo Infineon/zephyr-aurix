@@ -1,30 +1,4 @@
-# Copyright (c) 2026 Parthiban Nallathambi
-#
-# SPDX-License-Identifier: Apache-2.0
 
-'''Runner that flashes Infineon AURIX targets via iSYSTEM winIDEA running
-on a remote (typically Windows) host, using the isystem.connect Python SDK.
-
-The runner copies the freshly built ELF to a path under D:/Parthiban/ on the
-remote host using ssh+scp, then drives the named winIDEA instance over TCP
-to:
-
-    1. stop the CPU
-    2. point the active session's symbol-file and program-file at the new
-       ELF
-    3. download to flash
-    4. resetAndRun
-
-If --watch is given, the runner polls the CPU state for a few seconds after
-release and dumps PC, PSW, PCXI, A10, A11, plus the call stack on
-unexpected stops, so trap diagnostics from a real crash land in the build
-log just like they would in the winIDEA UI.
-
-Required tooling on the host running west:
-    - isystem.connect              (pip install isystem.connect)
-    - sshpass                      (and SSHPASS env var with the Windows password)
-    - openssh-client               (for scp/ssh)
-'''
 
 import contextlib
 import fcntl
@@ -39,17 +13,16 @@ from pathlib import Path
 
 from runners.core import RunnerCaps, ZephyrBinaryRunner
 
-DEFAULT_WINIDEA_HOST = '10.11.176.11'
+DEFAULT_WINIDEA_HOST = '192.168.1.2'
 DEFAULT_REMOTE_DIR = 'D:/Parthiban'
 DEFAULT_SSH_USER = 'bharathi'
 DEFAULT_WATCH_SECONDS = 5
 DEFAULT_LOCK_TIMEOUT = 600.0
-DEFAULT_CONSOLE_HOST = '10.11.176.252'
-DEFAULT_CONSOLE_SECONDS = 0  # default: same as watch_seconds
+DEFAULT_CONSOLE_HOST = '192.168.1.3'
+DEFAULT_CONSOLE_SECONDS = 0
 
 OPT_SYMBOL_FILE = '/IDE/System.Debug.Applications[0].SymbolFiles.File'
 OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
-
 
 @contextlib.contextmanager
 def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
@@ -93,9 +66,6 @@ def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
         finally:
             os.close(fd)
 
-# Map (board, qualifier) -> winIDEA instance id, remote ELF basename, and
-# the TCP serial-console endpoint exposed by the lab "kural" host. Add new
-# boards here when wiring up extra hardware.
 BOARD_PROFILES = {
     'kit_a3g_tc4d7_lite/tc4d7xp/cpu0': {
         'instance_id': 'com.tasking.winIDEA.instance.id-TC4D7',
@@ -108,7 +78,6 @@ BOARD_PROFILES = {
         'console_port': 9000,
     },
 }
-
 
 class WinIDEABinaryRunner(ZephyrBinaryRunner):
     '''Flash AURIX targets via remote winIDEA + isystem.connect.'''
@@ -242,7 +211,7 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         if command != 'flash':
             raise RuntimeError(f'winidea runner does not support {command!r}')
         try:
-            import isystem.connect as ic  # noqa: F401
+            import isystem.connect as ic
         except ImportError as exc:
             raise RuntimeError(
                 'isystem.connect is not importable; install with '
@@ -256,7 +225,6 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             raise RuntimeError(f'ELF not found: {elf}')
 
         remote_path = f'{self.remote_dir}/{self.remote_name}'
-        # winIDEA accepts forward slashes in paths.
         remote_path_for_winidea = remote_path
 
         with _winidea_lock(self.instance_id, self.lock_timeout, self.logger):
@@ -295,7 +263,11 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         try:
             if exec_ctrl.getCPUStatus(False).isRunning():
                 self.logger.info('CPU running -> stop()')
-                exec_ctrl.stop()
+                try:
+                    exec_ctrl.stop()
+                except Exception as e:
+                    self.logger.warning('stop() failed (%s); falling back to reset()', e)
+                    exec_ctrl.reset()
                 time.sleep(0.2)
             self._set_path(mgr, OPT_SYMBOL_FILE, remote_elf)
             self._set_path(mgr, OPT_PROGRAM_FILE, remote_elf)
@@ -319,8 +291,6 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                 if self.watch and self.watch_seconds > 0:
                     self._watch_for_trap(mgr, exec_ctrl, ic)
 
-                # Hold the console reader open until console_seconds is up so
-                # late prints (e.g. shells, banners) make it into the log.
                 if console is not None:
                     seconds = self.console_seconds or self.watch_seconds or 5
                     elapsed = time.time() - console.started_at
