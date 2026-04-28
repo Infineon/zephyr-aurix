@@ -77,6 +77,11 @@ BOARD_PROFILES = {
         'remote_name': 'zephyr-tc397-cpu0.out',
         'console_port': 9000,
     },
+    'kit_tc4x7_com_trb/tc4d7xp/cpu0': {
+        'instance_id': 'com.tasking.winIDEA.instance.id-TC4D7 - Triboard',
+        'remote_name': 'zephyr-tc4x7-com-cpu0.out',
+        'console_port': 9002,
+    },
 }
 
 class WinIDEABinaryRunner(ZephyrBinaryRunner):

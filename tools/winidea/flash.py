@@ -1,4 +1,26 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Parthiban Nallathambi
+# SPDX-License-Identifier: Apache-2.0
+"""
+Standalone flasher for Infineon AURIX targets via remote winIDEA + isystem.connect.
+
+Usable by anything that can produce an ELF (Zephyr west, NuttX make, bare CMake
+etc). Mirrors the logic in scripts/west_commands/runners/winidea.py but takes
+its inputs as plain CLI flags rather than a Zephyr RunnerConfig.
+
+Pipeline:
+  1. sshpass -e scp <local-elf> <ssh-user>@<host>:/<remote-dir>/<remote-name>
+  2. attach to winIDEA instance over TCP using isystem.connect
+  3. stop CPU, rewrite SymbolFiles[0] / DLFs_Program[0] paths
+  4. CDebugFacade.download() then resetAndRun()
+  5. optional --watch poll: dump PC/PSW/PCXI/A10/A11 + call stack on
+     unexpected stop within --watch-seconds
+
+Required tooling on the calling host:
+  - python -m pip install --user isystem.connect
+  - sshpass + openssh-client
+  - SSHPASS env var with the Windows password
+"""
 
 from __future__ import annotations
 
@@ -20,6 +42,7 @@ OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
 DEFAULT_CONSOLE_HOST = '192.168.1.3'
 
 log = logging.getLogger('winidea.flash')
+
 
 @contextlib.contextmanager
 def winidea_lock(instance_id: str, timeout: float = 600.0):
@@ -62,6 +85,7 @@ def winidea_lock(instance_id: str, timeout: float = 600.0):
             fcntl.flock(fd, fcntl.LOCK_UN)
         finally:
             os.close(fd)
+
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
@@ -112,6 +136,7 @@ def parse_args(argv=None):
     p.add_argument('-v', '--verbose', action='store_true')
     return p.parse_args(argv)
 
+
 def scp(local: Path, host: str, user: str, remote: str) -> None:
     if 'SSHPASS' not in os.environ:
         raise SystemExit('SSHPASS env var must hold the Windows password '
@@ -124,6 +149,7 @@ def scp(local: Path, host: str, user: str, remote: str) -> None:
     log.debug('  %s', ' '.join(shlex.quote(c) for c in cmd))
     subprocess.run(cmd, check=True)
 
+
 def set_path(mgr, opt_path: str, new_path: str) -> None:
     import isystem.connect as ic
     opt = ic.COptionController(mgr, opt_path)
@@ -134,6 +160,7 @@ def set_path(mgr, opt_path: str, new_path: str) -> None:
     if cur != new_path:
         entry.set('Path', new_path)
         log.info('  %s[0].Path: %s -> %s', opt_path, cur, new_path)
+
 
 def watch_for_trap(mgr, watch_seconds: int) -> bool:
     import isystem.connect as ic
@@ -168,6 +195,7 @@ def watch_for_trap(mgr, watch_seconds: int) -> bool:
     except Exception as e:
         log.error('  stack frame read failed: %s', e)
     return False
+
 
 @contextlib.contextmanager
 def console_recorder(host, port, log_path, capture):
@@ -231,6 +259,7 @@ def console_recorder(host, port, log_path, capture):
                 log.info('| %s', line)
         except OSError:
             pass
+
 
 def main(argv=None):
     args = parse_args(argv)
@@ -315,6 +344,7 @@ def main(argv=None):
                 return rc
         finally:
             mgr.disconnect_keep()
+
 
 if __name__ == '__main__':
     sys.exit(main())
