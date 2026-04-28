@@ -39,16 +39,17 @@
 	status = "okay";
 };
 
-/*
- * On-board high-speed CAN transceiver (Infineon TLE9371VSJ) is wired to
- * AURIX CAN module 0 node 1 (P01.3/P01.4) and terminated at the CAN
- * connector with a 120 ohm resistor.  The transceiver has no
- * software-visible enable / standby line on this board, so no
- * "can-transceiver-gpio" compatible node is exposed.
- * See "TC4D7 Lite Kit user manual", section 2.5.
- */
 &mcmcan0 {
 	status = "okay";
+};
+
+/ {
+	can_phy0: can-phy0 {
+		compatible = "infineon,tle9371", "can-transceiver-gpio";
+		standby-gpios = <&p03 5 GPIO_ACTIVE_HIGH>;
+		max-bitrate = <1000000>;
+		#phy-cells = <0>;
+	};
 };
 
 &can01 {
@@ -56,6 +57,7 @@
 	bitrate-data = <2000000>;
 	pinctrl-0 = <&can1_default>;
 	pinctrl-names = "default";
+	phys = <&can_phy0>;
 	status = "okay";
 };
 

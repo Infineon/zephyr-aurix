@@ -127,7 +127,7 @@ static const struct can_driver_api mcmcan_mcan_driver_api = {
 	.remove_rx_filter = can_mcan_remove_rx_filter,
 #ifdef CONFIG_CAN_MANUAL_RECOVERY_MODE
 	.recover = can_mcan_recover,
-#endif 
+#endif /* CONFIG_CAN_MANUAL_RECOVERY_MODE */
 	.get_state = can_mcan_get_state,
 	.set_state_change_callback = can_mcan_set_state_change_callback,
 	.get_core_clock = mcmcan_mcan_get_core_clock,
@@ -138,7 +138,7 @@ static const struct can_driver_api mcmcan_mcan_driver_api = {
 	.set_timing_data = can_mcan_set_timing_data,
 	.timing_data_min = CAN_MCAN_TIMING_DATA_MIN_INITIALIZER,
 	.timing_data_max = CAN_MCAN_TIMING_DATA_MAX_INITIALIZER,
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 };
 
 static const struct can_mcan_ops mcmcan_mcan_ops = {
@@ -190,6 +190,7 @@ DT_INST_FOREACH_STATUS_OKAY(MCMCAN_NODE_INIT)
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT infineon_mcmcan
 
+/* TC3x and TC4x have different MCMCAN register layouts. */
 #if defined(CONFIG_SOC_SERIES_TC4X)
 #define MCMCAN_CTRL_OFF      0x0000
 #define MCMCAN_NODE_NPCR     0x004C
@@ -256,6 +257,7 @@ static int mcmcan_init(const struct device *dev)
 	uint32_t grint1, grint2;
 #endif
 
+	/* Global clock enable */
 	if (!device_is_ready(mcmcan_config->clock_dev)) {
 		LOG_ERR("clock control device not ready");
 		return -ENODEV;
@@ -276,10 +278,14 @@ static int mcmcan_init(const struct device *dev)
 	}
 
 #if defined(CONFIG_SOC_SERIES_TC4X)
-	
+	/* Allow all master TAG IDs to write the M_CAN node registers; without
+	 * this CPU0 writes to NBTP/CCCR/etc. are silently dropped because the
+	 * reset value of ACCEN_WRA on TC4Dx silicon does not always include
+	 * tag 0. */
 	sys_write32(0xFFFFFFFF, mcmcan_config->base + MCMCAN_CTRL_OFF + MCMCAN_ACCEN_WRA_OFF);
 #endif
 
+	/* Initialize MRAM */
 	sys_write32(0xC0000000, mcmcan_config->base + MCMCAN_MCR);
 	if (!WAIT_FOR((sys_read32(mcmcan_config->base + MCMCAN_MCR) & BIT(28)) == 0, 1000,
 		      k_busy_wait(1))) {
@@ -300,16 +306,20 @@ static int mcmcan_init(const struct device *dev)
 		if (!mcmcan_config->pinctrl[i]) {
 			continue;
 		}
-		
+		/* Set local clock enable */
 		mcr |= (0x3 << i * 2);
 
+		/* Set pinctrl */
 		err = mcmcan_set_node_pinctrl(dev, i);
 		if (err) {
 			return err;
 		}
 
 #if !defined(CONFIG_SOC_SERIES_TC4X)
-		
+		/*
+		 * TC3x interrupt-compactor: program the two GRINTx registers
+		 * so rxfifo0 / rxfifo1 IRQs go to line1 and the rest to line0.
+		 */
 		grint1 = ((i * 2) << 28) | ((i * 2) << 24) | ((i * 2) << 20) | ((i * 2) << 16) |
 			 ((i * 2) << 12) | ((i * 2) << 8) | ((i * 2) << 4) | ((i * 2) << 0);
 		grint2 = ((i * 2) << 28) | ((i * 2) << 24) | ((i * 2) << 20) | ((i * 2 + 1) << 16) |
@@ -318,26 +328,32 @@ static int mcmcan_init(const struct device *dev)
 		sys_write32(grint1, mcmcan_config->base + MCMCAN_GRINT1(i));
 		sys_write32(grint2, mcmcan_config->base + MCMCAN_GRINT2(i));
 #else
-		
+		/* Route node i events to SRC_CANINT(i*2) / (i*2+1). */
 		{
 			uint32_t l0 = (uint32_t)(i * 2);
 			uint32_t l1 = (uint32_t)(i * 2 + 1);
 			uint32_t g0intr;
 			uint32_t g1intr;
 
+			/* G0INTR groups go to line0. */
 			g0intr = (l0 << 0) | (l0 << 4) | (l0 << 8) | (l0 << 12) |
 				 (l0 << 16) | (l0 << 20) | (l0 << 24) | (l0 << 28);
 
+			/* G1INTR: REINT/RETI/TRAQ/TRACO -> line0;
+			 * RxF1F/RxF0F/RxF1N/RxF0N -> line1.
+			 */
 			g1intr = (l0 << 0) | (l1 << 4) | (l1 << 8) | (l1 << 12) |
 				 (l1 << 16) | (l0 << 20) | (l0 << 24) | (l0 << 28);
 
 			sys_write32(g0intr, mcmcan_config->base + MCMCAN_G0INTR(i));
 			sys_write32(g1intr, mcmcan_config->base + MCMCAN_G1INTR(i));
-			
+			/* G2INTR is CRE-only; we don't use the routing engine,
+			 * leave at reset (all CRE groups -> SRC_CANINT0). */
 		}
 #endif
 	}
 
+	/* Enable local clocks */
 	sys_write32(0xC0000000 | mcr, mcmcan_config->base + MCMCAN_MCR);
 	sys_write32(mcr, mcmcan_config->base + MCMCAN_MCR);
 
