@@ -90,6 +90,7 @@ static int can_mcan_exit_sleep_mode(const struct device *dev)
 		}
 	}
 
+
 unlock:
 	k_mutex_unlock(&data->lock);
 
@@ -243,9 +244,10 @@ int can_mcan_set_timing_data(const struct device *dev, const struct can_timing *
 		FIELD_PREP(CAN_MCAN_DBTP_DBRP, timing_data->prescaler - 1UL);
 
 	if (timing_data->prescaler == 1U || timing_data->prescaler == 2U) {
-		
+		/* TDC can only be enabled if DBRP = { 0, 1 } */
 		dbtp |= CAN_MCAN_DBTP_TDC;
 
+		/* Set TDC offset for correct location of the Secondary Sample Point (SSP) */
 		tdco = CAN_CALC_TDCO(timing_data, 0U, tdco_max);
 		LOG_DBG("TDC enabled, using TDCO %u", tdco);
 
@@ -268,7 +270,7 @@ unlock:
 
 	return err;
 }
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 
 int can_mcan_get_capabilities(const struct device *dev, can_mode_t *cap)
 {
@@ -305,6 +307,7 @@ int can_mcan_start(const struct device *dev)
 		}
 	}
 
+	/* Reset statistics */
 	CAN_STATS_RESET(dev);
 
 	err = can_mcan_leave_init_mode(dev, K_MSEC(CAN_INIT_TIMEOUT_MS));
@@ -312,7 +315,7 @@ int can_mcan_start(const struct device *dev)
 		LOG_ERR("failed to leave init mode (err %d)", err);
 
 		if (config->common.phy != NULL) {
-			
+			/* Attempt to disable the CAN transceiver in case of error */
 			(void)can_transceiver_disable(config->common.phy);
 		}
 
@@ -359,6 +362,7 @@ int can_mcan_stop(const struct device *dev)
 		return -EALREADY;
 	}
 
+	/* CAN transmissions are automatically stopped when entering init mode */
 	err = can_mcan_enter_init_mode(dev, K_MSEC(CAN_INIT_TIMEOUT_MS));
 	if (err != 0) {
 		LOG_ERR("Failed to enter init mode");
@@ -434,7 +438,7 @@ int can_mcan_set_mode(const struct device *dev, can_mode_t mode)
 	}
 
 	if ((mode & CAN_MODE_LOOPBACK) != 0) {
-		
+		/* Loopback mode */
 		cccr |= CAN_MCAN_CCCR_TEST;
 		test |= CAN_MCAN_TEST_LBCK;
 	} else {
@@ -442,7 +446,7 @@ int can_mcan_set_mode(const struct device *dev, can_mode_t mode)
 	}
 
 	if ((mode & CAN_MODE_LISTENONLY) != 0) {
-		
+		/* Bus monitoring mode */
 		cccr |= CAN_MCAN_CCCR_MON;
 	} else {
 		cccr &= ~CAN_MCAN_CCCR_MON;
@@ -454,7 +458,7 @@ int can_mcan_set_mode(const struct device *dev, can_mode_t mode)
 	} else {
 		cccr &= ~(CAN_MCAN_CCCR_FDOE | CAN_MCAN_CCCR_BRSE);
 	}
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 
 	err = can_mcan_write_reg(dev, CAN_MCAN_CCCR, cccr);
 	if (err != 0) {
@@ -497,12 +501,13 @@ static void can_mcan_state_change_handler(const struct device *dev)
 	}
 
 	if (state == CAN_STATE_BUS_OFF) {
-		
+		/* Request all TX buffers to be cancelled */
 		err = can_mcan_write_reg(dev, CAN_MCAN_TXBCR, CAN_MCAN_TXBCR_CR);
 		if (err != 0) {
 			return;
 		}
 
+		/* Call all TX queue callbacks with -ENETUNREACH */
 		for (uint32_t tx_idx = 0U; tx_idx < cbs->num_tx; tx_idx++) {
 			tx_cb = cbs->tx[tx_idx].function;
 
@@ -515,7 +520,10 @@ static void can_mcan_state_change_handler(const struct device *dev)
 
 		if (!IS_ENABLED(CONFIG_CAN_MANUAL_RECOVERY_MODE) ||
 		    (data->common.mode & CAN_MODE_MANUAL_RECOVERY) == 0U) {
-			
+			/*
+			 * Request leaving init mode, but do not take the lock (as we are in ISR
+			 * context), nor wait for the result.
+			 */
 			err = can_mcan_read_reg(dev, CAN_MCAN_CCCR, &cccr);
 			if (err != 0) {
 				return;
@@ -563,6 +571,7 @@ static void can_mcan_tx_event_handler(const struct device *dev)
 
 		tx_idx = tx_event.mm;
 
+		/* Acknowledge TX event */
 		err = can_mcan_write_reg(dev, CAN_MCAN_TXEFA, event_idx);
 		if (err != 0) {
 			return;
@@ -612,11 +621,14 @@ static void can_mcan_lec_update_stats(const struct device *dev, enum can_mcan_ps
 		break;
 	}
 }
-#endif 
+#endif /* CONFIG_CAN_STATS */
 
 static int can_mcan_read_psr(const struct device *dev, uint32_t *val)
 {
-	
+	/* Reading the lower byte of the PSR register clears the protocol last
+	 * error codes (LEC). To avoid missing errors, this function should be
+	 * used whenever the PSR register is read.
+	 */
 	int err = can_mcan_read_reg(dev, CAN_MCAN_PSR, val);
 
 	if (err != 0) {
@@ -632,7 +644,7 @@ static int can_mcan_read_psr(const struct device *dev, uint32_t *val)
 	lec = FIELD_GET(CAN_MCAN_PSR_DLEC, *val);
 	can_mcan_lec_update_stats(dev, lec);
 #endif
-#endif 
+#endif /* CONFIG_CAN_STATS */
 
 	return 0;
 }
@@ -661,6 +673,7 @@ void can_mcan_line_0_isr(const struct device *dev)
 			can_mcan_state_change_handler(dev);
 		}
 
+		/* TX event FIFO new entry */
 		if ((ir & CAN_MCAN_IR_TEFN) != 0U) {
 			can_mcan_tx_event_handler(dev);
 		}
@@ -681,7 +694,7 @@ void can_mcan_line_0_isr(const struct device *dev)
 #ifdef CONFIG_CAN_STATS
 		if ((ir & (CAN_MCAN_IR_PEA | CAN_MCAN_IR_PED)) != 0U) {
 			uint32_t reg;
-			
+			/* This function automatically updates protocol error stats */
 			can_mcan_read_psr(dev, &reg);
 		}
 #endif
@@ -745,7 +758,7 @@ static void can_mcan_get_message(const struct device *dev, uint16_t fifo_offset,
 
 #ifdef CONFIG_CAN_RX_TIMESTAMP
 		frame.timestamp = hdr.rxts;
-#endif 
+#endif /* CONFIG_CAN_RX_TIMESTAMP */
 
 		filt_idx = hdr.fidx;
 
@@ -914,7 +927,7 @@ int can_mcan_recover(const struct device *dev, k_timeout_t timeout)
 
 	return can_mcan_leave_init_mode(dev, timeout);
 }
-#endif 
+#endif /* CONFIG_CAN_MANUAL_RECOVERY_MODE */
 
 int can_mcan_send(const struct device *dev, const struct can_frame *frame, k_timeout_t timeout,
 		  can_tx_callback_t callback, void *user_data)
@@ -931,10 +944,10 @@ int can_mcan_send(const struct device *dev, const struct can_frame *frame, k_tim
 #ifdef CONFIG_CAN_FD_MODE
 		.fdf = (frame->flags & CAN_FRAME_FDF) != 0U ? 1U : 0U,
 		.brs = (frame->flags & CAN_FRAME_BRS) != 0U ? 1U : 0U,
-#else  
+#else  /* CONFIG_CAN_FD_MODE */
 		.fdf = 0U,
 		.brs = 0U,
-#endif 
+#endif /* !CONFIG_CAN_FD_MODE */
 		.efc = 1U,
 	};
 	uint32_t put_idx = UINT32_MAX;
@@ -959,12 +972,12 @@ int can_mcan_send(const struct device *dev, const struct can_frame *frame, k_tim
 		LOG_ERR("CAN FD format not supported in non-FD mode");
 		return -ENOTSUP;
 	}
-#else  
+#else  /* CONFIG_CAN_FD_MODE */
 	if ((frame->flags & ~(CAN_FRAME_IDE | CAN_FRAME_RTR)) != 0U) {
 		LOG_ERR("unsupported CAN frame flags 0x%02x", frame->flags);
 		return -ENOTSUP;
 	}
-#endif 
+#endif /* !CONFIG_CAN_FD_MODE */
 
 	if (data_length > sizeof(frame->data)) {
 		LOG_ERR("data length (%zu) > max frame data length (%zu)", data_length,
@@ -1004,6 +1017,7 @@ int can_mcan_send(const struct device *dev, const struct can_frame *frame, k_tim
 
 	k_mutex_lock(&data->tx_mtx, K_FOREVER);
 
+	/* Acquire a free TX buffer */
 	for (int i = 0; i < cbs->num_tx; i++) {
 		if (cbs->tx[i].function == NULL) {
 			put_idx = i;
@@ -1011,6 +1025,7 @@ int can_mcan_send(const struct device *dev, const struct can_frame *frame, k_tim
 		}
 	}
 
+	/* A free TX buffer should always be available since the data->tx_sem was acquired */
 	__ASSERT_NO_MSG(put_idx < cbs->num_tx);
 	tx_hdr.mm = put_idx;
 
@@ -1071,6 +1086,11 @@ int can_mcan_get_max_filters(const struct device *dev, bool ide)
 	}
 }
 
+/* Use masked configuration only for simplicity. If someone needs more than
+ * 28 standard filters, dual mode needs to be implemented.
+ * Dual mode gets tricky, because we can only activate both filters.
+ * If one of the IDs is not used anymore, we would need to mark it as unused.
+ */
 int can_mcan_add_rx_filter_std(const struct device *dev, can_rx_callback_t callback,
 			       void *user_data, const struct can_filter *filter)
 {
@@ -1100,6 +1120,7 @@ int can_mcan_add_rx_filter_std(const struct device *dev, can_rx_callback_t callb
 		return -ENOSPC;
 	}
 
+	/* TODO proper fifo balancing */
 	filter_element.sfec = filter_id & 0x01 ? CAN_MCAN_XFEC_FIFO1 : CAN_MCAN_XFEC_FIFO0;
 
 	err = can_mcan_write_mram(dev, config->mram_offsets[CAN_MCAN_MRAM_CFG_STD_FILTER] +
@@ -1150,6 +1171,7 @@ static int can_mcan_add_rx_filter_ext(const struct device *dev, can_rx_callback_
 		return -ENOSPC;
 	}
 
+	/* TODO proper fifo balancing */
 	filter_element.efec = filter_id & 0x01 ? CAN_MCAN_XFEC_FIFO1 : CAN_MCAN_XFEC_FIFO0;
 
 	err = can_mcan_write_mram(dev, config->mram_offsets[CAN_MCAN_MRAM_CFG_EXT_FILTER] +
@@ -1251,6 +1273,10 @@ void can_mcan_set_state_change_callback(const struct device *dev,
 	data->common.state_change_cb_user_data = user_data;
 }
 
+/* helper function allowing mcan drivers without access to private mcan
+ * definitions to set CCCR_CCE, which might be needed to disable write
+ * protection for some registers.
+ */
 void can_mcan_enable_configuration_change(const struct device *dev)
 {
 	struct can_mcan_data *data = dev->data;
@@ -1351,12 +1377,14 @@ int can_mcan_configure_mram(const struct device *dev, uintptr_t mrba, uintptr_t 
 		return err;
 	}
 
+	/* 64 byte Tx Buffer data fields size */
 	reg = CAN_MCAN_TXESC_TBDS;
 	err = can_mcan_write_reg(dev, CAN_MCAN_TXESC, reg);
 	if (err != 0) {
 		return err;
 	}
 
+	/* 64 byte Rx Buffer/FIFO1/FIFO0 data fields size */
 	reg = CAN_MCAN_RXESC_RBDS | CAN_MCAN_RXESC_F1DS | CAN_MCAN_RXESC_F0DS;
 	err = can_mcan_write_reg(dev, CAN_MCAN_RXESC, reg);
 	if (err != 0) {
@@ -1374,7 +1402,7 @@ int can_mcan_init(const struct device *dev)
 	struct can_timing timing = { 0 };
 #ifdef CONFIG_CAN_FD_MODE
 	struct can_timing timing_data = { 0 };
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 	uint32_t reg;
 	int err;
 
@@ -1422,13 +1450,18 @@ int can_mcan_init(const struct device *dev)
 		FIELD_GET(CAN_MCAN_CREL_STEP, reg), FIELD_GET(CAN_MCAN_CREL_SUBSTEP, reg),
 		FIELD_GET(CAN_MCAN_CREL_YEAR, reg), FIELD_GET(CAN_MCAN_CREL_MON, reg),
 		FIELD_GET(CAN_MCAN_CREL_DAY, reg));
-#endif 
+#endif /* CONFIG_CAN_LOG_LEVEL >= LOG_LEVEL_DBG */
 
 	err = can_mcan_read_reg(dev, CAN_MCAN_CCCR, &reg);
 	if (err != 0) {
 		return err;
 	}
 
+	/* Set CCCR.TEST=1 so TEST-register writes are accepted, then clear
+	 * TEST.LBCK before clearing CCCR.TEST again. The M_CAN spec
+	 * write-protects the TEST register unless CCCR.TEST=1 at the time of
+	 * the write.
+	 */
 	err = can_mcan_write_reg(dev, CAN_MCAN_CCCR, reg | CAN_MCAN_CCCR_TEST);
 	if (err != 0) {
 		return err;
@@ -1457,13 +1490,16 @@ int can_mcan_init(const struct device *dev)
 	}
 
 #ifdef CONFIG_CAN_RX_TIMESTAMP
-	
+	/*
+	 * Enable the internal timestamp counter by default. SoC-specific driver frontends can
+	 * overwrite this if configured for using a SoC-specific, external timestamp counter.
+	 */
 	reg = FIELD_PREP(CAN_MCAN_TSCC_TCP, config->timestamp_prescaler - 1U) |
 		FIELD_PREP(CAN_MCAN_TSCC_TSS, 1U);
-#else 
-	
+#else /* CONFIG_CAN_RX_TIMESTAMP */
+	/* Disable timestamp counter */
 	reg = 0U;
-#endif 
+#endif /* !CONFIG_CAN_RX_TIMESTAMP */
 
 	err = can_mcan_write_reg(dev, CAN_MCAN_TSCC, reg);
 	if (err != 0) {
@@ -1504,7 +1540,7 @@ int can_mcan_init(const struct device *dev)
 	}
 
 	LOG_DBG("Sample-point err data phase: %d", err);
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 
 	err = can_set_timing(dev, &timing);
 	if (err != 0) {
@@ -1518,13 +1554,15 @@ int can_mcan_init(const struct device *dev)
 		LOG_ERR("failed to set data phase timing (err %d)", err);
 		return -ENODEV;
 	}
-#endif 
+#endif /* CONFIG_CAN_FD_MODE */
 
 	reg = CAN_MCAN_IE_BOE | CAN_MCAN_IE_EWE | CAN_MCAN_IE_EPE | CAN_MCAN_IE_MRAFE |
 	      CAN_MCAN_IE_TEFLE | CAN_MCAN_IE_TEFNE | CAN_MCAN_IE_RF0NE | CAN_MCAN_IE_RF1NE |
 	      CAN_MCAN_IE_RF0LE | CAN_MCAN_IE_RF1LE;
 #ifdef CONFIG_CAN_STATS
-	
+	/* These ISRs are only enabled/used for statistics, they are otherwise
+	 * disabled as they may produce a significant amount of frequent ISRs.
+	 */
 	reg |= CAN_MCAN_IE_PEAE | CAN_MCAN_IE_PEDE;
 #endif
 
@@ -1545,6 +1583,7 @@ int can_mcan_init(const struct device *dev)
 		return err;
 	}
 
+	/* Interrupt on every TX buffer transmission event */
 	reg = CAN_MCAN_TXBTIE_TIE;
 	err = can_mcan_write_reg(dev, CAN_MCAN_TXBTIE, reg);
 	if (err != 0) {
