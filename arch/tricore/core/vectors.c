@@ -47,7 +47,9 @@ void __attribute((naked, section(".vectors.trap"))) __trap_vector_tc0_class3()
 	__asm volatile("svlcx\n"
 		       "mov %d4, 3\n"
 		       "mov %d5, %d15\n"
-		       "jeq %d5, 4, z_tricore_fault_fcu\n"
+		       "jne %d5, 4, 1f\n"
+		       "j z_tricore_fault_fcu\n"
+		       "1:\n"
 		       "j z_tricore_fault\n");
 }
 
