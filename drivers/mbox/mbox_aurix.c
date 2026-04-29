@@ -70,8 +70,10 @@ static int mbox_aurix_send(const struct device *dev, mbox_channel_id_t id,
 		lockset = msg->size != 0 ? 1 : 0;
 	}
 
-	MODULE_INT.GPSRG[gpsr].SWC[swc].B = (Ifx_INT_GPSRG_SWC_Bits){
-		.DATA = data, .LOCKSET = lockset, .SETR = 1};
+	MODULE_INT.GPSRG[gpsr].SWC[swc].U =
+		((uint32_t)data) |
+		((uint32_t)lockset << 16) |
+		(1U << 29);
 #endif
 
 	return 0;
@@ -155,8 +157,7 @@ static void mbox_aurix_isr(void *user_data)
 		msg.size = 2;
 		msg_data = MODULE_INT.GPSRG[grp].SWC[ch].B.DATA;
 		
-		MODULE_INT.GPSRG[grp].SWC[ch].B = (Ifx_INT_GPSRG_SWC_Bits){
-			.LOCKCLR = 1};
+		MODULE_INT.GPSRG[grp].SWC[ch].U = (1U << 17);
 	}
 #endif
 
