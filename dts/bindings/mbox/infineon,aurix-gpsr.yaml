@@ -1,0 +1,21 @@
+# Copyright (c) 2024, Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Mbox implementation for the Aurix SoCs based on GPSR IRQs
+
+compatible: infineon,aurix-gpsr
+
+include: [base.yaml, mailbox-controller.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  rx-channels:
+    type: array
+
+mbox-cells:
+  - channel

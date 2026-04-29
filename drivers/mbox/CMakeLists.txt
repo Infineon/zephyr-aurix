@@ -6,9 +6,9 @@ zephyr_library()
 
 zephyr_library_sources_ifdef(CONFIG_USERSPACE mbox_handlers.c)
 
-# zephyr-keep-sorted-start
 zephyr_library_sources_ifdef(CONFIG_MBOX_ADI_MAX32_SEMA mbox_adi_max32_sema.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_ANDES_PLIC_SW mbox_andes_plic_sw.c)
+zephyr_library_sources_ifdef(CONFIG_MBOX_AURIX mbox_aurix.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_ESP32 mbox_esp32.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_IVSHMEM mbox_ivshmem.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_MHUV3 mbox_mhuv3.c)
@@ -29,4 +29,3 @@ zephyr_library_sources_ifdef(CONFIG_MBOX_STM32_HSEM mbox_stm32_hsem.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_TI_OMAP_MAILBOX mbox_ti_omap.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_TI_SECURE_PROXY mbox_ti_secproxy.c)
 zephyr_library_sources_ifdef(CONFIG_MBOX_XLNX_IPI_MAILBOX mbox_xlnx_ipi_mailbox.c)
-# zephyr-keep-sorted-stop
