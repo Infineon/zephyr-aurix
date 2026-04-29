@@ -1,0 +1,14 @@
+
+
+&gpsr0 {
+	status = "okay";
+	rx-channels = <0>;
+};
+
+/ {
+	mbox_consumer: mbox-consumer {
+		compatible = "vnd,mbox-consumer";
+		mboxes = <&gpsr0 0>, <&gpsr0 0>;
+		mbox-names = "tx", "rx";
+	};
+};
