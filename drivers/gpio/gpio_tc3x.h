@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2024 Infineon Technologies AG
  *
@@ -10,6 +9,7 @@
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/sys_io.h>
+#include <zephyr/sys/slist.h>
 
 #define TC3X_OUT_OFFSET  0x0
 #define TC3X_OMR_OFFSET  0x4
@@ -27,13 +27,29 @@
 #define TC3X_GPIO_MODE_OUTPUT_PUSH_PULL  (TC3X_IOCR_OUTPUT)
 #define TC3X_GPIO_MODE_OUTPUT_OPEN_DRAIN (TC3X_IOCR_OUTPUT | TC3X_IOCR_OPEN_DRAIN)
 
+enum gpio_tc3x_irq_type {
+	TC3X_IRQ_TYPE_GTM = 1,
+};
+
+struct gpio_tc3x_irq_source {
+	uint32_t mux: 4;
+	uint32_t ch: 4;
+	uint32_t tim: 4;
+	uint32_t type: 2;
+	uint32_t pin: 4;
+};
+
 struct gpio_tc3x_config {
 	struct gpio_driver_config common;
 	mm_reg_t base;
+	void (*config_func)(const struct device *dev);
+	const struct gpio_tc3x_irq_source *irq_sources;
+	uint8_t irq_source_count;
 };
 
 struct gpio_tc3x_data {
 	struct gpio_driver_data common;
+	sys_slist_t callbacks;
 };
 
-#endif /* ZEPHYR_DRIVERS_GPIO_GPIO_STM32_H_ */
+#endif

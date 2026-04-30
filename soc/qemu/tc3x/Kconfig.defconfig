@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 if TEST
+# Bump CSA frames so the ZTEST + USERSPACE matrix doesn't exhaust
+# the pool before the harness gets any output back.
 config TRICORE_CSA_COUNT
 	default 384
 endif
