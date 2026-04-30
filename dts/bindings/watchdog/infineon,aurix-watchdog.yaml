@@ -1,0 +1,12 @@
+# Copyright (c) 2024, Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Infineon Aurix Watchdog
+
+compatible: "infineon,aurix-watchdog"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true

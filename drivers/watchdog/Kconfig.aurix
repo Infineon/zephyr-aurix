@@ -1,0 +1,11 @@
+
+# Copyright (C) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+config WDT_AURIX
+	bool "Infineon Aurix MUCs Watchdog Driver"
+	default y
+	select HAS_WDT_DISABLE_AT_BOOT
+	depends on DT_HAS_INFINEON_AURIX_WATCHDOG_ENABLED
+	help
+	  Enable CPU WDT driver for Infineon Aurix MCUs.

@@ -351,37 +351,37 @@
 		};
 
         cpu0_wdt: wdt@f0000018 {
-            compatible = "infineon,tc-wdt";
+            compatible = "infineon,aurix-watchdog";
             reg = <0xF0000018 0x30>;
             status = "disabled";
         };
 
         cpu1_wdt: wdt@f0000048 {
-            compatible = "infineon,tc-wdt";
+            compatible = "infineon,aurix-watchdog";
             reg = <0xF0000048 0x30>;
             status = "disabled";
         };
 
         cpu2_wdt: wdt@f0000078 {
-            compatible = "infineon,tc-wdt";
+            compatible = "infineon,aurix-watchdog";
             reg = <0xF0000078 0x30>;
             status = "disabled";
         };
 
         cpu3_wdt: wdt@f00000a8 {
-            compatible = "infineon,tc-wdt";
+            compatible = "infineon,aurix-watchdog";
             reg = <0xF00000A8 0x30>;
             status = "disabled";
         };
 
         cpu4_wdt: wdt@f00000d8 {
-            compatible = "infineon,tc-wdt";
+            compatible = "infineon,aurix-watchdog";
             reg = <0xF00000D8 0x30>;
             status = "disabled";
         };
 
         cpu5_wdt: wdt@f0000108 {
-            compatible = "infineon,tc-wdt";
+            compatible = "infineon,aurix-watchdog";
             reg = <0xF0000108 0x30>;
             status = "disabled";
         };
@@ -931,9 +931,6 @@
             status = "disabled";
         };
 
-        /* MCMCAN modules: control regs and Message RAM in separate
-         * sysbus windows; up to four M_CAN nodes per module.
-         */
         mcmcan0: mcmcan0@f4710000 {
             compatible = "infineon,mcmcan";
             #address-cells = <1>;
