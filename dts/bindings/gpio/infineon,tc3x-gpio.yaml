@@ -14,10 +14,12 @@ properties:
   irq-sources:
     type: array
     description: |
-      Optional list of GPIO IRQ sources (encoded GTM/ERU mapping)
-      tied to specific pins on this port. Currently parsed for
-      forwards compatibility -- the TC3x GPIO driver does not yet
-      implement pin_interrupt_configure (returns -ENOSYS).
+      Optional list of GPIO IRQ sources tied to specific pins on
+      this port. Each entry is a packed encoding produced by the
+      AURIX_GPIO_IRQ_TIM() macro from the SoC's gpio_irq.h header
+      (pin, GTM TIM unit, channel, mux). Entries are paired in
+      order with the node's interrupts property: irq-sources[i]
+      uses interrupts[i].
 
   "#gpio-cells":
     const: 2
