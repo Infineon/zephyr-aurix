@@ -22,6 +22,11 @@
 
 #include "gpio_tc3x.h"
 
+/* TC3x GTM TIM unit base addresses (TIM0..TIM7 at 0x800 stride),
+ * channel sub-stride within a TIM is 0x80. The Ifx_GTM_TIM struct
+ * has CH0..CH7 as named fields (with reserved gaps), so step via
+ * raw addresses instead of array indexing.
+ */
 #define TC3X_GTM_TIM_BASE        0xF0101000u
 #define TC3X_GTM_TIM_STRIDE      0x800u
 #define TC3X_GTM_TIM_CH_STRIDE   0x80u
@@ -31,19 +36,25 @@
 #define TC3X_GTM_TIM_CH_IRQ_EN_OFF   0x30
 #define TC3X_GTM_TIM_CH_IRQ_MODE_OFF 0x38
 
+/**
+ * @brief Common gpio flags to custom flags
+ */
 static int gpio_tc3x_flags_to_iocr(gpio_flags_t flags, uint32_t *iocr)
 {
 	bool is_input = flags & GPIO_INPUT;
 	bool is_output = flags & GPIO_OUTPUT;
 
+	/* Disconnect not supported */
 	if (!is_input && !is_output) {
 		return -ENOTSUP;
 	}
 
+	/* Open source not supported*/
 	if (flags & GPIO_OPEN_SOURCE) {
 		return -ENOTSUP;
 	}
 
+	/* Pull up & pull down not supported in output mode */
 	if (is_output && (flags & (GPIO_PULL_UP | GPIO_PULL_DOWN)) != 0) {
 		return -ENOTSUP;
 	}
@@ -151,12 +162,18 @@ static int gpio_tc3x_port_toggle_bits(const struct device *dev, gpio_port_pins_t
 	return 0;
 }
 
+/**
+ * @brief Configure pin or port
+ */
 static int gpio_tc3x_config(const struct device *dev, gpio_pin_t pin, gpio_flags_t flags)
 {
 	const struct gpio_tc3x_config *cfg = dev->config;
 	int err;
 	uint32_t iocr = 0;
 
+	/* figure out if we can map the requested GPIO
+	 * configuration
+	 */
 	err = gpio_tc3x_flags_to_iocr(flags, &iocr);
 	if (err != 0) {
 		return err;
@@ -181,7 +198,9 @@ static int gpio_tc3x_config(const struct device *dev, gpio_pin_t pin, gpio_flags
 }
 
 #if defined(CONFIG_GPIO_GET_CONFIG)
-
+/**
+ * @brief Get configuration of pin
+ */
 static int gpio_tc3x_get_config(const struct device *dev, gpio_pin_t pin, gpio_flags_t *flags)
 {
 	const struct gpio_tc3x_config *cfg = dev->config;
@@ -222,12 +241,13 @@ static int gpio_tc3x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 	}
 
 	if (!gtm_initialized) {
-		
+		/* GCLK_NUM/DEN are CPU-EndInit protected on TC3x. */
 		aurix_cpu_endinit_enable(false);
 		sys_write32(1, (mem_addr_t)&MODULE_GTM.CMU.GCLK_NUM);
 		sys_write32(1, (mem_addr_t)&MODULE_GTM.CMU.GCLK_DEN);
 		aurix_cpu_endinit_enable(true);
 
+		/* CMU.CLK_EN is a 2-bit-per-field register; 0b10 force-enables. */
 		Ifx_GTM_CMU_CLK_EN clk_en = {.U = 0};
 		clk_en.B.EN_CLK0 = 0x2;
 		clk_en.B.EN_CLK1 = 0x2;
@@ -281,7 +301,7 @@ static const struct gpio_driver_api gpio_tc3x_driver = {
 	.pin_configure = gpio_tc3x_config,
 #if defined(CONFIG_GPIO_GET_CONFIG)
 	.pin_get_config = gpio_tc3x_get_config,
-#endif 
+#endif /* CONFIG_GPIO_GET_CONFIG */
 	.port_get_raw = gpio_tc3x_port_get_raw,
 	.port_set_masked_raw = gpio_tc3x_port_set_masked_raw,
 	.port_set_bits_raw = gpio_tc3x_port_set_bits_raw,
@@ -312,7 +332,7 @@ static int gpio_tc3x_init(const struct device *dev)
 		uintptr_t ch_base = TC3X_GTM_TIM_BASE +                                            \
 				    (uintptr_t)irq_src->tim * TC3X_GTM_TIM_STRIDE +                \
 				    (uintptr_t)irq_src->ch * TC3X_GTM_TIM_CH_STRIDE;               \
-		                       \
+		/* Acknowledge by clearing IRQ_NOTIFY (write-1-to-clear). */                       \
 		sys_write32(0x3F, ch_base + 0x2C);                                                 \
 		gpio_fire_callbacks(&data->callbacks, dev, BIT(irq_src->pin));                     \
 	}
