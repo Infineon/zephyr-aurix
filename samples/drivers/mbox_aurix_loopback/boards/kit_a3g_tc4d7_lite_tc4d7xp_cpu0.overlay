@@ -1,4 +1,4 @@
-
+/* Single-core GPSR loopback overlay for the TC4D7 Lite kit. */
 
 &gpsr0 {
 	status = "okay";

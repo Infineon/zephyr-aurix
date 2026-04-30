@@ -3,7 +3,7 @@
 
 config TRICORE_AMP
 	bool "TriCore AMP support"
-	depends on SOC_SERIES_TC4XX
+	depends on SOC_SERIES_TC4X
 	help
 	  CPU0 starts secondary CPUs after clock init.
 
