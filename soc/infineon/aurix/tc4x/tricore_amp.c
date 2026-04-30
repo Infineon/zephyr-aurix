@@ -28,6 +28,10 @@ static const uint32_t pflash_base[TC4X_MAX_CPUS] = {
 	PFLASH_ADDR(5),
 };
 
+/* Write each secondary's PC and clear BOOTCON.HALT to release it.
+ * Don't touch peer-CPU PROT/ACCEN: that triggers a class-4 DAE on
+ * cross-core SE writes. Reset defaults are already permissive.
+ */
 static int tricore_amp_start_cores(void)
 {
 	uint32_t mask = CONFIG_TRICORE_AMP_CPU_MASK;
