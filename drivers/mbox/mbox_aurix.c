@@ -58,11 +58,11 @@ static int mbox_aurix_send(const struct device *dev, mbox_channel_id_t id,
 	uint8_t lockset = 0;
 
 	if (msg) {
-		
+		/* Check message size*/
 		if (msg->size > 2) {
 			return -EINVAL;
 		}
-		
+		/* Check message status */
 		if (MODULE_INT.GPSRG[gpsr].SWC[swc].B.LOCKSTAT) {
 			return -EIO;
 		}
@@ -70,6 +70,11 @@ static int mbox_aurix_send(const struct device *dev, mbox_channel_id_t id,
 		lockset = msg->size != 0 ? 1 : 0;
 	}
 
+	/* Atomically commit DATA + LOCKSET + SETR in a single 32-bit store.
+	 * Going through .B as a struct literal lets the compiler emit
+	 * sub-word stores, which on this register means LOCKSET can land
+	 * before DATA and the data write is then dropped by the lock.
+	 */
 	MODULE_INT.GPSRG[gpsr].SWC[swc].U =
 		((uint32_t)data) |
 		((uint32_t)lockset << 16) |
@@ -128,6 +133,7 @@ static int mbox_aurix_init(const struct device *dev)
 {
 	const struct mbox_aurix_config *cfg = dev->config;
 
+	/* Nothing to initialize if no RX-Channels are used */
 	if (cfg->rx_channels == 0) {
 		return 0;
 	}
@@ -148,6 +154,7 @@ static void mbox_aurix_isr(void *user_data)
 	uint8_t grp = (irq - AURIX_GPSR_IRQ_BASE) / 8;
 	uint8_t ch = (irq - AURIX_GPSR_IRQ_BASE) % 8;
 
+	/* Check for invald irq */
 	if (!(cfg->rx_channels & (1 << ch))) {
 		return;
 	}
@@ -156,7 +163,9 @@ static void mbox_aurix_isr(void *user_data)
 	if (MODULE_INT.GPSRG[grp].SWC[ch].B.LOCKSTAT) {
 		msg.size = 2;
 		msg_data = MODULE_INT.GPSRG[grp].SWC[ch].B.DATA;
-		
+		/* Clear LOCKSTAT (W1C) via .U so the write lands in one
+		 * store, regardless of compiler bitfield codegen.
+		 */
 		MODULE_INT.GPSRG[grp].SWC[ch].U = (1U << 17);
 	}
 #endif

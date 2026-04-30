@@ -74,6 +74,7 @@ int main(void)
 			return 0;
 		}
 
+		/* Wait for the ISR to drain the slot before reusing it. */
 		ret = k_sem_take(&rx_sem, K_MSEC(50));
 		if (ret != 0) {
 			printk("FAIL no rx for #%u: %d\n", counter, ret);
