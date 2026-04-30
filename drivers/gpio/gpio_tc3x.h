@@ -31,6 +31,10 @@ enum gpio_tc3x_irq_type {
 	TC3X_IRQ_TYPE_GTM = 1,
 };
 
+/* Encoding matches AURIX_GPIO_IRQ_TIM(pin, tim, ch, mux) from
+ * dt-bindings/gpio/<soc>-gpio_irq.h: pin in [31:28], type in [13:12],
+ * tim in [11:8], ch in [7:4], mux in [3:0].
+ */
 struct gpio_tc3x_irq_source {
 	uint32_t mux: 4;
 	uint32_t ch: 4;
@@ -52,4 +56,4 @@ struct gpio_tc3x_data {
 	sys_slist_t callbacks;
 };
 
-#endif
+#endif /* ZEPHYR_DRIVERS_GPIO_GPIO_TC3X_H_ */

@@ -26,11 +26,10 @@
 #define TC3X_GTM_TIM_STRIDE      0x800u
 #define TC3X_GTM_TIM_CH_STRIDE   0x80u
 
-#define TC3X_GTM_TIM_CH_CNTS_OFF 0x10
-#define TC3X_GTM_TIM_CH_FLT_RE_OFF 0x1C
-#define TC3X_GTM_TIM_CH_FLT_FE_OFF 0x20
-#define TC3X_GTM_TIM_CH_CTRL_OFF 0x24
-#define TC3X_GTM_TIM_CH_IRQ_EN_OFF 0x30
+#define TC3X_GTM_TIM_CH_CTRL_OFF     0x24
+#define TC3X_GTM_TIM_CH_NOTIFY_OFF   0x2C
+#define TC3X_GTM_TIM_CH_IRQ_EN_OFF   0x30
+#define TC3X_GTM_TIM_CH_IRQ_MODE_OFF 0x38
 
 static int gpio_tc3x_flags_to_iocr(gpio_flags_t flags, uint32_t *iocr)
 {
@@ -230,19 +229,19 @@ static int gpio_tc3x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 		aurix_cpu_endinit_enable(true);
 
 		Ifx_GTM_CMU_CLK_EN clk_en = {.U = 0};
-		clk_en.B.EN_CLK0 = 2;
-		clk_en.B.EN_CLK1 = 2;
-		clk_en.B.EN_CLK2 = 2;
-		clk_en.B.EN_CLK3 = 2;
-		clk_en.B.EN_CLK4 = 2;
-		clk_en.B.EN_CLK5 = 2;
-		clk_en.B.EN_CLK6 = 2;
-		clk_en.B.EN_CLK7 = 2;
-		clk_en.B.EN_ECLK0 = 2;
-		clk_en.B.EN_ECLK1 = 2;
-		clk_en.B.EN_ECLK2 = 2;
-		clk_en.B.EN_FXCLK = 2;
-		MODULE_GTM.CMU.CLK_EN = clk_en;
+		clk_en.B.EN_CLK0 = 0x2;
+		clk_en.B.EN_CLK1 = 0x2;
+		clk_en.B.EN_CLK2 = 0x2;
+		clk_en.B.EN_CLK3 = 0x2;
+		clk_en.B.EN_CLK4 = 0x2;
+		clk_en.B.EN_CLK5 = 0x2;
+		clk_en.B.EN_CLK6 = 0x2;
+		clk_en.B.EN_CLK7 = 0x2;
+		clk_en.B.EN_ECLK0 = 0x2;
+		clk_en.B.EN_ECLK1 = 0x2;
+		clk_en.B.EN_ECLK2 = 0x2;
+		clk_en.B.EN_FXCLK = 0x2;
+		sys_write32(clk_en.U, (mem_addr_t)&MODULE_GTM.CMU.CLK_EN);
 		gtm_initialized = true;
 	}
 
@@ -255,20 +254,16 @@ static int gpio_tc3x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 			    (uintptr_t)irq_src->ch * TC3X_GTM_TIM_CH_STRIDE;
 
 	Ifx_GTM_TIM_CH_CTRL ctrl = {.U = 0};
-	ctrl.B.TIM_EN = 1;
 	ctrl.B.CLK_SEL = 7;
-	ctrl.B.FLT_CNT_FRQ = 0x3;
 	ctrl.B.TIM_MODE = mode == GPIO_INT_MODE_EDGE ? 0x2 : 0x5;
 	ctrl.B.DSL = trig == GPIO_INT_TRIG_HIGH ? 1 : 0;
 	ctrl.B.ISL = trig == GPIO_INT_TRIG_BOTH ? 1 : 0;
-	ctrl.B.FLT_EN = 1;
-	ctrl.B.FLT_MODE_FE = mode == GPIO_INT_MODE_LEVEL ? 0x1 : 0;
-	ctrl.B.FLT_MODE_RE = mode == GPIO_INT_MODE_LEVEL ? 0x1 : 0;
 
-	sys_write32(0x5, ch_base + TC3X_GTM_TIM_CH_FLT_RE_OFF);
-	sys_write32(0x5, ch_base + TC3X_GTM_TIM_CH_FLT_FE_OFF);
-	sys_write32(10, ch_base + TC3X_GTM_TIM_CH_CNTS_OFF);
+	sys_write32(ctrl.U, ch_base + TC3X_GTM_TIM_CH_CTRL_OFF);
+	sys_write32(0x3F, ch_base + TC3X_GTM_TIM_CH_NOTIFY_OFF);
+	sys_write32(0x1, ch_base + TC3X_GTM_TIM_CH_IRQ_MODE_OFF);
 	sys_write32(0x1, ch_base + TC3X_GTM_TIM_CH_IRQ_EN_OFF);
+	ctrl.B.TIM_EN = 1;
 	sys_write32(ctrl.U, ch_base + TC3X_GTM_TIM_CH_CTRL_OFF);
 
 	return 0;
