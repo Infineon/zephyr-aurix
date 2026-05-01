@@ -51,7 +51,7 @@ void z_tricore_wdt_boot()
 #if CONFIG_TRICORE_CORE_ID == 0
 	WDT_SAFETY_DISABLE_IF_UNUSED;
 #endif
-	WDT_CPU_DISABLE(WDT_CPU_IDX(CONFIG_TRICORE_CORE_ID))
+	WDT_CPU_DISABLE_BY_ID(WDT_CPU_IDX(CONFIG_TRICORE_CORE_ID));
 #else
 #if CONFIG_TRICORE_CORE_ID == 0
 	WDT_DISABLE(DT_NODELABEL(safety_wdt));
@@ -60,7 +60,6 @@ void z_tricore_wdt_boot()
 #endif
 }
 
-/* Function for Hightec LLVM */
 void __memcpy_assume_aligned(void *dst, const void *src, size_t n)
 {
 	if (n == 4) {
