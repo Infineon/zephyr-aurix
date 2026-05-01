@@ -23,14 +23,15 @@
 		};
 	};
 
-	/* CAN module 0 node 1 on P01.3/P01.4 (TC4D7 LITE on-board transceiver). */
 	can1_default: can1_default {
 		group1 {
 			pinmux = <CAN01_TX_P1_3>;
 			output-enable;
+			drive-strength = "strong";
 		};
 		group2 {
 			pinmux = <CAN01_RX_P1_4>;
+			drive-strength = "strong";
 		};
 	};
 };
