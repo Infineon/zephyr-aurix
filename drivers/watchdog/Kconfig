@@ -1,3 +1,4 @@
+# Watchdog configuration options
 
 # Copyright (c) 2015 Intel Corporation
 # Copyright (c) 2017 Nordic Semiconductor ASA
@@ -77,8 +78,9 @@ config WDT_COUNTER_CH_COUNT
 	  Note that actual channel count will be limited to number of channels
 	  supported by the counter device which is used for watchdog.
 
-endif
+endif # WDT_COUNTER
 
+# zephyr-keep-sorted-start
 source "drivers/watchdog/Kconfig.adi_max42500"
 source "drivers/watchdog/Kconfig.ambiq"
 source "drivers/watchdog/Kconfig.andes_atcwdt200"
@@ -134,7 +136,8 @@ source "drivers/watchdog/Kconfig.xec"
 source "drivers/watchdog/Kconfig.xilinx_wwdt"
 source "drivers/watchdog/Kconfig.xlnx"
 source "drivers/watchdog/Kconfig.xmc4xxx"
+# zephyr-keep-sorted-stop
 
 source "drivers/watchdog/Kconfig.rts5817"
 
-endif
+endif # WATCHDOG
