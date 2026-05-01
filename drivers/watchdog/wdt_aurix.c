@@ -40,55 +40,66 @@ struct wdt_aurix_data {
 #define WDT_STAT(base)  base + offsetof(Ifx_WTU_WDTCPU, STAT)
 #endif
 
+#if CONFIG_SOC_SERIES_TC3X
+
+static inline void wdt_aurix_apply_con0_tc3x(mm_reg_t con0, uint16_t reload, bool endinit)
+{
+	uint32_t v = sys_read32(con0);
+	uint32_t pw = ((v >> 2) & 0x3FFFu) ^ 0x003Fu;
+	int i;
+
+	if (v & 0x2U) {
+		
+		sys_write32((v & 0xFFFF0000U) | (pw << 2) | 0x1U, con0);
+	}
+
+	sys_write32(((uint32_t)reload << 16) | (pw << 2) | 0x2U |
+	            (endinit ? 0x1U : 0U), con0);
+
+	for (i = 0; i < 10000; i++) {
+		if ((((sys_read32(con0) & 0x1U) != 0)) == endinit) {
+			break;
+		}
+	}
+}
+#endif
+
 static inline void wdt_aurix_unlock(const struct device *dev)
 {
 	const struct wdt_aurix_config *config = dev->config;
+#if CONFIG_SOC_SERIES_TC3X
+	const struct wdt_aurix_data *data = dev->data;
+
+	wdt_aurix_apply_con0_tc3x(WDT_CTRLA(config->base), data->reload, false);
+#elif CONFIG_SOC_SERIES_TC4X
 	Ifx_WTU_CTRLA wtu_ctrla;
 
 	wtu_ctrla.U = sys_read32(WDT_CTRLA(config->base));
 	if (wtu_ctrla.B.LCK) {
 		wtu_ctrla.B.LCK = 0;
-#if CONFIG_SOC_SERIES_TC3X
-		wtu_ctrla.B.PW = config->password;
-		wtu_ctrla.B.ENDINIT = 1;
-#elif CONFIG_SOC_SERIES_TC4X
-		/* WTU rotates the password per unlock; toggle low PW bits. */
+		
 		wtu_ctrla.U ^= (0x7FU << 1);
-#endif
 		sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
 	}
-
-#if CONFIG_SOC_SERIES_TC3X
-	wtu_ctrla.B.LCK = 1;
-	wtu_ctrla.B.ENDINIT = 0;
-	sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
 #endif
 }
 
 static inline void wdt_aurix_lock(const struct device *dev)
 {
 	const struct wdt_aurix_config *config = dev->config;
-#if CONFIG_SOC_SERIES_TC3X
 	const struct wdt_aurix_data *data = dev->data;
-#endif
+#if CONFIG_SOC_SERIES_TC4X
 	Ifx_WTU_CTRLA wtu_ctrla;
+#endif
 
 #if CONFIG_SOC_SERIES_TC3X
-	wtu_ctrla.U = sys_read32(WDT_CTRLA(config->base));
-	if (wtu_ctrla.B.LCK) {
-		wtu_ctrla.B.LCK = 0;
-		wtu_ctrla.B.PW = config->password;
-		wtu_ctrla.B.ENDINIT = 1;
-		sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
-	}
-
-	wtu_ctrla = (Ifx_WTU_CTRLA){
-		.B.ENDINIT = 1, .B.LCK = 1, .B.REL = data->reload, .B.PW = config->password};
-	sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
+	
+	wdt_aurix_apply_con0_tc3x(WDT_CTRLA(config->base), data->reload, true);
 #elif CONFIG_SOC_SERIES_TC4X
 	wtu_ctrla.U = sys_read32(WDT_CTRLA(config->base));
 	wtu_ctrla.B.LCK = 1;
 	sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
+	ARG_UNUSED(data);
 #endif
 }
 
@@ -182,23 +193,16 @@ static int wdt_aurix_init(const struct device *dev)
 
 	data->reload = 0xFFFC;
 
-	/* Initial unlock operation needs to read the password */
+#if CONFIG_SOC_SERIES_TC3X
+	
+	wdt_aurix_apply_con0_tc3x(WDT_CTRLA(config->base), data->reload, false);
+#elif CONFIG_SOC_SERIES_TC4X
 	ctrla.U = sys_read32(WDT_CTRLA(config->base));
 	if (ctrla.B.LCK) {
 		ctrla.B.LCK = 0;
-#if CONFIG_SOC_SERIES_TC3X
-		ctrla.B.PW ^= 0x003F;
-		ctrla.B.ENDINIT = 1;
-#elif CONFIG_SOC_SERIES_TC4X
 		ctrla.B.PW ^= 0x007F;
-#endif
 		sys_write32(ctrla.U, WDT_CTRLA(config->base));
 	}
-	/* Clear endinit to configure wdt */
-#if CONFIG_SOC_SERIES_TC3X
-	ctrla.B.ENDINIT = 0;
-	ctrla.B.LCK = 1;
-	sys_write32(ctrla.U, WDT_CTRLA(config->base));
 #endif
 	wdt_aurix_configure(dev, !IS_ENABLED(CONFIG_WDT_DISABLE_AT_BOOT));
 	wdt_aurix_lock(dev);
