@@ -96,7 +96,6 @@ __maybe_unused static inline int clock_control_tc3x_ccu_pll_wait_power_up()
 	Ifx_SCU_PERPLLSTAT perpllstat;
 	Ifx_SCU_SYSPLLSTAT syspllstat;
 
-	/* Wait 1ms to stabilize the pll */
 	uint64_t start_time = k_ticks_to_us_floor64(k_uptime_ticks());
 
 	if (!WAIT_FOR((perpllstat = MODULE_SCU.PERPLLSTAT, syspllstat = MODULE_SCU.SYSPLLSTAT,
@@ -182,7 +181,6 @@ static inline int clock_control_tc3x_ccu_select_clock(uint8_t clksel)
 	MODULE_SCU.CCUCON0 = ccucon0;
 	aurix_safety_endinit_enable(true);
 
-	/* Wait for new clock config to be active */
 	if (clksel) {
 		WAIT_FOR_CCUCON_UNLOCKED_OR_ERR(0, fpll_div3)
 	} else {
@@ -215,8 +213,8 @@ static inline int clock_control_tc3x_ccu_set_divider()
 		.B.MCANDIV = CLOCK_DIV_WITH_INST(fmcani, infineon_mcmcan),
 		.B.MSCDIV = 0,
 		.B.QSPIDIV = CLOCK_DIV_WITH_INST(fqspi, infineon_qspi),
-		.B.I2CDIV = 0,
-		.B.PLL1DIVDIS = 1, // TODO: Implement pll1 div
+		.B.I2CDIV = CLOCK_DIV_WITH_INST(fi2c, infineon_aurix_i2c),
+		.B.PLL1DIVDIS = 1, 
 	};
 	Ifx_SCU_CCUCON2 ccucon2 = {
 		.B.CLKSELASCLINS =
@@ -270,7 +268,7 @@ static int clock_control_tc3x_ccu_on(const struct device *dev, clock_control_sub
 	case CLOCK_FADC:
 		return 0;
 	case CLOCK_FI2C:
-		return -EIO;
+		return CLOCK_DIV_WITH_INST(fi2c, infineon_aurix_i2c) != 0 ? 0 : -EIO;
 	case CLOCK_FEBU:
 		return 0;
 	default:
@@ -334,7 +332,8 @@ static int clock_control_tc3x_ccu_get_rate(const struct device *dev, clock_contr
 	case CLOCK_FADC:
 		return 0;
 	case CLOCK_FI2C:
-		return -EIO;
+		*rate = fsource2_freq / fi2c_div;
+		return 0;
 	case CLOCK_FEBU:
 		return 0;
 	default:
@@ -349,7 +348,6 @@ static int clock_control_tc3x_ccu_init(const struct device *dev)
 
 #if !IS_ENABLED(CONFIG_SOC_TC3X_SLAVE_CORE)
 
-	/* Enable osc if requrired */
 	if (CLOCK_IS_CLOCK_SOURCE(fosc, FOSC_SOURCES)) {
 		if (!clock_control_tc3x_ccu_osc_ok()) {
 			ret = clock_control_tc3x_ccu_osc_init();
@@ -367,7 +365,6 @@ static int clock_control_tc3x_ccu_init(const struct device *dev)
 			return ret;
 		}
 
-		/* Configure pll parameters*/
 		clock_control_tc3x_ccu_pll_init();
 		if (ret) {
 			return ret;
@@ -383,7 +380,7 @@ static int clock_control_tc3x_ccu_init(const struct device *dev)
 			return ret;
 		}
 	} else {
-		/* Disable pll power */
+		
 		clock_control_tc3x_ccu_pll_power_down();
 
 		if (ret) {
@@ -396,7 +393,6 @@ static int clock_control_tc3x_ccu_init(const struct device *dev)
 		return -EIO;
 	}
 
-	/* Select clock for operation */
 	ret = clock_control_tc3x_ccu_select_clock(
 		DT_SAME_NODE(DT_CLOCKS_CTLR(DT_NODELABEL(fsource0)), DT_NODELABEL(fpll0)));
 	if (ret) {
@@ -404,7 +400,7 @@ static int clock_control_tc3x_ccu_init(const struct device *dev)
 	}
 
 	if (CLOCK_IS_CLOCK_SOURCE(fpll0, fsource0)) {
-		/* Frequency stepping, to avoid load jumps */
+		
 		ret = clock_control_tc3x_ccu_pll_set_devider();
 		if (ret) {
 			return ret;
