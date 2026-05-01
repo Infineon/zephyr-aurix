@@ -3,10 +3,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
- * The kit's user button is on P03.11, but P03 has no GTM TIM/ERU mux on
- * TC4x silicon, so it cannot generate edge interrupts. Re-point sw0 to
- * P10.5, which is exposed on the kit header and routes to TIM0_2.
- * Short P10.5 to GND momentarily to "press" the button.
+ * The kit on-board user button is on P03.11, but P03 has no GTM TIM
+ * or ERU mux on TC4x silicon, so it cannot generate edge interrupts.
+ * Re-point sw0 to P10.7, which is exposed on the kit mikroBUS header
+ * (pin 15, labeled "INT") and routes to GTM TIM0_0.  Short P10.7 to
+ * GND momentarily to "press" the button.
  */
 
 #include <infineon/tc4x/tc4x7_com-gpio_irq.h>
@@ -14,8 +15,8 @@
 / {
 	buttons {
 		button_irq: button_irq {
-			gpios = <&p10 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-			label = "Header-pin button (P10.5)";
+			gpios = <&p10 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			label = "mikroBUS INT (P10.7)";
 		};
 	};
 
@@ -26,8 +27,8 @@
 
 &p10 {
 	status = "okay";
-	irq-sources = <GPIO_P10_5_IRQ_TIM0_2>;
-	interrupts = <IRQ_EGTM_TIM0_SR2 2>;
+	irq-sources = <GPIO_P10_7_IRQ_TIM0_0>;
+	interrupts = <IRQ_EGTM_TIM0_SR0 2>;
 };
 
 &fegtm {
