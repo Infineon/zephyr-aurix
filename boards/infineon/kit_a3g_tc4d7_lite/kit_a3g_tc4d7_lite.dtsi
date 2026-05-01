@@ -39,6 +39,13 @@
 	status = "okay";
 };
 
+/* On-board TLE9371VSJ CAN transceiver on M_CAN node 1 (P01.3/P01.4),
+ * 120 ohm terminated. TLE9371 defaults to standby; CAN_STB (P03.5)
+ * is hogged low at boot so the transceiver is in normal mode before
+ * the M_CAN BSP ever drives the bus. Mirrors the NuttX board init
+ * (phy_present=false there); the can_mcan driver does not need a
+ * phy hook to manage standby.
+ */
 &mcmcan0 {
 	status = "okay";
 };
