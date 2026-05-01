@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2026 Parthiban Nallathambi
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The TC397 ADAS kit has no user-button block; on-board P33.0 drives
+ * the acoustic beeper (datasheet) and P33.1..4 are LEDs.  Re-point
+ * sw0 to P33.10, exposed on header X2 pin 38, with GTM TIM0_0 mux.
+ * Short P33.10 to GND momentarily to "press" the button.
+ */
+
+#include <infineon/tc3x/tc3x7_adas-gpio_irq.h>
+
+/ {
+	buttons {
+		compatible = "gpio-keys";
+		button_irq: button_irq {
+			gpios = <&p33 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			label = "X2.38 header pin (P33.10)";
+		};
+	};
+
+	aliases {
+		sw0 = &button_irq;
+	};
+};
+
+&p33 {
+	status = "okay";
+	irq-sources = <GPIO_P33_10_IRQ_TIM0_0>;
+	interrupts = <IRQ_GTM_TIM0_0 2>;
+};
