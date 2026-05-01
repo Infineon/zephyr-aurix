@@ -60,6 +60,7 @@ void z_tricore_wdt_boot()
 #endif
 }
 
+/* Function for Hightec LLVM */
 void __memcpy_assume_aligned(void *dst, const void *src, size_t n)
 {
 	if (n == 4) {
