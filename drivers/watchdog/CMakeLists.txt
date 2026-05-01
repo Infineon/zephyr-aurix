@@ -5,6 +5,7 @@ zephyr_syscall_header(${ZEPHYR_BASE}/include/zephyr/drivers/watchdog.h)
 zephyr_library()
 zephyr_library_property(ALLOW_EMPTY TRUE)
 
+# zephyr-keep-sorted-start
 zephyr_library_sources_ifdef(CONFIG_FWDGT_GD32 wdt_fwdgt_gd32.c)
 zephyr_library_sources_ifdef(CONFIG_IWDG_STM32 wdt_iwdg_stm32.c)
 zephyr_library_sources_ifdef(CONFIG_USERSPACE wdt_handlers.c)
@@ -71,3 +72,4 @@ zephyr_library_sources_ifdef(CONFIG_WWDGT_GD32 wdt_wwdgt_gd32.c)
 zephyr_library_sources_ifdef(CONFIG_WWDG_STM32 wdt_wwdg_stm32.c)
 zephyr_library_sources_ifdef(CONFIG_WWDT_NUMAKER wdt_wwdt_numaker.c)
 zephyr_library_sources_ifdef(CONFIG_XILINX_WINDOW_WATCHDOG wdt_xilinx_wwdt.c)
+# zephyr-keep-sorted-stop

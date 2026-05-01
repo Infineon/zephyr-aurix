@@ -931,6 +931,9 @@
             status = "disabled";
         };
 
+        /* MCMCAN modules: control regs and Message RAM in separate
+         * sysbus windows; up to four M_CAN nodes per module.
+         */
         mcmcan0: mcmcan0@f4710000 {
             compatible = "infineon,mcmcan";
             #address-cells = <1>;

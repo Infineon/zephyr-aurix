@@ -52,7 +52,7 @@ static inline void wdt_aurix_unlock(const struct device *dev)
 		wtu_ctrla.B.PW = config->password;
 		wtu_ctrla.B.ENDINIT = 1;
 #elif CONFIG_SOC_SERIES_TC4X
-		
+		/* WTU rotates the password per unlock; toggle low PW bits. */
 		wtu_ctrla.U ^= (0x7FU << 1);
 #endif
 		sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
@@ -182,6 +182,7 @@ static int wdt_aurix_init(const struct device *dev)
 
 	data->reload = 0xFFFC;
 
+	/* Initial unlock operation needs to read the password */
 	ctrla.U = sys_read32(WDT_CTRLA(config->base));
 	if (ctrla.B.LCK) {
 		ctrla.B.LCK = 0;
@@ -193,7 +194,7 @@ static int wdt_aurix_init(const struct device *dev)
 #endif
 		sys_write32(ctrla.U, WDT_CTRLA(config->base));
 	}
-	
+	/* Clear endinit to configure wdt */
 #if CONFIG_SOC_SERIES_TC3X
 	ctrla.B.ENDINIT = 0;
 	ctrla.B.LCK = 1;
