@@ -23,6 +23,20 @@
 		};
 	};
 
+	/* CAN module 0 node 1 on P01.3/P01.4 (TC4D7 LITE on-board transceiver).
+	 * drive-strength must be "strong" (PD=0): the binding default "medium"
+	 * (PD=2) produces edges the on-board TLE9371 transceiver + Pi mcp2515
+	 * peer can't lock onto at 500 kbit/s. Confirmed against NuttX TC4D7
+	 * pad config (PADCFG[3].DRVCFG=0x051) 2026-05-01.
+	 *
+	 * output-select on the RX group sets P01.PCSRSEL[4]=1 to mirror NuttX
+	 * (which writes whole-word PCSRSEL = BIT(4) and ends up with 0x10).
+	 * Empirically this is *not* cosmetic on TC4D7 silicon: with PCSRSEL=0
+	 * the kit still drives TX edges but the bus locks up at the protocol
+	 * layer (kit reads StuffError on its own readback, never sees ACK,
+	 * goes ERROR-PASSIVE in <1s). With PCSRSEL[4]=1 NuttX exchanges 16
+	 * frames bidir clean. Verified on TC4D7-B on 2026-05-01.
+	 */
 	can1_default: can1_default {
 		group1 {
 			pinmux = <CAN01_TX_P1_3>;
