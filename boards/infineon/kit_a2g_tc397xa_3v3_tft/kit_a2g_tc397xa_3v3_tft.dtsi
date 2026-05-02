@@ -27,6 +27,9 @@
 		led0 = &led0;
 	};
 
+	/* On-board TLE9251VSJ on M_CAN node 2 (P10.2/P10.3). No software
+	 * enable/standby line, so no can-transceiver-gpio node is needed.
+	 */
 };
 
 &fosc {
@@ -67,6 +70,7 @@
 	pinctrl-names = "default";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
+	/* MCP79411 EUI-48 EEPROM (0x57); RTCC at 0x6F (no Zephyr driver) */
 	eeprom: eeprom@57 {
 		compatible = "microchip,mcp79411", "atmel,at24";
 		reg = <0x57>;
@@ -77,6 +81,7 @@
 	};
 };
 
+/* CAN module 0 node 2 - default board config */
 &mcmcan0 {
 	status = "okay";
 };
