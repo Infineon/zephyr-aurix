@@ -41,7 +41,13 @@ struct wdt_aurix_data {
 #endif
 
 #if CONFIG_SOC_SERIES_TC3X
-
+/* AURIX TC3xx CON0 access pattern (matches NuttX tc3x_wdt_apply_con0):
+ * the password rotates with every modify-write, so fixing it from DT
+ * does not work after the first access.  Read CON0, rotate PW from the
+ * just-read value, then do unlock (ENDINIT=1, LCK=0) followed by the
+ * actual modify (LCK=1 with new ENDINIT) -- both writes use the same
+ * rotated PW.
+ */
 static inline void wdt_aurix_apply_con0_tc3x(mm_reg_t con0, uint16_t reload, bool endinit)
 {
 	uint32_t v = sys_read32(con0);
@@ -49,10 +55,11 @@ static inline void wdt_aurix_apply_con0_tc3x(mm_reg_t con0, uint16_t reload, boo
 	int i;
 
 	if (v & 0x2U) {
-		
+		/* unlock: keep REL, set rotated PW, ENDINIT=1, LCK=0 */
 		sys_write32((v & 0xFFFF0000U) | (pw << 2) | 0x1U, con0);
 	}
 
+	/* apply: new REL, same rotated PW, LCK=1, ENDINIT as requested */
 	sys_write32(((uint32_t)reload << 16) | (pw << 2) | 0x2U |
 	            (endinit ? 0x1U : 0U), con0);
 
@@ -70,6 +77,7 @@ static inline void wdt_aurix_unlock(const struct device *dev)
 #if CONFIG_SOC_SERIES_TC3X
 	const struct wdt_aurix_data *data = dev->data;
 
+	/* Open ENDINIT window for CON1 writes; keep current reload value. */
 	wdt_aurix_apply_con0_tc3x(WDT_CTRLA(config->base), data->reload, false);
 #elif CONFIG_SOC_SERIES_TC4X
 	Ifx_WTU_CTRLA wtu_ctrla;
@@ -77,7 +85,7 @@ static inline void wdt_aurix_unlock(const struct device *dev)
 	wtu_ctrla.U = sys_read32(WDT_CTRLA(config->base));
 	if (wtu_ctrla.B.LCK) {
 		wtu_ctrla.B.LCK = 0;
-		
+		/* WTU rotates the password per unlock; toggle low PW bits. */
 		wtu_ctrla.U ^= (0x7FU << 1);
 		sys_write32(wtu_ctrla.U, WDT_CTRLA(config->base));
 	}
@@ -93,7 +101,7 @@ static inline void wdt_aurix_lock(const struct device *dev)
 #endif
 
 #if CONFIG_SOC_SERIES_TC3X
-	
+	/* Close ENDINIT and write REL with rotated password. */
 	wdt_aurix_apply_con0_tc3x(WDT_CTRLA(config->base), data->reload, true);
 #elif CONFIG_SOC_SERIES_TC4X
 	wtu_ctrla.U = sys_read32(WDT_CTRLA(config->base));
@@ -194,7 +202,9 @@ static int wdt_aurix_init(const struct device *dev)
 	data->reload = 0xFFFC;
 
 #if CONFIG_SOC_SERIES_TC3X
-	
+	/* Open ENDINIT window via the rotated-password apply; CON1 (CTRLB) is
+	 * then writable until the matching apply_con0(...endinit=true).
+	 */
 	wdt_aurix_apply_con0_tc3x(WDT_CTRLA(config->base), data->reload, false);
 #elif CONFIG_SOC_SERIES_TC4X
 	ctrla.U = sys_read32(WDT_CTRLA(config->base));
