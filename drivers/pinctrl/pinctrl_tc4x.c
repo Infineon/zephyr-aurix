@@ -52,7 +52,12 @@ static void pinctrl_configure_pin(const pinctrl_soc_pin_t *pin)
 	}
 
 	void *accgrp_prote = (void *)&PORT_BASE(pin->port)->ACCGRP[0].PROTE;
-	
+	/* PADCFG.PD (pad drive mode) and PADCFG.PL (pad level) are pad
+	 * properties that only apply when the pin is an output.  Forcing
+	 * them on an input pin disables the alt-input mux on TC4Dx (the
+	 * asclin / etc. peripheral RX path silently drops to nothing),
+	 * which is why NuttX writes 0 for them on inputs.  Mirror that.
+	 */
 	Ifx_P_PADCFG_DRVCFG drvcfg = {
 		.B = {.DIR = pin->output,
 		      .OD = pin->open_drain,
