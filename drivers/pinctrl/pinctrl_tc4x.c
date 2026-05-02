@@ -52,12 +52,13 @@ static void pinctrl_configure_pin(const pinctrl_soc_pin_t *pin)
 	}
 
 	void *accgrp_prote = (void *)&PORT_BASE(pin->port)->ACCGRP[0].PROTE;
+	
 	Ifx_P_PADCFG_DRVCFG drvcfg = {
 		.B = {.DIR = pin->output,
 		      .OD = pin->open_drain,
 		      .MODE = pin->output ? pin->alt : (pin->pull_down | (pin->pull_up << 1)),
-		      .PD = pin->pad_driver,
-		      .PL = pin->pad_level}};
+		      .PD = pin->output ? pin->pad_driver : 0,
+		      .PL = pin->output ? pin->pad_level : 0}};
 
 	if (aurix_prot_get_state(accgrp_prote) == AURIX_PROT_STATE_RUN) {
 		aurix_prot_set_state(accgrp_prote, AURIX_PROT_STATE_CONFIG);
