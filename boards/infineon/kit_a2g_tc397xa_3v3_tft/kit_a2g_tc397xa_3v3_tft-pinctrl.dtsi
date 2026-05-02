@@ -51,6 +51,7 @@
 		};
 	};
 
+	/* MCP79411 RTCC+EEPROM on P15.4 (SCL) / P15.5 (SDA) */
 	i2c0_default: i2c0_default {
 		group1 {
 			pinmux = <I2C0_SCL_IN_P15_4>, <I2C0_SDA_IN_P15_5>;
@@ -62,6 +63,12 @@
 		};
 	};
 
+	/* CAN module 0 node 2 on P10.2/P10.3 (default board config).
+	 * drive-strength = "strong" mirrors the lesson from TC4D7-B
+	 * (commit 3ff98447331): default medium drive made the kit read
+	 * its own TX as StuffError; strong drive gets the SoC's
+	 * self-readback past the bus capacitance.
+	 */
 	can0_default: can0_default {
 		group1 {
 			pinmux = <CAN02_TX_P10_3>;
