@@ -51,7 +51,17 @@
 		};
 	};
 
-	/* CAN module 0 node 2 on P10.2/P10.3 (default board config) */
+	i2c0_default: i2c0_default {
+		group1 {
+			pinmux = <I2C0_SCL_IN_P15_4>, <I2C0_SDA_IN_P15_5>;
+		};
+		group2 {
+			pinmux = <I2C0_SCL_OUT_P15_4>, <I2C0_SDA_OUT_P15_5>;
+			output-enable;
+			drive-open-drain;
+		};
+	};
+
 	can0_default: can0_default {
 		group1 {
 			pinmux = <CAN02_TX_P10_3>;
