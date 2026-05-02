@@ -51,7 +51,6 @@
 		};
 	};
 
-	/* MCP79411 RTCC+EEPROM on P15.4 (SCL) / P15.5 (SDA) */
 	i2c0_default: i2c0_default {
 		group1 {
 			pinmux = <I2C0_SCL_IN_P15_4>, <I2C0_SDA_IN_P15_5>;
@@ -63,14 +62,15 @@
 		};
 	};
 
-	/* CAN module 0 node 2 on P10.2/P10.3 (default board config) */
 	can0_default: can0_default {
 		group1 {
 			pinmux = <CAN02_TX_P10_3>;
 			output-enable;
+			drive-strength = "strong";
 		};
 		group2 {
 			pinmux = <CAN02_RX_P10_2>;
+			drive-strength = "strong";
 		};
 	};
 };
