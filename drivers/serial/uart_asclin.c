@@ -140,9 +140,11 @@ static bool uart_asclin_set_baudrate(Ifx_ASCLIN *base, uint32_t baudrate, uint32
 	int32_t ai;
 	float div = ((float)fovs / (float)fpd);
 
+	/* initialize matrix */
 	m[0][0] = m[1][1] = 1;
 	m[0][1] = m[1][0] = 0;
 
+	/* loop finding terms until denom gets too big */
 	while (m[1][0] * (ai = (uint32_t)div) + m[1][1] <= 4095) {
 		int32_t t;
 		t = m[0][0] * ai + m[0][1];
@@ -162,12 +164,12 @@ static bool uart_asclin_set_baudrate(Ifx_ASCLIN *base, uint32_t baudrate, uint32
 static inline void uart_asclin_set_framecfg(Ifx_ASCLIN *base, uint8_t data_bits, uint8_t stop_bits,
 					    bool parity_enable, bool parity_odd)
 {
-	
+	/* Frame Configuration*/
 	base->FRAMECON.B = (Ifx_ASCLIN_FRAMECON_Bits){
 		.STOP = stop_bits, .MODE = 1, .PEN = parity_enable, .ODD = parity_odd};
-	
+	/* Data configuration */
 	base->DATCON.B = (Ifx_ASCLIN_DATCON_Bits){.DATLEN = data_bits};
-	
+	/* Fifo configuration */
 	base->TXFIFOCON.B = (Ifx_ASCLIN_TXFIFOCON_Bits){
 		.FLUSH = 1, .ENO = 1, .FM = 0, .INW = (data_bits > 8 ? 2 : 1)};
 	base->RXFIFOCON.B = (Ifx_ASCLIN_RXFIFOCON_Bits){
@@ -180,16 +182,19 @@ static int uart_asclin_poll_in(const struct device *dev, unsigned char *p_char)
 	struct uart_asclin_data *data = dev->data;
 	int ret_val = -1;
 
+	/* generate fatal error if CONFIG_ASSERT is enabled. */
 	__ASSERT(p_char != NULL, "p_char is null pointer!");
 
+	/* Stop, if p_char is null pointer */
 	if (p_char == NULL) {
 		return -EINVAL;
 	}
 
 	k_spinlock_key_t key = k_spin_lock(&data->lock);
 
+	/* check if received character is ready.*/
 	if (uart_asclin_rx_fifo_fill_level(config->base)) {
-		
+		/* got a character */
 		*p_char = uart_asclin_rx_fifo_read(config->base);
 		ret_val = 0;
 	}
@@ -206,6 +211,7 @@ static void uart_asclin_poll_out(const struct device *dev, unsigned char c)
 
 	k_spinlock_key_t key;
 
+	/* wait until uart is free to transmit.*/
 	while (true) {
 		key = k_spin_lock(&data->lock);
 		if (uart_asclin_tx_fifo_fill_level(config->base) < UART_ASCLIN_FIFO_SIZE) {
@@ -267,7 +273,7 @@ static int uart_asclin_config_get(const struct device *dev, struct uart_config *
 
 	return 0;
 }
-#endif 
+#endif /* CONFIG_UART_USE_RUNTIME_CONFIGURE */
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 
@@ -430,7 +436,7 @@ static void uart_asclin_irq_callback_set(const struct device *dev, uart_irq_call
 	data->irq_cb_data = user_data;
 }
 
-#endif 
+#endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 
 static int uart_asclin_init(const struct device *dev)
 {
@@ -456,6 +462,7 @@ static int uart_asclin_init(const struct device *dev)
 		return -EIO;
 	}
 
+	/* Pin config */
 	ret = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
 	if (ret != 0) {
 		return ret;
@@ -494,7 +501,7 @@ static DEVICE_API(uart, uart_asclin_driver_api) = {
 #ifdef CONFIG_UART_USE_RUNTIME_CONFIGURE
 	.configure = uart_asclin_configure,
 	.config_get = uart_asclin_config_get,
-#endif 
+#endif /* CONFIG_UART_USE_RUNTIME_CONFIGURE */
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	.fifo_fill = uart_asclin_fifo_fill,
@@ -551,7 +558,7 @@ static void uart_asclin_isr(const struct device *dev)
 #define UART_ASCLIN_IRQ_CONFIG_FUNC(n)
 #define UART_ASCLIN_IRQ_CONFIG_INIT(n)
 
-#endif 
+#endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 
 #define UART_ASCLIN_CLOCK_ID(n)                                                                    \
 	COND_CODE_1(DT_INST_CLOCKS_HAS_NAME(n, fasclinf), \
