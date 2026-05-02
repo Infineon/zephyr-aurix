@@ -72,22 +72,20 @@ static inline int i2c_aurix_set_baudrate(const struct device *dev, uint32_t baud
 		return ret;
 	}
 
-	if (baudrate > 400000) // for High Speed mode
+	if (baudrate > 400000) 
 	{
-		dec = DIV_ROUND_UP((((fi2c / baudrate) * 46) - 92), 5); // always: Inc = 46
-	} else // for Standard and fast mode
+		dec = DIV_ROUND_UP((((fi2c / baudrate) * 46) - 92), 5); 
+	} else 
 	{
-		dec = DIV_ROUND_UP((((fi2c / rmc) / baudrate) - 3), 2); // always: Inc = 1
+		dec = DIV_ROUND_UP((((fi2c / rmc) / baudrate) - 3), 2); 
 	}
 
-	// dec:inc must be at least 6
 	if (dec < 6) {
 		dec = 6;
 	} else if (dec > BIT(11) - 1) {
 		dec = BIT(11) - 1;
 	}
 
-	/* Baudrate configuration */
 	if (baudrate > 400000) {
 		cfg->base->FDIVCFG.B = (Ifx_I2C_FDIVCFG_Bits){.DEC = 0x1D2, .INC = 5};
 		cfg->base->FDIVHIGHCFG.B = (Ifx_I2C_FDIVHIGHCFG_Bits){.DEC = dec, .INC = 46};
@@ -199,7 +197,8 @@ static inline void i2c_aurix_p_isr(const struct device *const dev)
 	Ifx_I2C_PIRQSS_Bits pirqs = cfg->base->PIRQSS.B;
 	if (pirqs.NACK == 1 || pirqs.AL == 1) {
 		k_event_post(&data->irq_event, BIT(1));
-	} else if (pirqs.TX_END == 1) {
+	}
+	if (pirqs.TX_END == 1) {
 		k_event_post(&data->irq_event, BIT(0));
 	}
 	i2c_aurix_clear_protocol_irqs(dev);
@@ -230,16 +229,14 @@ static int i2c_aurix_transfer(const struct device *dev, struct i2c_msg *msgs, ui
 		data->offset = 0;
 
 		for (i = msg_idx; i < num_msgs; i++) {
-			/* Stop on read messages */
+			
 			if ((msgs[i].flags & I2C_MSG_RW_MASK) != data->rnw) {
 				msg_idx = i - 1;
 				break;
 			}
 
-			/* Sum up len */
 			data->bytes += msgs[i].len;
 
-			/* Stop on restart or stop flags*/
 			if (msgs[i].flags & (I2C_MSG_RESTART | I2C_MSG_STOP)) {
 				msg_idx = i;
 				break;
@@ -272,16 +269,17 @@ static int i2c_aurix_transfer(const struct device *dev, struct i2c_msg *msgs, ui
 		}
 		cfg->base->IMSC.B = (Ifx_I2C_IMSC_Bits){1, 1, 1, 1, 1, 1};
 
-		k_event_wait(&data->irq_event, 0xF, true, K_FOREVER);
+		uint32_t ev = k_event_wait(&data->irq_event, 0xF, true, K_FOREVER);
 
-		/* Stop bus if requested */
 		if (msgs[msg_idx].flags & I2C_MSG_STOP) {
-			k_event_clear(&data->irq_event, 0x1);
-			cfg->base->ENDDCTRL.B.SETEND = 1;
-			k_event_wait(&data->irq_event, 0x1, false, K_FOREVER);
+			if (!(ev & BIT(0))) {
+				
+				k_event_clear(&data->irq_event, 0x1);
+				cfg->base->ENDDCTRL.B.SETEND = 1;
+				k_event_wait(&data->irq_event, 0x1, false, K_FOREVER);
+			}
 		}
 
-		/* Check for protocol error condition */
 		if (k_event_clear(&data->irq_event, 0xF) & BIT(1)) {
 			ret = -EIO;
 			break;
@@ -289,7 +287,7 @@ static int i2c_aurix_transfer(const struct device *dev, struct i2c_msg *msgs, ui
 	}
 
 err:
-	/* Stop bus if not stopped and error happend */
+	
 	if (cfg->base->BUSSTAT.B.BS == I2C_STATUS_BUSYMASTER) {
 		k_event_clear(&data->irq_event, 0x1);
 		cfg->base->ENDDCTRL.B.SETEND = 1;
@@ -320,17 +318,13 @@ static int i2c_aurix_transfer_cb(const struct device *dev, struct i2c_msg *msgs,
 	ARG_UNUSED(userdata);
 	return -ENOSYS;
 }
-#endif /* CONFIG_I2C_CALLBACK */
+#endif 
 #if defined(CONFIG_I2C_RTIO) || defined(__DOXYGEN__)
 
-/**
- * @i2c_api_iodev_submit
- * @brief Callback API for submitting work to a I2C device with RTIO
- */
 static void i2c_aurix_iodev_submit(const struct device *dev, struct rtio_iodev_sqe *iodev_sqe)
 {
 }
-#endif /* CONFIG_I2C_RTIO */
+#endif 
 
 static int i2c_aurix_recover_bus(const struct device *dev)
 {
@@ -375,7 +369,6 @@ static int i2c_aurix_init(const struct device *dev)
 	struct i2c_aurix_data *const data = dev->data;
 	int ret;
 
-	/* Enable Module */
 	if (!aurix_enable_clock((uintptr_t)&cfg->base->CLC, 1000)) {
 		return -EIO;
 	}
@@ -401,16 +394,16 @@ static int i2c_aurix_init(const struct device *dev)
 
 	cfg->base->ADDRCFG.B = (Ifx_I2C_ADDRCFG_Bits){.ADR = 0,
 						      .TBAM = 0,
-						      .GCE = 0, // TODO: General call enable
-						      .MCE = 0, // TOOD: Master Code enable
+						      .GCE = 0, 
+						      .MCE = 0, 
 						      .MNS = 1,
 						      .SONA = 1,
 						      .SOPE = 0};
 	cfg->base->FIFOCFG.B = (Ifx_I2C_FIFOCFG_Bits){
 		.RXBS = 2,
 		.TXBS = 2,
-		.RXFA = 2, /* TODO: 32bit alignment */
-		.TXFA = 2, /* TODO: 32bit alignment */
+		.RXFA = 2, 
+		.TXFA = 2, 
 		.TXFC = 1,
 		.RXFC = 1,
 		.CRBC = 0,
