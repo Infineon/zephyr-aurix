@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "kit_a2g_tc397xa_3v3_tft-pinctrl.dtsi"
+#include <zephyr/dt-bindings/i2c/i2c.h>
 
 / {
 	leds: leds {
@@ -26,9 +27,6 @@
 		led0 = &led0;
 	};
 
-	/* On-board TLE9251VSJ on M_CAN node 2 (P10.2/P10.3). No software
-	 * enable/standby line, so no can-transceiver-gpio node is needed.
-	 */
 };
 
 &fosc {
@@ -63,7 +61,22 @@
 	};
 };
 
-/* CAN module 0 node 2 - default board config */
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	eeprom: eeprom@57 {
+		compatible = "microchip,mcp79411", "atmel,at24";
+		reg = <0x57>;
+		size = <256>;
+		pagesize = <8>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
 &mcmcan0 {
 	status = "okay";
 };
