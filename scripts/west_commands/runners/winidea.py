@@ -1,30 +1,4 @@
-# Copyright (c) 2026 Parthiban Nallathambi
-#
-# SPDX-License-Identifier: Apache-2.0
 
-'''Runner that flashes Infineon AURIX targets via iSYSTEM winIDEA running
-on a remote (typically Windows) host, using the isystem.connect Python SDK.
-
-The runner copies the freshly built ELF to a path under D:/Parthiban/ on the
-remote host using ssh+scp, then drives the named winIDEA instance over TCP
-to:
-
-    1. stop the CPU
-    2. point the active session's symbol-file and program-file at the new
-       ELF
-    3. download to flash
-    4. resetAndRun
-
-If --watch is given, the runner polls the CPU state for a few seconds after
-release and dumps PC, PSW, PCXI, A10, A11, plus the call stack on
-unexpected stops, so trap diagnostics from a real crash land in the build
-log just like they would in the winIDEA UI.
-
-Required tooling on the host running west:
-    - isystem.connect              (pip install isystem.connect)
-    - sshpass                      (and SSHPASS env var with the Windows password)
-    - openssh-client               (for scp/ssh)
-'''
 
 import contextlib
 import fcntl
@@ -45,11 +19,10 @@ DEFAULT_SSH_USER = 'bharathi'
 DEFAULT_WATCH_SECONDS = 5
 DEFAULT_LOCK_TIMEOUT = 600.0
 DEFAULT_CONSOLE_HOST = '192.168.1.3'
-DEFAULT_CONSOLE_SECONDS = 0  # default: same as watch_seconds
+DEFAULT_CONSOLE_SECONDS = 0
 
 OPT_SYMBOL_FILE = '/IDE/System.Debug.Applications[0].SymbolFiles.File'
 OPT_PROGRAM_FILE = '/IDE/System.Debug.SoCs[0].DLFs_Program.File'
-
 
 @contextlib.contextmanager
 def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
@@ -93,9 +66,6 @@ def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
         finally:
             os.close(fd)
 
-# Map (board, qualifier) -> winIDEA instance id, remote ELF basename, and
-# the TCP serial-console endpoint exposed by the lab "kural" host. Add new
-# boards here when wiring up extra hardware.
 BOARD_PROFILES = {
     'kit_a3g_tc4d7_lite/tc4d7xp/cpu0': {
         'instance_id': 'com.tasking.winIDEA.instance.id-TC4D7',
@@ -114,14 +84,13 @@ BOARD_PROFILES = {
     },
 }
 
-
 class WinIDEABinaryRunner(ZephyrBinaryRunner):
     '''Flash AURIX targets via remote winIDEA + isystem.connect.'''
 
     def __init__(self, cfg, *, host, ssh_user, remote_dir, instance_id,
                  remote_name, watch, watch_seconds, lock_timeout,
                  capture_console, console_host, console_port,
-                 console_seconds, console_log):
+                 console_seconds, console_log, extra_elf=None):
         super().__init__(cfg)
         self.host = host
         self.ssh_user = ssh_user
@@ -136,6 +105,7 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         self.console_port = console_port
         self.console_seconds = console_seconds
         self.console_log = console_log
+        self.extra_elf = list(extra_elf or [])
 
     @classmethod
     def name(cls):
@@ -196,6 +166,13 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         parser.add_argument('--console-log', default=None,
                             help='Path to write the captured console to '
                                  '(default: <build_dir>/console.log)')
+        parser.add_argument('--extra-elf', action='append', default=[],
+                            metavar='LOCAL[:REMOTE]',
+                            help='Additional ELF to scp + flash into the '
+                                 'same winIDEA debug session (for AMP). '
+                                 'Repeatable. LOCAL is the local ELF path; '
+                                 'optional REMOTE is the basename to scp '
+                                 'to (defaults to the source basename).')
 
     @staticmethod
     def _board_target_from_build(build_dir):
@@ -241,13 +218,14 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                    console_host=args.console_host,
                    console_port=console_port,
                    console_seconds=args.console_seconds,
-                   console_log=console_log)
+                   console_log=console_log,
+                   extra_elf=args.extra_elf)
 
     def do_run(self, command, **kwargs):
         if command != 'flash':
             raise RuntimeError(f'winidea runner does not support {command!r}')
         try:
-            import isystem.connect as ic  # noqa: F401
+            import isystem.connect as ic
         except ImportError as exc:
             raise RuntimeError(
                 'isystem.connect is not importable; install with '
@@ -261,12 +239,27 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             raise RuntimeError(f'ELF not found: {elf}')
 
         remote_path = f'{self.remote_dir}/{self.remote_name}'
-        # winIDEA accepts forward slashes in paths.
-        remote_path_for_winidea = remote_path
+        remote_paths = [remote_path]
+
+        extras_resolved = []
+        for spec in self.extra_elf:
+            if ':' in spec:
+                local, remote_basename = spec.rsplit(':', 1)
+            else:
+                local = spec
+                remote_basename = Path(local).name
+            local_path = Path(local)
+            if not local_path.is_file():
+                raise RuntimeError(f'--extra-elf not found: {local_path}')
+            extras_resolved.append(
+                (local_path, f'{self.remote_dir}/{remote_basename}'))
+            remote_paths.append(f'{self.remote_dir}/{remote_basename}')
 
         with _winidea_lock(self.instance_id, self.lock_timeout, self.logger):
             self._scp(elf, remote_path)
-            self._winidea_flash(remote_path_for_winidea)
+            for local_path, remote_p in extras_resolved:
+                self._scp(local_path, remote_p)
+            self._winidea_flash(remote_paths)
 
     def _scp(self, src: Path, dst_remote: str) -> None:
         if 'SSHPASS' not in os.environ:
@@ -282,7 +275,10 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         self.logger.debug('  %s', ' '.join(shlex.quote(c) for c in cmd))
         subprocess.run(cmd, check=True)
 
-    def _winidea_flash(self, remote_elf: str) -> None:
+    def _winidea_flash(self, remote_elfs) -> None:
+        if isinstance(remote_elfs, str):
+            remote_elfs = [remote_elfs]
+        primary_elf = remote_elfs[0]
         import isystem.connect as ic
         mgr = ic.ConnectionMgr()
         cfg = (ic.CConnectionConfig()
@@ -306,10 +302,13 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                     self.logger.warning('stop() failed (%s); falling back to reset()', e)
                     exec_ctrl.reset()
                 time.sleep(0.2)
-            self._set_path(mgr, OPT_SYMBOL_FILE, remote_elf)
-            self._set_path(mgr, OPT_PROGRAM_FILE, remote_elf)
+            self._set_path_at(mgr, OPT_SYMBOL_FILE, 0, primary_elf)
+            for idx, p in enumerate(remote_elfs):
+                self._set_path_at(mgr, OPT_PROGRAM_FILE, idx, p)
+            self._trim_paths(mgr, OPT_PROGRAM_FILE, len(remote_elfs))
 
-            self.logger.info('downloading %s', remote_elf)
+            for p in remote_elfs:
+                self.logger.info('downloading %s', p)
             t0 = time.time()
             ic.CDebugFacade(mgr).download()
             self.logger.info('download ok in %.1fs', time.time() - t0)
@@ -328,8 +327,6 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                 if self.watch and self.watch_seconds > 0:
                     self._watch_for_trap(mgr, exec_ctrl, ic)
 
-                # Hold the console reader open until console_seconds is up so
-                # late prints (e.g. shells, banners) make it into the log.
                 if console is not None:
                     seconds = self.console_seconds or self.watch_seconds or 5
                     elapsed = time.time() - console.started_at
@@ -401,15 +398,28 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             self.logger.info('| %s', line)
 
     def _set_path(self, mgr, opt_path: str, new_path: str) -> None:
+        self._set_path_at(mgr, opt_path, 0, new_path)
+
+    def _set_path_at(self, mgr, opt_path: str, idx: int,
+                     new_path: str) -> None:
         import isystem.connect as ic
         opt = ic.COptionController(mgr, opt_path)
-        if opt.size() == 0:
+        while opt.size() <= idx:
             opt.add()
-        entry = opt.at(0)
+        entry = opt.at(idx)
         cur = entry.get('Path')
         if cur != new_path:
             entry.set('Path', new_path)
-            self.logger.info('  %s[0].Path: %s -> %s', opt_path, cur, new_path)
+            self.logger.info('  %s[%d].Path: %s -> %s',
+                             opt_path, idx, cur, new_path)
+
+    def _trim_paths(self, mgr, opt_path: str, keep: int) -> None:
+        import isystem.connect as ic
+        opt = ic.COptionController(mgr, opt_path)
+        while opt.size() > keep:
+            opt.remove(opt.size() - 1)
+            self.logger.info('  %s: trimmed entry %d',
+                             opt_path, opt.size())
 
     def _watch_for_trap(self, mgr, exec_ctrl, ic) -> None:
         deadline = time.time() + self.watch_seconds
