@@ -1,0 +1,4 @@
+include:
+  - project: 'linumiz/infineon/development/ci'
+    ref: master
+    file: '/release.yml'
