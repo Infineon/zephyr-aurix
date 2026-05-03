@@ -9,11 +9,22 @@
 &pinctrl {
 	uart0_default: uart0_default {
 		group1 {
-			pinmux = <ASCLIN0_TX_P15_2>;
+			pinmux = <ASCLIN0_TX_P14_0>;
 			output-enable;
 		};
 		group2 {
-			pinmux = <ASCLIN0_RX_P15_3>;
+			pinmux = <ASCLIN0_RX_P14_1>;
+		};
+	};
+
+	i2c0_default: i2c0_default {
+		group1 {
+			pinmux = <I2C0_SCL_IN_P15_4>, <I2C0_SDA_IN_P15_5>;
+		};
+		group2 {
+			pinmux = <I2C0_SCL_OUT_P15_4>, <I2C0_SDA_OUT_P15_5>;
+			output-enable;
+			drive-open-drain;
 		};
 	};
 
