@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Parthiban Nallathambi
+# Copyright (c) 2026 Linumiz
 # SPDX-License-Identifier: Apache-2.0
 """
 Standalone flasher for Infineon AURIX targets via remote winIDEA + isystem.connect.
