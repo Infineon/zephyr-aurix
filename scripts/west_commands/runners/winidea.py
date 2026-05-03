@@ -121,12 +121,14 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
     def __init__(self, cfg, *, host, ssh_user, remote_dir, instance_id,
                  remote_name, watch, watch_seconds, lock_timeout,
                  capture_console, console_host, console_port,
-                 console_seconds, console_log, extra_elf=None):
+                 console_seconds, console_log, extra_elf=None,
+                 winidea_port=None):
         super().__init__(cfg)
         self.host = host
         self.ssh_user = ssh_user
         self.remote_dir = remote_dir
         self.instance_id = instance_id
+        self.winidea_port = winidea_port
         self.remote_name = remote_name
         self.watch = watch
         self.watch_seconds = watch_seconds
@@ -161,6 +163,10 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         parser.add_argument('--instance-id', default=None,
                             help='winIDEA instance id; defaults to the one '
                                  'baked in for the active board')
+        parser.add_argument('--winidea-port', type=int, default=None,
+                            help='Connect to winIDEA SDK by TCP port instead '
+                                 'of instance-id discovery (useful when the '
+                                 'iConnect helper is in a stale state)')
         parser.add_argument('--remote-name', default=None,
                             help='Filename to give the ELF on the remote '
                                  'side; defaults to the per-board value')
@@ -250,7 +256,8 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                    console_port=console_port,
                    console_seconds=args.console_seconds,
                    console_log=console_log,
-                   extra_elf=args.extra_elf)
+                   extra_elf=args.extra_elf,
+                   winidea_port=args.winidea_port)
 
     def do_run(self, command, **kwargs):
         if command != 'flash':
@@ -313,17 +320,20 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         primary_elf = remote_elfs[0]
         import isystem.connect as ic
         mgr = ic.ConnectionMgr()
-        cfg = (ic.CConnectionConfig()
-               .host(self.host)
-               .instanceId(self.instance_id))
-        cfg.start_existing()
+        cfg = ic.CConnectionConfig().host(self.host)
+        if self.winidea_port:
+            cfg = cfg.processTCPPort(self.winidea_port)
+            attach_via = f'port {self.winidea_port}'
+        else:
+            cfg = cfg.instanceId(self.instance_id)
+            attach_via = f'id={self.instance_id}'
+            cfg.start_existing()
         mgr.connect(cfg)
         if not mgr.isConnected():
             raise RuntimeError(
-                f'could not attach to winIDEA instance {self.instance_id!r} '
-                f'on {self.host}')
-        self.logger.info('connected to winIDEA %s on %s (id=%s)',
-                         mgr.getWinIDEAVersion(), self.host, self.instance_id)
+                f'could not attach to winIDEA ({attach_via}) on {self.host}')
+        self.logger.info('connected to winIDEA %s on %s (%s)',
+                         mgr.getWinIDEAVersion(), self.host, attach_via)
         exec_ctrl = ic.CExecutionController(mgr)
         try:
             if exec_ctrl.getCPUStatus(False).isRunning():
