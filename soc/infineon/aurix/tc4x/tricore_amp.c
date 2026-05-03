@@ -10,11 +10,6 @@
 #include <soc.h>
 #include <stdint.h>
 
-#define IFX_CPUn_REG(n)			(0xF8800000U + 0x40000U * (n))
-#define IFX_CPU_HALT			BIT(0)
-#define IFX_CPU_BOOTCON(n)		(IFX_CPUn_REG(n) + 0x1FE60U)
-#define IFX_CPU_PC(n)			(IFX_CPUn_REG(n) + 0x1FE08U)
-
 #define TC4X_MAX_CPUS			6
 
 #define PFLASH_ADDR(n) DT_REG_ADDR(DT_NODELABEL(flash##n))
@@ -28,29 +23,81 @@ static const uint32_t pflash_base[TC4X_MAX_CPUS] = {
 	PFLASH_ADDR(5),
 };
 
-/* Write each secondary's PC and clear BOOTCON.HALT to release it.
- * Don't touch peer-CPU PROT/ACCEN: that triggers a class-4 DAE on
- * cross-core SE writes. Reset defaults are already permissive.
- */
+#define VMT1_BASE			0xF0420000U
+#define VMT1_CLC			(VMT1_BASE + 0x00U)
+#define VMT1_MEMTEST			(VMT1_BASE + 0x80U)
+#define VMT1_MC_BASE			(VMT1_BASE + 0x1000U)
+
+#define VMT1_MC_STRIDE			0x40U
+#define VMT1_MC_MCONTROL(i)		(VMT1_MC_BASE + (i) * VMT1_MC_STRIDE + 0x0CU)
+#define VMT1_MC_MSTATUS(i)		(VMT1_MC_BASE + (i) * VMT1_MC_STRIDE + 0x10U)
+
+#define VMT_MCONTROL_START_BIT		BIT(0)
+#define VMT_MCONTROL_SRAM_CLR_BIT	BIT(15)
+#define VMT_MSTATUS_DONE_BIT		BIT(0)
+
+static int vmt_clock_enable(void)
+{
+	uint32_t clc = sys_read32(VMT1_CLC);
+
+	if ((clc & 0x2U) == 0U) {
+		return 0;
+	}
+
+	sys_write32(clc & ~BIT(0), VMT1_CLC);
+	for (int spin = 0; spin < 1000; spin++) {
+		if ((sys_read32(VMT1_CLC) & 0x2U) == 0U) {
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static void vmt_scrub_channel(unsigned int ch)
+{
+	sys_write32(VMT_MCONTROL_SRAM_CLR_BIT | VMT_MCONTROL_START_BIT,
+		    VMT1_MC_MCONTROL(ch));
+	sys_write32(VMT_MCONTROL_SRAM_CLR_BIT, VMT1_MC_MCONTROL(ch));
+	for (int spin = 0; spin < 1000000; spin++) {
+		if (sys_read32(VMT1_MC_MSTATUS(ch)) & VMT_MSTATUS_DONE_BIT) {
+			return;
+		}
+	}
+}
+
+static void tricore_amp_scrub_dlmu(uint32_t mask)
+{
+	if (vmt_clock_enable() != 0) {
+		return;
+	}
+
+	sys_write32(0xFU, VMT1_MEMTEST);
+
+	for (unsigned int i = 0; i < TC4X_MAX_CPUS; i++) {
+		if ((i == 0) || (mask & BIT(i))) {
+			vmt_scrub_channel(i);
+		}
+	}
+
+	sys_write32(0x0U, VMT1_MEMTEST);
+}
+
 static int tricore_amp_start_cores(void)
 {
 	uint32_t mask = CONFIG_TRICORE_AMP_CPU_MASK;
-	uint32_t hreg;
 
 	if (CONFIG_TRICORE_CORE_ID != 0) {
 		return 0;
 	}
+
+	tricore_amp_scrub_dlmu(mask);
 
 	for (int i = 1; i < TC4X_MAX_CPUS; i++) {
 		if (!(mask & BIT(i))) {
 			continue;
 		}
 
-		hreg = sys_read32(IFX_CPU_BOOTCON(i));
-		if (hreg & IFX_CPU_HALT) {
-			sys_write32(pflash_base[i], IFX_CPU_PC(i));
-			sys_write32(0, IFX_CPU_BOOTCON(i));
-		}
+		aurix_start_core(i, pflash_base[i]);
 	}
 
 	return 0;
