@@ -21,6 +21,8 @@ manifest:
   remotes:
     - name: upstream
       url-base: https://github.com/zephyrproject-rtos
+    - name: ifx
+      url-base: https://github.com/infineon
     - name: babblesim
       url-base: https://github.com/BabbleSim
 
@@ -188,8 +190,10 @@ manifest:
       groups:
         - hal
     - name: hal_infineon
-      revision: 3ae25facf70c296145f6e12aa10b4810d49c2b33
+      revision: aurix
       path: modules/hal/infineon
+      remote: ifx
+      repo-path: hal_infineon-aurix
       groups:
         - hal
     - name: hal_intel
