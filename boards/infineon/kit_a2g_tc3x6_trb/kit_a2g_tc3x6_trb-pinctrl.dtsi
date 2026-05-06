@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2026 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include <zephyr/dt-bindings/pinctrl/aurix-pinctrl.h>
+#include <infineon/tc3x/tc3x6-pinctrl.h>
+
+&pinctrl {
+	uart0_default: uart0_default {
+		group1 {
+			pinmux = <ASCLIN0_TX_P14_0>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <ASCLIN0_RX_P14_1>;
+		};
+	};
+
+	eth0_rmii_default: eth0_rmii_default {
+		group1 {
+			pinmux = <GETH_REFCLK_P11_12>,
+			         <GETH_RXDV_P11_11>,
+			         <GETH_RXD0_P11_10>,
+			         <GETH_RXD1_P11_9>;
+		};
+		group2 {
+			pinmux = <GETH_TXEN_P11_6>,
+			         <GETH_TXD0_P11_3>,
+			         <GETH_TXD1_P11_2>;
+			drive-strength = "strong";
+			output-enable;
+			output-select;
+		};
+	};
+
+	eth0_mdio_default: eth0_mdio_default {
+		group1 {
+			pinmux = <GETH_MDC_P02_8>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <GETH_MDIO_P00_0>;
+		};
+	};
+
+	can0_default: can0_default {
+		group1 {
+			pinmux = <CAN00_TX_P20_8>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <CAN00_RX_P20_7>;
+		};
+	};
+	can1_default: can1_default {
+		group1 {
+			pinmux = <CAN11_TX_P00_4>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <CAN11_RX_P00_5>;
+		};
+	};
+	i2c0_default: i2c0_default {
+		group1 {
+			pinmux = <I2C0_SCL_IN_P15_4>, <I2C0_SDA_IN_P15_5>;
+		};
+		group2 {
+			pinmux = <I2C0_SCL_OUT_P15_4>, <I2C0_SDA_OUT_P15_5>;
+			output-enable;
+			drive-open-drain;
+		};
+	};
+};

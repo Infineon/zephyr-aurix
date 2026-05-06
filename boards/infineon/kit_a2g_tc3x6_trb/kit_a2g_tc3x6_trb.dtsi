@@ -1,0 +1,121 @@
+/*
+ * Copyright (c) 2026 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include "kit_a2g_tc3x6_trb-pinctrl.dtsi"
+#include <zephyr/dt-bindings/i2c/i2c.h>
+
+/ {
+	leds: leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&p33 4 GPIO_ACTIVE_LOW>;
+		};
+		led1: led_1 {
+			gpios = <&p33 5 GPIO_ACTIVE_LOW>;
+		};
+		led2: led_2 {
+			gpios = <&p33 6 GPIO_ACTIVE_LOW>;
+		};
+		led3: led_3 {
+			gpios = <&p33 7 GPIO_ACTIVE_LOW>;
+		};
+		led4: led_4 {
+			gpios = <&p20 11 GPIO_ACTIVE_LOW>;
+		};
+		led5: led_5 {
+			gpios = <&p20 12 GPIO_ACTIVE_LOW>;
+		};
+		led6: led_6 {
+			gpios = <&p20 13 GPIO_ACTIVE_LOW>;
+		};
+		led7: led_7 {
+			gpios = <&p20 14 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	aliases {
+		led0 = &led0;
+	};
+
+	can_phy0: can-phy0 {
+		compatible = "infineon,tle9251v", "can-transceiver-gpio";
+		max-bitrate = <5000000>;
+		#phy-cells = <0>;
+	};
+
+	can_phy1: can-phy1 {
+		compatible = "infineon,tle9251v", "can-transceiver-gpio";
+		max-bitrate = <5000000>;
+		#phy-cells = <0>;
+	};
+};
+
+&fosc {
+	clock-frequency = <DT_FREQ_M(20)>;
+	status = "okay";
+};
+
+&p33 {
+	status = "okay";
+};
+
+&p20 {
+	status = "okay";
+};
+
+&asclin0 {
+	compatible = "infineon,asclin-uart";
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-names = "default";
+};
+
+&eth0 {
+	pinctrl-0 = <&eth0_rmii_default>;
+	pinctrl-names = "default";
+	phy-connection-type = "rmii";
+	phy-handle = <&phy>;
+};
+
+&mdio0 {
+	pinctrl-0 = <&eth0_mdio_default>;
+	pinctrl-names = "default";
+
+	phy: ethernet-phy@1 {
+		compatible = "ethernet-phy";
+		reg = <1>;
+	};
+};
+
+&can00 {
+	bitrate = <500000>;
+	bitrate-data = <2000000>;
+	pinctrl-0 = <&can0_default>;
+	pinctrl-names = "default";
+	phys = <&can_phy0>;
+};
+&can11 {
+	bitrate = <500000>;
+	bitrate-data = <2000000>;
+	pinctrl-0 = <&can1_default>;
+	pinctrl-names = "default";
+	phys = <&can_phy1>;
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	/* MCP79411 EUI-48 EEPROM (0x57) */
+	eeprom: eeprom@57 {
+		compatible = "microchip,mcp79411", "atmel,at24";
+		reg = <0x57>;
+		size = <256>;
+		pagesize = <8>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
