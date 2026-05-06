@@ -43,6 +43,10 @@ config SOC_TC39xB
 	bool
 	select SOC_SERIES_TC3X
 
+config SOC_TC366DP
+	bool
+	select SOC_TC36x
+
 config SOC_TC375TP
 	bool
 	select SOC_TC37x
