@@ -87,6 +87,13 @@
 	};
 };
 
+qspi2: &qspi2 {
+	pinctrl-0 = <&qspi2_pin>;
+	pinctrl-names = "default";
+	max_clock_frequency = <50000000>;
+	status = "okay";
+};
+
 &can00 {
 	bitrate = <500000>;
 	bitrate-data = <2000000>;

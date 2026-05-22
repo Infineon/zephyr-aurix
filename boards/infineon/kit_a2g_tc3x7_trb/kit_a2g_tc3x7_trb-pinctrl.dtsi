@@ -69,4 +69,16 @@
 			pinmux = <CAN10_RX_P23_0>;
 		};
 	};
+
+	qspi2_pin: qspi2_pin {
+		group1 {
+			pinmux = <QSPI2_M_SCLK_P15_8>, <QSPI2_M_MTSR_P15_6> , <QSPI2_M_SLSO0_P15_2>;
+			output-enable;
+			drive-push-pull;
+		};
+
+		group2 {
+			pinmux = <QSPI2_M_MRST_P15_7>;
+		};
+	};
 };
