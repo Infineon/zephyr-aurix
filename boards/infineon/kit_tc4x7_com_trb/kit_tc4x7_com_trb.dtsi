@@ -128,6 +128,13 @@
 	};
 };
 
+qspi4: &qspi4 {
+	pinctrl-0 = <&qspi4_pin>;
+	pinctrl-names = "default";
+	max_clock_frequency = <50000000>;
+	status = "okay";
+};
+
 &fosc {
 	clock-frequency = <DT_FREQ_M(25)>;
 	status = "okay";

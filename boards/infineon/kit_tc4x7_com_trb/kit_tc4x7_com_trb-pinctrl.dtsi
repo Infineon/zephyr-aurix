@@ -46,4 +46,17 @@
 			drive-open-drain;
 		};
 	};
+
+	qspi4_pin: qspi4_pin {
+		group1 {
+			pinmux = <QSPI4_M_SCLK_P22_3>, <QSPI4_M_MTSR_P22_0> , <QSPI4_M_SLSO3_P22_2>;
+			output-enable;
+			drive-push-pull;
+		};
+
+		group2 {
+			pinmux = <QSPI4_M_MRST_P22_1>;
+		};
+	};
+
 };
