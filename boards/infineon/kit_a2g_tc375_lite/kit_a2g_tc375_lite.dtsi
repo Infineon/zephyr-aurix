@@ -192,3 +192,10 @@ arduino_serial: &asclin0 {
 	phys = <&can_phy0>;
 	status = "okay";
 };
+
+qspi4: &qspi4 {
+	pinctrl-0 = <&qspi4_pin>;
+	pinctrl-names = "default";
+	max_clock_frequency = <50000000>;
+	status = "okay";
+};
