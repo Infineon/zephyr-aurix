@@ -1,0 +1,31 @@
+# Copyright (c) 2026 Infineon Technologies AG,
+# or an affiliate of Infineon Technologies AG.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+description: Infineon Aurix Queued Synchronous Peripheral Interface
+
+compatible: "infineon,aurix-qspi"
+
+include: [spi-controller.yaml, pinctrl-device.yaml]
+
+bus: spi
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true
+
+  max_clock_frequency:
+    type: int
+    required: true
+    description: |
+      Maximum clock frequency the SPI peripheral can be driven at, in Hz.
