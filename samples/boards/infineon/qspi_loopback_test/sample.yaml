@@ -1,0 +1,12 @@
+sample:
+  name: QSPI Testing
+tests:
+  sample.boards.infineon.qspi_loopback_test:
+    platform_allow: 
+    - kit_tc4x9_std_trb/tc499pp/cpu0
+    - kit_a3g_tc4d7_lite/tc4d7xp/tc
+    - kit_tc4x7_com_trb/tc4d7xp/cpu0
+    - kit_a2g_tc3x7_trb/tc397xp/cpu0
+    - kit_a2g_tc377tx_3v3_tr/tc377tx/cpu0 
+    - kit_a2g_tc375_lite/tc375tp/cpu0
+    tags: tricore
