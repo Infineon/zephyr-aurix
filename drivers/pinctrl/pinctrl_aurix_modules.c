@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "pinctrl_aurix_modules.h"
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(aurix_pinctrl, CONFIG_PINCTRL_LOG_LEVEL);
 
 #include "IfxI2c_regdef.h"
 #include "IfxAsclin_regdef.h"
+#include "IfxQspi_regdef.h"
+
 
 void pinctrl_configure_asclin_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base)
 {
@@ -41,6 +45,21 @@ void pinctrl_configure_i2c_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, 
 		break;
 	}
 	i2c->GPCTL = gpctl;
+}
+
+void pinctrl_configure_qspi_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base)
+{
+	volatile Ifx_QSPI *qspi = (Ifx_QSPI *)base;
+	uint32_t i;
+	LOG_DBG("Entered Pinctrl Config");
+	for (i = 0; i<pin_cnt; i++) {
+		if (pins[i].output) {
+			continue;
+		}
+		qspi->PISEL.B.MRIS = pins[i].alt;
+		LOG_DBG("Configured %u",qspi->PISEL.B.MRIS);
+		break;
+	}
 }
 
 #if CONFIG_SOC_SERIES_TC3X

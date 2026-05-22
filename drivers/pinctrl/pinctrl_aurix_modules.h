@@ -21,6 +21,12 @@ void pinctrl_configure_asclin_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cn
 		break;
 void pinctrl_configure_i2c_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base);
 
+#define QSPI_ENABLED_CASE(n)                                                                     \
+	case DT_REG_ADDR(n):                                                                       \
+		pinctrl_configure_qspi_pins(pins, pin_cnt, reg);                                 \
+		break;
+void pinctrl_configure_qspi_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base);
+
 #if CONFIG_SOC_SERIES_TC3X
 #define GETH_MAC_ENABLED_CASE(n)                                                                   \
 	case DT_REG_ADDR(n):                                                                       \
