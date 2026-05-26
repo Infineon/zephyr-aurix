@@ -1,0 +1,11 @@
+# Kconfig - Infineon AURIX ASCLIN LIN driver
+
+config LIN_ASCLIN
+	bool "Infineon AURIX ASCLIN LIN driver"
+	default y
+	depends on DT_HAS_INFINEON_ASCLIN_LIN_ENABLED
+	depends on SOC_SERIES_TC4X || SOC_SERIES_TC3X
+	help
+	  Enable LIN driver for the ASCLIN peripheral on Infineon AURIX
+	  TC3xx and TC4xx families. TC2xx ASCLIN is not supported (older
+	  register variant).

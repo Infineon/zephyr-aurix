@@ -91,6 +91,7 @@ int pinctrl_configure_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, uintp
 {
 	switch (reg) {
 		DT_FOREACH_STATUS_OKAY(infineon_asclin_uart, ASCLIN_ENABLED_CASE)
+		DT_FOREACH_STATUS_OKAY(infineon_asclin_lin, ASCLIN_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(infineon_aurix_i2c, I2C_ENABLED_CASE)
 		//DT_FOREACH_STATUS_OKAY(infineon_aurix_qspi, QSPI_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_qos, GETH_MAC_ENABLED_CASE)
