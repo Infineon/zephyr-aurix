@@ -1,0 +1,73 @@
+# Copyright (c) 2026 Linumiz
+# SPDX-License-Identifier: Apache-2.0
+
+description: Infineon AURIX ASCLIN LIN controller
+
+compatible: "infineon,asclin-lin"
+
+include: [lin-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+    description: |
+      TX (header/response), RX (header/response + FIFO),
+      error (parity, framing, collision, timeout, break, autobaud, overflow).
+
+  interrupt-names:
+    required: true
+
+  clocks:
+    required: true
+
+  clock-names:
+    required: true
+    description: Module clock. "fasclinf" preferred over "fasclins" if both present.
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true
+
+  phys:
+    type: phandle
+    description: Optional transceiver phandle (e.g., lin-transceiver-gpio).
+
+  oversampling:
+    type: int
+    default: 16
+    description: Bit oversampling (4-16); higher improves noise immunity.
+
+  samplepoint:
+    type: int
+    default: 8
+    description: Sample point position (1..oversampling-1).
+
+  median-filter:
+    type: boolean
+    description: Enable 3-sample median filter.
+
+  prescaler:
+    type: int
+    default: 1
+    description: Module clock prescaler (1..4096).
+
+  brg-numerator:
+    type: int
+    description: Force BRG.NUMERATOR; paired with brg-denominator.
+
+  brg-denominator:
+    type: int
+    description: Force BRG.DENOMINATOR; zero triggers Stern-Brocot approximation.
+
+  bus-idle-timeout-ms:
+    type: int
+    default: 4000
+    description: |
+      Idle ms before sleep-eligible and wake-up detection.
+      Re-armed on transaction completion/header RX. 0 disables
+      wake-up. LIN spec default is 4000 ms.
