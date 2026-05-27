@@ -13,6 +13,7 @@
 #include <zephyr/sys/util.h>
 
 #include "IfxStm_reg.h"
+#include "IfxCbs_reg.h"
 
 #define TIMER_BASE_ADDR DT_REG_ADDR_BY_IDX(DT_CHOSEN(infineon_system_timer), 0)
 
@@ -181,7 +182,9 @@ static int sys_clock_driver_init(void)
 
 	/* Set debug freeze if selected */
 #if DT_PROP(DT_CHOSEN(infineon_system_timer), freeze)
-	sys_write32(0x12000000, TIMER_BASE_ADDR + offsetof(Ifx_STM, OCS));
+	if (CBS_OSTATE.B.OEN) {
+		sys_write32(0x12000000, TIMER_BASE_ADDR + offsetof(Ifx_STM, OCS));
+	}
 #endif
 	/* Set compare window */
 	Ifx_STM_CMCON cmcon = {.B.MSIZE0 = 31, .B.MSTART0 = 0};
