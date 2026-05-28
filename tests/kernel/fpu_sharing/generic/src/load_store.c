@@ -74,6 +74,8 @@
 #include "float_regs_sparc.h"
 #elif defined(CONFIG_XTENSA)
 #include "float_regs_xtensa.h"
+#elif defined(CONFIG_TRICORE)
+#include "float_regs_tricore_gcc.h"
 #endif
 
 #include "float_context.h"

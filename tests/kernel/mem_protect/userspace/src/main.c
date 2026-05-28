@@ -206,6 +206,13 @@ ZTEST_USER(userspace, test_write_control)
 	set_fault(K_ERR_CPU_EXCEPTION);
 
 	__asm__ volatile("rsr.ps %0" : "=r" (ps));
+#elif defined(CONFIG_TRICORE)
+	set_fault(K_ERR_CPU_EXCEPTION);
+
+	/* MTCR is supervisor-only; PSW is a core CSFR. */
+	cr_write(TRICORE_PSW, 0);
+
+	zassert_unreachable("Write to control register did not fault");
 #else
 #error "Not implemented for this architecture"
 	zassert_unreachable("Write to control register did not fault");
@@ -305,6 +312,14 @@ ZTEST_USER(userspace, test_disable_mmu_mpu)
 		__asm__ volatile("wptlb %0, %1\n\t" : : "a"(i), "a"(0));
 	}
 #endif
+
+#elif defined(CONFIG_TRICORE)
+	set_fault(K_ERR_CPU_EXCEPTION);
+
+	/* DPRE_0 is the data-read enable bitmap for PRS 0; MTCR is
+	 * supervisor-only so this write must fault from user mode.
+	 */
+	cr_write(TRICORE_DPRE_0, 0xFFFFFFFFu);
 
 #else
 #error "Not implemented for this architecture"
@@ -443,7 +458,7 @@ ZTEST_USER(userspace, test_read_priv_stack)
 	s[0] = 0;
 	priv_stack_ptr = (char *)&s[0] - size;
 #elif defined(CONFIG_ARM) || defined(CONFIG_X86) || defined(CONFIG_RISCV) || \
-	defined(CONFIG_ARM64) || defined(CONFIG_XTENSA)
+	defined(CONFIG_ARM64) || defined(CONFIG_XTENSA) || defined(CONFIG_TRICORE)
 	/* priv_stack_ptr set by test_main() */
 #else
 #error "Not implemented for this architecture"
@@ -468,7 +483,7 @@ ZTEST_USER(userspace, test_write_priv_stack)
 	s[0] = 0;
 	priv_stack_ptr = (char *)&s[0] - size;
 #elif defined(CONFIG_ARM) || defined(CONFIG_X86) || defined(CONFIG_RISCV) || \
-	defined(CONFIG_ARM64) || defined(CONFIG_XTENSA)
+	defined(CONFIG_ARM64) || defined(CONFIG_XTENSA) || defined(CONFIG_TRICORE)
 	/* priv_stack_ptr set by test_main() */
 #else
 #error "Not implemented for this architecture"

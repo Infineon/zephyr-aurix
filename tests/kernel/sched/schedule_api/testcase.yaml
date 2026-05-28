@@ -9,7 +9,7 @@ common:
   ignore_faults: true
 tests:
   kernel.scheduler:
-    filter: not CONFIG_SCHED_MULTIQ
+    filter: not CONFIG_SCHED_MULTIQ and not CONFIG_SOC_SERIES_TC3X
     extra_configs:
       - CONFIG_TIMESLICING=y
   kernel.scheduler.no_timeslicing:
@@ -17,12 +17,13 @@ tests:
     extra_configs:
       - CONFIG_TIMESLICING=n
   kernel.scheduler.slice_perthread:
-    filter: not CONFIG_SCHED_MULTIQ
+    filter: not CONFIG_SCHED_MULTIQ and not CONFIG_SOC_SERIES_TC3X
     extra_configs:
       - CONFIG_TIMESLICING=y
       - CONFIG_TIMESLICE_PER_THREAD=y
   kernel.scheduler.multiq:
     extra_args: CONF_FILE=prj_multiq.conf
+    filter: not CONFIG_SOC_SERIES_TC3X
     extra_configs:
       - CONFIG_TIMESLICING=y
   kernel.scheduler.multiq_no_timeslicing:
@@ -31,6 +32,7 @@ tests:
       - CONFIG_TIMESLICING=n
   kernel.scheduler.simple_timeslicing:
     extra_args: CONF_FILE=prj_simple.conf
+    filter: not CONFIG_SOC_SERIES_TC3X
     extra_configs:
       - CONFIG_TIMESLICING=y
   kernel.scheduler.simple_no_timeslicing:

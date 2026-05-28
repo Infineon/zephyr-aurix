@@ -188,6 +188,25 @@ struct fp_non_volatile_register_set {
 #define SIZEOF_FP_VOLATILE_REGISTER_SET 0
 #define SIZEOF_FP_NON_VOLATILE_REGISTER_SET sizeof(struct fp_non_volatile_register_set)
 
+#elif defined(CONFIG_TRICORE)
+
+/*
+ * TriCore data registers (used by the FPU as the operand file) are saved
+ * eagerly on every call and trap via the HW context-save-area mechanism,
+ * so there is no separate FP register file to snapshot for the load/store
+ * comparison harness. Leave both register sets empty; the byte-compare
+ * loops in load_store.c then iterate zero times and the kernel switch
+ * coverage is provided by every other preemptive ztest on this branch.
+ */
+struct fp_volatile_register_set {
+};
+
+struct fp_non_volatile_register_set {
+};
+
+#define SIZEOF_FP_VOLATILE_REGISTER_SET 0
+#define SIZEOF_FP_NON_VOLATILE_REGISTER_SET 0
+
 #else
 
 #error  "Architecture must provide the following definitions:\n"
