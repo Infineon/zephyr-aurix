@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef UART_ASCLIN_REGS_H
 #define UART_ASCLIN_REGS_H
 
