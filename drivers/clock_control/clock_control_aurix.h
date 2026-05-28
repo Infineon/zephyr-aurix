@@ -49,17 +49,17 @@
 		(DT_STRING_UNQUOTED(DT_CHILD(DT_NODELABEL(pll), DT_CAT3(pll, _, id)), k_pre_div)), \
 		(1.0))
 #define PLL_K_PRE_DIV_REG(pll, id)                                                                 \
-	(id == 3 ? (uint32_t)(PLL_K_PRE_DIV(pll, id) * 10.0 - 10)                                  \
-		 : (PLL_K_PRE_DIV(pll, id) == 1.0   ? 0                                            \
-		    : PLL_K_PRE_DIV(pll, id) == 2.0 ? 1                                            \
-		    : PLL_K_PRE_DIV(pll, id) == 1.2 ? 2                                            \
-						    : 3))
+	((id) == 3 ? (uint32_t)(PLL_K_PRE_DIV(pll, id) * 10.0 - 10)                                \
+		   : (PLL_K_PRE_DIV(pll, id) == 1.0   ? 0                                          \
+		      : PLL_K_PRE_DIV(pll, id) == 2.0 ? 1                                          \
+		      : PLL_K_PRE_DIV(pll, id) == 1.2 ? 2                                          \
+						      : 3))
 #define PLL_DCO_FREQ(pll) ((double)CLOCK_SOURCE_FREQ(pll) / PLL_P_DIV(pll) * PLL_N_DIV(pll))
 #define PLL_FREQ(pll, id) (PLL_DCO_FREQ(pll) / PLL_K_PRE_DIV(pll, id) / PLL_K_DIV(pll, id))
 
 /* Dividers & Select*/
 #define CLOCK_DIV_WITH_INST(clock, compat) ((DT_HAS_COMPAT_STATUS_OKAY(compat)) ? clock##_div : 0)
-#define CLOCK_DIV_WITH_STATUS(clock)       (DT_NODE_HAS_STATUS(CLOCK(clock), okay) ? clock##_div : 0)
+#define CLOCK_DIV_WITH_STATUS(clock) (DT_NODE_HAS_STATUS(CLOCK(clock), okay) ? clock##_div : 0)
 #define CLOCK_SEL_WITH_INST(clock, source0, source1, compat)                                       \
 	(IS_ENABLED(DT_CAT3(DT_N_INST_, compat, _NUM_OKAY))                                        \
 		 ? CLOCK_SOURCE_IS(clock, source0) ? 1 : 0x2                                       \
@@ -200,8 +200,8 @@ static inline void ccu_busy_wait_framp(uint32_t usec_to_wait)
 	}
 
 	uint32_t start_cycles = k_cycle_get_32();
-	uint32_t cycles_to_wait = z_tmcvt_32(
-		usec_to_wait, Z_HZ_us, (fsource0_freq - 100000000) / fstm_div, true, true, false);
+	uint32_t cycles_to_wait = z_tmcvt_32(usec_to_wait, Z_HZ_us,
+				  (fsource0_freq - 100000000) / fstm_div, true, true, false);
 
 	for (;;) {
 		uint32_t current_cycles = k_cycle_get_32();
@@ -221,10 +221,11 @@ static inline void ccu_busy_wait_framp(uint32_t usec_to_wait)
 		}                                                                                  \
                                                                                                    \
 		uint32_t start_cycles = k_cycle_get_32();                                          \
-		uint32_t cycles_to_wait = z_tmcvt_32(usec_to_wait, Z_HZ_us,                        \
-						     (uint32_t)((float)PLL_DCO_FREQ(sys_pll) /     \
-								(PLL_K_DIV(sys_pll, 2) + offset)), \
-						     true, true, false);                           \
+		uint32_t cycles_to_wait =                                                          \
+			z_tmcvt_32(usec_to_wait, Z_HZ_us,                                          \
+				   (uint32_t)((float)PLL_DCO_FREQ(sys_pll) /                       \
+					      (PLL_K_DIV(sys_pll, 2) + (offset))),                 \
+				   true, true, false);                                             \
                                                                                                    \
 		for (;;) {                                                                         \
 			uint32_t current_cycles = k_cycle_get_32();                                \

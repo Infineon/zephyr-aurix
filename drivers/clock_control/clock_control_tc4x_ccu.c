@@ -301,13 +301,13 @@ static inline int clock_control_tc4x_ccu_set_divider()
 		.B.ASCLINFDIV =  CLOCK_DIV_WITH_INST(fasclinf, infineon_asclin_uart),
 		.B.CLKSELASCLINS =  CLOCK_SEL_WITH_INST(fasclins, fasclinsi, fosc, infineon_asclin_uart),
 		.B.ASCLINSDIV = CLOCK_DIV_WITH_INST(fasclinsi, infineon_asclin_uart),
-		.B.LETH100PERON = CLOCK_DIV_WITH_STATUS(fleth100),
+		.B.LETH100PERON = !!CLOCK_DIV_WITH_STATUS(fleth100),
 	};
 	/* clang-format on */
 	CLOCK_SYSCCUCON1 = sysccu1;
 	CLOCK_SYSCCUCON0 = sysccu0;
 	WAIT_FOR_CCUSTAT_UNLOCKED_OR_ERR(fback_div);
-	/* Disable all peripheral clocks befor setting them again to change clock sources. */
+	/* Disable all peripheral clocks before setting them again to change clock sources. */
 	CLOCK_PERCCUCON0.U = 0;
 	WAIT_FOR_CCUSTAT_UNLOCKED_OR_ERR(fback_div);
 	CLOCK_PERCCUCON0 = perccu0;
@@ -520,34 +520,44 @@ static int clock_control_tc4x_ccu_init(const struct device *dev)
 		return ret;
 	}
 
-	ret = clock_control_tc4x_ccu_ramposc_move(true);
-	if (ret) {
-		return ret;
+	if (CLOCK_SOURCE_IS(fsource0, fpll0)) {
+		ret = clock_control_tc4x_ccu_ramposc_move(true);
+		if (ret) {
+			return ret;
+		}
+		/* Wait for the PLL to stabilize */
+		ccu_busy_wait_framp(1000);
+
+		if (CLOCK_RAMPSTAT.B.FLLLOCK != 1) {
+			return -EIO;
+		}
+		if (CLOCK_SYSPLLSTAT.B.PLLLOCK != 1) {
+			return -EIO;
+		}
+
+		ret = clock_control_tc4x_ccu_syspll_divider();
+		if (ret) {
+			return ret;
+		}
+
+		clock_control_tc4x_ccu_set_sys_source(SYS_SOURCE_PLL);
+	} else if (CLOCK_SOURCE_IS(fsource1, fpll1)) {
+		/* Wait in case peripheral PLL only is used */
+		ccu_busy_wait_fback_div(1000);
 	}
 
-	ccu_busy_wait_framp(1000);
+	if (CLOCK_SOURCE_IS(fsource1, fpll1)) {
+		if (CLOCK_PERPLLSTAT.B.PLLLOCK != 1) {
+			return -EIO;
+		}
 
-	if (CLOCK_RAMPSTAT.B.FLLLOCK != 1) {
-		return -EIO;
-	}
-	if (CLOCK_SYSPLLSTAT.B.PLLLOCK != 1) {
-		return -EIO;
-	}
-	if (CLOCK_PERPLLSTAT.B.PLLLOCK != 1) {
-		return -EIO;
-	}
+		ret = clock_control_tc4x_ccu_perpll_divider();
+		if (ret) {
+			return ret;
+		}
 
-	ret = clock_control_tc4x_ccu_syspll_divider();
-	if (ret) {
-		return ret;
+		clock_control_tc4x_ccu_set_per_source(PER_SOURCE_PLL);
 	}
-	clock_control_tc4x_ccu_set_sys_source(SYS_SOURCE_PLL);
-
-	ret = clock_control_tc4x_ccu_perpll_divider();
-	if (ret) {
-		return ret;
-	}
-	clock_control_tc4x_ccu_set_per_source(PER_SOURCE_PLL);
 
 	return 0;
 }
@@ -574,7 +584,7 @@ static struct clock_control_tc4x_data clock_control_tc4x_data = {
 		.fasclinf_div = fasclinf_div,
 	}};
 
-static const struct clock_control_driver_api clock_control_tc4x_ccu_api = {
+static DEVICE_API(clock_control, clock_control_tc4x_ccu_api) = {
 	.on = clock_control_tc4x_ccu_on,
 	.off = clock_control_tc4x_ccu_off,
 	.get_rate = clock_control_tc4x_ccu_get_rate,
