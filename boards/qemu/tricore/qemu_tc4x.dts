@@ -18,6 +18,7 @@
 		zephyr,sram = &dsram0;
 		zephyr,console = &asclin0;
 		zephyr,shell-uart = &asclin0;
+		infineon,system-timer = &stm0;
 	};
 };
 
@@ -34,5 +35,9 @@
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-names = "default";
 	current-speed = <115200>;
+	status = "okay";
+};
+
+&stm0 {
 	status = "okay";
 };

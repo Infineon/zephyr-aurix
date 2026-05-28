@@ -5,4 +5,8 @@ if BOARD_QEMU_TC3X || BOARD_QEMU_TC4X
 config BUILD_OUTPUT_BIN
 	default n
 
+config TRICORE_CORE_ID
+	int
+	default 0
+
 endif
