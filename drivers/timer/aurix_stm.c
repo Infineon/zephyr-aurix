@@ -3,29 +3,56 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "zephyr/drivers/interrupt_controller/intc_aurix_ir.h"
+#include <stdint.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/init.h>
 #include <zephyr/drivers/timer/system_timer.h>
 #include <zephyr/irq.h>
 #include <zephyr/spinlock.h>
 #include <zephyr/sys_clock.h>
 #include <zephyr/sys/util.h>
+
+#if CONFIG_SOC_SERIES_TC3X
+#include <IfxStm_reg.h>
+#elif CONFIG_SOC_SERIES_TC4X
+#include <IfxCpu_reg.h>
+#endif
+#include <IfxCbs_reg.h>
 #include <soc.h>
 
-#include <IfxCpu_reg.h>
+/* TC3x/TC4x adaption defines */
+#if CONFIG_SOC_SERIES_TC3X
+#define STM_IRQ_IDX 0
+#elif CONFIG_SOC_SERIES_TC4X
+#define ICR           STM_ICR
+#define Ifx_STM_CMCON Ifx_CPU_STM_CMCON
+#define Ifx_STM       Ifx_CPU_STM
+#define STM_IRQ_IDX   COND_CODE_1(CONFIG_TRICORE_VIRTUALIZATION, (CONFIG_TRICORE_VM_ID), (1))
+#endif
+#define STM_NODE DT_CHOSEN(infineon_system_timer)
+#define STM_IRQ  DT_IRQN_BY_IDX(STM_NODE, STM_IRQ_IDX)
 
-#define STM_VM_ID       COND_CODE_1(CONFIG_TRICORE_VIRTUALIZATION, (CONFIG_TRICORE_VM_ID), (1))
-#define STM_IRQ         (8 + CONFIG_TRICORE_CORE_ID * 0x10 + STM_VM_ID * 2)
-#define __CPU_MODULE(i) DT_CAT(MODULE_CPU, i)
-#define CPU_MODULE      __CPU_MODULE(COND_CODE_1(IS_EQ(CONFIG_TRICORE_CORE_ID, 6), (CS), (CONFIG_TRICORE_CORE_ID)))
-#define STM_REG         (&CPU_MODULE.STMHV)
-#define STM_REG_VM      (&STM_REG->VM[STM_VM_ID])
+BUILD_ASSERT(IS_ENABLED(CONFIG_SOC_SERIES_TC3X) || IS_ENABLED(CONFIG_SOC_SERIES_TC4X),
+	     "aurix_stm requires CONFIG_SOC_SERIES_TC3X or CONFIG_SOC_SERIES_TC4X");
 
+/* STM registers */
+static Ifx_STM *const STM_TIMER = (Ifx_STM *)DT_REG_ADDR(STM_NODE);
+/* Test value */
+#if defined(CONFIG_TEST)
+const int32_t z_sys_timer_irq_for_test = STM_IRQ;
+#endif
+
+/* Timer values */
 #define TICKS_PER_SEC   CONFIG_SYS_CLOCK_TICKS_PER_SEC
 #define CYCLES_PER_SEC  CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC
 #define CYCLES_PER_TICK (CYCLES_PER_SEC / TICKS_PER_SEC)
-/* the unsigned long cast limits divisions to native CPU register width */
-#define cycle_diff_t    unsigned long
-#define CYCLE_DIFF_MAX  (~(cycle_diff_t)0)
+/* 64-bit dcycles: a missed-IRQ window > 2^32 cycles must not silently
+ * truncate. CYCLE_DIFF_MAX stays at 32 bits to keep the CMP0 set-ahead
+ * cap (CYCLES_MAX) inside the STM compare register.
+ */
+#define cycle_diff_t    uint64_t
+#define CYCLE_DIFF_MAX  ((cycle_diff_t)UINT32_MAX)
 
 /*
  * We have two constraints on the maximum number of cycles we can wait for.
@@ -52,40 +79,62 @@
 #define CYCLES_MAX_4 (CYCLES_MAX_3 / 2 + CYCLES_MAX_3 / 4)
 #define CYCLES_MAX   (CYCLES_MAX_4 + LSB_GET(CYCLES_MAX_4))
 
-static struct k_spinlock lock;
 static uint64_t last_count;
 static uint64_t last_ticks;
 static uint32_t last_elapsed;
 
 static uint32_t get_time32(void)
 {
-	return (uint32_t)STM_REG->ABS.U;
+#if CONFIG_SOC_SERIES_TC3X
+	return STM_TIMER->TIM0.U;
+#elif CONFIG_SOC_SERIES_TC4X
+	return (uint32_t)STM_TIMER->ABS.U;
+#else
+	return 0;
+#endif
 }
 
 static uint64_t get_time64(void)
 {
-	return STM_REG->ABS.U;
+#if CONFIG_SOC_SERIES_TC3X
+	return (uint64_t)STM_TIMER->TIM0SV.U | ((uint64_t)STM_TIMER->CAPSV.U << 32);
+#elif CONFIG_SOC_SERIES_TC4X
+	return STM_TIMER->ABS.U;
+#else
+	return 0;
+#endif
 }
 
 static void set_compare(uint32_t cmp)
 {
-	STM_REG_VM->CMP[0].U = cmp;
+	STM_TIMER->CMP[0].U = cmp;
+}
+
+static bool stm_cmp0ir_pending(void)
+{
+#if CONFIG_SOC_SERIES_TC3X
+	return STM_TIMER->ICR.B.CMP0IR != 0;
+#elif CONFIG_SOC_SERIES_TC4X
+	return STM_TIMER->ISR.B.CMP0IR != 0;
+#else
+	return false;
+#endif
 }
 
 static void set_compare_irq(bool enabled)
 {
-	STM_REG_VM->STM_ICR.B.CMP0EN = enabled;
+	STM_TIMER->ICR.B.CMP0EN = enabled;
 }
 
-static void sys_clock_isr()
+static void sys_clock_isr(void)
 {
-	k_spinlock_key_t key = k_spin_lock(&lock);
-	STM_REG_VM->ISCR.B.CMP0IRR = 1;
+	k_spinlock_key_t key = sys_clock_lock();
+
+	STM_TIMER->ISCR.B.CMP0IRR = 1;
 
 	uint64_t now = get_time64();
 	uint64_t dcycles = now - last_count;
 	uint32_t dticks = (cycle_diff_t)dcycles / CYCLES_PER_TICK;
-	__ASSERT(dcycles < 0x100000000ull, "lol");
 
 	last_count += (cycle_diff_t)dticks * CYCLES_PER_TICK;
 	last_ticks += dticks;
@@ -94,13 +143,21 @@ static void sys_clock_isr()
 	if (!IS_ENABLED(CONFIG_TICKLESS_KERNEL)) {
 		uint64_t next = last_count + CYCLES_PER_TICK;
 
-		/* Even though we use only the lower 32bits for compare an overflow is
-		 * not possible as we make sure that the CYCLES_PER_TICK is smaller than 32 bits*/
 		set_compare((uint32_t)next);
+
+		/* Check if previous compare value was missed and announce
+		 * the missed tick.
+		 */
+		if (next - now < 100 && get_time64() > next && !stm_cmp0ir_pending()) {
+			last_count += CYCLES_PER_TICK;
+			last_ticks += 1;
+			dticks += 1;
+			next += CYCLES_PER_TICK;
+			set_compare(next);
+		}
 	}
 
-	k_spin_unlock(&lock, key);
-	sys_clock_announce(dticks);
+	sys_clock_announce_locked(dticks, key);
 }
 
 void sys_clock_set_timeout(int32_t ticks, bool idle)
@@ -108,8 +165,6 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
 	if (!IS_ENABLED(CONFIG_TICKLESS_KERNEL)) {
 		return;
 	}
-
-	k_spinlock_key_t key = k_spin_lock(&lock);
 	uint64_t cyc;
 
 	if (ticks == K_TICKS_FOREVER) {
@@ -120,14 +175,13 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
 			cyc = last_count + CYCLES_MAX;
 		}
 	}
-	if (idle) {
-		set_compare_irq(false);
-	} else {
-		set_compare_irq(true);
-	}
+
 	set_compare(cyc);
 
-	k_spin_unlock(&lock, key);
+	/* Check if the compare value is already missed and trigger the interrupt if so. */
+	if (ticks < 2 && get_time64() > cyc && !stm_cmp0ir_pending()) {
+		intc_aurix_ir_irq_raise(STM_IRQ);
+	}
 }
 
 uint32_t sys_clock_elapsed(void)
@@ -136,13 +190,11 @@ uint32_t sys_clock_elapsed(void)
 		return 0;
 	}
 
-	k_spinlock_key_t key = k_spin_lock(&lock);
 	uint64_t now = get_time64();
 	uint64_t dcycles = now - last_count;
 	uint32_t dticks = (cycle_diff_t)dcycles / CYCLES_PER_TICK;
 
 	last_elapsed = dticks;
-	k_spin_unlock(&lock, key);
 	return dticks;
 }
 
@@ -158,36 +210,23 @@ uint64_t sys_clock_cycle_get_64(void)
 	return get_time64();
 }
 
-void sys_clock_disable()
+void sys_clock_disable(void)
 {
 	set_compare_irq(false);
 }
 
 static int sys_clock_driver_init(void)
 {
-	/*
-	uint32_t reg_val;
-	const struct device *clkctrl =
-		DEVICE_DT_GET(DT_PARENT(DT_CLOCKS_CTLR(DT_CHOSEN(infineon_system_timer))));
-	clock_control_subsys_t clk =
-		(void *)DT_NODE_CHILD_IDX(DT_CLOCKS_CTLR(DT_CHOSEN(infineon_system_timer)));
-	int ret;
+#if CONFIG_SOC_SERIES_TC4X
+	Ifx_CPU *const CPU_MODULE = &MODULE_CPU0 + arch_proc_id();
+	atomic_ptr_t stmwra = ATOMIC_PTR_INIT((void *)&CPU_MODULE->ACCENSTM.WRA);
 
-	if (!device_is_ready(clkctrl)) {
-		return -EIO;
+	/* Check if the write access is enabled for the current core */
+	if (!atomic_test_bit(stmwra, aurix_coreid_to_tagid(arch_proc_id()))) {
+		aurix_apu_enable_write_select(&CPU_MODULE->PROTSTMSE, &CPU_MODULE->ACCENSTMCFG.WRA,
+					      STM_IRQ_IDX, aurix_coreid_to_tagid(arch_proc_id()));
 	}
-
-	ret = clock_control_on(clkctrl, clk);
-	if (ret) {
-		return ret;
-	}
-	*/
-
-	aurix_prot_own(&CPU_MODULE.PROTSTMSE);
-	aurix_apu_enable_write(&CPU_MODULE.PROTSTMSE, &CPU_MODULE.ACCENSTMCFG.WRA,
-			       CONFIG_TRICORE_CORE_ID * 2);
-	aurix_apu_enable_write_select(&CPU_MODULE.PROTSTMSE, &CPU_MODULE.ACCENSTM.WRA, STM_VM_ID,
-				      CONFIG_TRICORE_CORE_ID * 2);
+#endif
 
 	IRQ_CONNECT(STM_IRQ, 1, sys_clock_isr, NULL, 0);
 
@@ -195,22 +234,28 @@ static int sys_clock_driver_init(void)
 	last_ticks = get_time64() / CYCLES_PER_TICK;
 	last_count = last_ticks * CYCLES_PER_TICK;
 
-	/* Set debug freeze if selected */
-#if CONFIG_DEBUG
-	STM_REG->OCS.U = 0x12000000;
+#if DT_PROP(STM_NODE, freeze)
+	/* Set debug freeze if selected and debugger connected */
+	if (CBS_OSTATE.B.OEN) {
+		STM_TIMER->OCS.U = 0x12000000;
+	}
 #endif
+	Ifx_STM_CMCON cmcon = {.B.MSIZE0 = 31, .B.MSTART0 = 0};
 
 	/* Set compare window */
-	STM_REG_VM->CMCON.B = (Ifx_CPU_STM_CMCON_Bits){.MSIZE0 = 31, .MSTART0 = 0};
+	STM_TIMER->CMCON.B = cmcon.B;
 	/* Set irq line */
-	STM_REG_VM->STM_ICR.B.CMP0OS = 0;
+	STM_TIMER->ICR.B.CMP0OS = 0;
 	/* Clear irq */
-	STM_REG_VM->ISCR.B.CMP0IRR = 1;
+	STM_TIMER->ISCR.B.CMP0IRR = 1;
 
 	if (!IS_ENABLED(CONFIG_TICKLESS_KERNEL)) {
 		set_compare((uint32_t)(last_count + CYCLES_PER_TICK));
-		set_compare_irq(true);
+	} else {
+		set_compare((uint32_t)(last_count + CYCLES_MAX));
 	}
+	set_compare_irq(true);
+
 	irq_enable(STM_IRQ);
 
 	return 0;

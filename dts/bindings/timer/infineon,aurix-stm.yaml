@@ -1,9 +1,9 @@
-# Copyright (c) 2024 Infineon Technologies AG
+# Copyright (c) 2026 Infineon Technologies AG
 # SPDX-License-Identifier: Apache-2.0
 
-description: TC3x System Timer Module (STM)
+description: AURIX System Timer Module (STM)
 
-compatible: "infineon,tc3x-stm"
+compatible: "infineon,aurix-stm"
 
 include: base.yaml
 
