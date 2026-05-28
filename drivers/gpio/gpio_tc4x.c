@@ -71,31 +71,6 @@ static int gpio_tc4x_flags_to_drvcfg(gpio_flags_t flags, Ifx_P_PADCFG_DRVCFG *dr
 	return 0;
 }
 
-#if defined(CONFIG_GPIO_GET_CONFIG)
-static int gpio_tc4x_pincfg_to_flags(uint32_t iocr, uint32_t out, gpio_flags_t *out_flags)
-{
-	if (iocr & TC3X_IOCR_OUTPUT) {
-		if (out) {
-			*out_flags = GPIO_OUTPUT_HIGH;
-		} else {
-			*out_flags = GPIO_OUTPUT_LOW;
-		}
-		if (iocr & TC3X_IOCR_OPEN_DRAIN) {
-			*out_flags |= GPIO_OPEN_DRAIN;
-		}
-	} else {
-		*out_flags = GPIO_INPUT;
-		if (iocr & TC3X_IOCR_PULL_DOWN) {
-			*out_flags |= GPIO_PULL_DOWN;
-		} else if (iocr & TC3X_IOCR_PULL_UP) {
-			*out_flags |= GPIO_PULL_UP;
-		}
-	}
-
-	return 0;
-}
-#endif
-
 static int gpio_tc4x_port_get_raw(const struct device *dev, uint32_t *value)
 {
 	const struct gpio_tc4x_config *cfg = dev->config;
@@ -191,21 +166,6 @@ static int gpio_tc4x_config(const struct device *dev, gpio_pin_t pin, gpio_flags
 
 	return 0;
 }
-
-#if defined(CONFIG_GPIO_GET_CONFIG)
-/**
- * @brief Get configuration of pin
- */
-static int gpio_tc4x_get_config(const struct device *dev, gpio_pin_t pin, gpio_flags_t *flags)
-{
-	const struct gpio_tc4x_config *cfg = dev->config;
-
-	gpio_tc4x_pincfg_to_flags(*(cfg->base + TC3X_IOCR_OFFSET / 4),
-				   *(cfg->base TC3X_OUT_OFFSET), flags);
-
-	return 0;
-}
-#endif
 
 struct gpio_tc4x_irq_tim {
 	uint8_t tim;
@@ -347,9 +307,6 @@ static int gpio_tc4x_manage_callback(const struct device *dev, struct gpio_callb
 
 static DEVICE_API(gpio, tc4x_gpio_driver_api) = {
 	.pin_configure = gpio_tc4x_config,
-#if defined(CONFIG_GPIO_GET_CONFIG)
-	.pin_get_config = gpio_tc4x_get_config,
-#endif /* CONFIG_GPIO_GET_CONFIG */
 	.port_get_raw = gpio_tc4x_port_get_raw,
 	.port_set_masked_raw = gpio_tc4x_port_set_masked_raw,
 	.port_set_bits_raw = gpio_tc4x_port_set_bits_raw,

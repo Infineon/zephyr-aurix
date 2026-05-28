@@ -205,8 +205,8 @@ static int gpio_tc3x_get_config(const struct device *dev, gpio_pin_t pin, gpio_f
 {
 	const struct gpio_tc3x_config *cfg = dev->config;
 
-	gpio_tc3x_pincfg_to_flags(*(cfg->base + TC3X_IOCR_OFFSET / 4),
-				   *(cfg->base TC3X_OUT_OFFSET), flags);
+	gpio_tc3x_pincfg_to_flags(sys_read32(cfg->base + TC3X_IOCR_OFFSET),
+				  sys_read32(cfg->base + TC3X_OUT_OFFSET), flags);
 
 	return 0;
 }

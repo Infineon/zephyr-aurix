@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2024 Infineon Technologies AG
  *
@@ -12,6 +11,11 @@
 #include <zephyr/drivers/gpio.h>
 
 #include <IfxPort_regdef.h>
+
+#define TC4X_IOCR_OUTPUT     0x10
+#define TC4X_IOCR_OPEN_DRAIN 0x08
+#define TC4X_IOCR_PULL_DOWN  0x01
+#define TC4X_IOCR_PULL_UP    0x02
 
 enum gpio_tc4x_input_mode {
 	GPIO_TC4X_INPUT_GPIO,
