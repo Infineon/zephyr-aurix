@@ -22,6 +22,8 @@
 extern "C" {
 #endif
 
+/** @cond INTERNAL_HIDDEN */
+
 /* TriCore Exception Stack Frame is the lower context*/
 struct arch_esf {
 	uint32_t pcxi;
@@ -88,6 +90,8 @@ struct arch_esf {
 
 #define TRICORE_TRAP5_OVF  1
 #define TRICORE_TRAP5_SOVF 2
+
+/** @endcond */
 
 #ifdef __cplusplus
 }

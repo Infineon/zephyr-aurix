@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * @file
+ * @brief TriCore specific IRQ macros and helpers
+ */
+
 #ifndef ZEPHYR_INCLUDE_ARCH_TRICORE_IRQ_H_
 #define ZEPHYR_INCLUDE_ARCH_TRICORE_IRQ_H_
 
@@ -12,14 +17,15 @@ extern "C" {
 #endif
 #include <zephyr/sys/util.h>
 
+/** @cond INTERNAL_HIDDEN */
+
 #define IRQ_ZERO_LACTENCY BIT(0)
-#define IRQ_USE_TOS		  BIT(1)
-#define IRQ_TOS			  GENMASK(31, 28)
+#define IRQ_USE_TOS       BIT(1)
+#define IRQ_TOS           GENMASK(31, 28)
 
 #ifndef _ASMLANGUAGE
 #include <zephyr/irq.h>
 #include <zephyr/sw_isr_table.h>
-
 
 extern void arch_irq_enable(unsigned int irq);
 extern void arch_irq_disable(unsigned int irq);
@@ -31,13 +37,13 @@ extern void z_tricore_irq_config(unsigned int irq, unsigned int prio, unsigned i
 #define ARCH_IRQ_CONNECT(irq_p, priority_p, isr_p, isr_param_p, flags_p)                           \
 	{                                                                                          \
 		Z_ISR_DECLARE(irq_p, 0, isr_p, isr_param_p);                                       \
-		z_tricore_irq_config(irq_p, priority_p, flags_p);                                           \
+		z_tricore_irq_config(irq_p, priority_p, flags_p);                                  \
 	}
 
 #define ARCH_IRQ_DIRECT_CONNECT(irq_p, priority_p, isr_p, flags_p)                                 \
 	{                                                                                          \
 		Z_ISR_DECLARE_DIRECT(irq_p, ISR_FLAG_DIRECT, isr_p);                               \
-		z_tricore_irq_config(irq_p, priority_p, flags_p);                            \
+		z_tricore_irq_config(irq_p, priority_p, flags_p);                                  \
 	}
 
 #define ARCH_ISR_DIRECT_HEADER()     arch_isr_direct_header()
@@ -83,6 +89,8 @@ static inline void arch_isr_direct_footer(int swap)
 	}                                                                                          \
 	static inline int name##_body(void)
 #endif /* _ASMLANGUAGE */
+
+/** @endcond */
 
 #ifdef __cplusplus
 }

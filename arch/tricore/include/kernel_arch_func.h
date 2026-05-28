@@ -26,13 +26,13 @@ static ALWAYS_INLINE bool arch_is_in_isr(void)
 
 static ALWAYS_INLINE void arch_switch(void *switch_to, void **switched_from)
 {
-	extern void z_tricore_switch(struct k_thread * new, struct k_thread * old);
-	register struct k_thread *new __asm__("a4") = switch_to;
-	register struct k_thread *old __asm__("a5") =
+	extern void z_tricore_switch(struct k_thread *to, struct k_thread *from);
+	register struct k_thread *to __asm__("a4") = switch_to;
+	register struct k_thread *from __asm__("a5") =
 		CONTAINER_OF(switched_from, struct k_thread, switch_handle);
 
 	/* Use syscall for context switch and restore */
-	__asm("syscall 1\n\t" ::"a"(new), "a"(old));
+	__asm("syscall " STRINGIFY(TRICORE_SYSCALL_SWITCH) ::"a"(to), "a"(from));
 }
 
 #endif /* _ASMLANGUAGE */

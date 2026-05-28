@@ -21,13 +21,19 @@
 extern "C" {
 #endif
 
+/** @cond INTERNAL_HIDDEN */
+
+#define TRICORE_SYSCALL_EXCEPT_STR STRINGIFY(TRICORE_SYSCALL_EXCEPT)
+
 #define ARCH_EXCEPT(reason_p)                                                                      \
 	do {                                                                                       \
-		__asm__ volatile(                                                                  \
-			"mov %%d4, %[_reason]\n"                                                   \
-			"syscall " STRINGIFY(_SYSCALL_EXCEPT) "\n" ::[_reason] "r"(reason_p)       \
-					     : "d4", "memory");                                    \
+		__asm__ volatile("mov %%d4, %[_reason]\n"                                          \
+				 "syscall " TRICORE_SYSCALL_EXCEPT_STR                             \
+				 "\n" ::[_reason] "r"(reason_p)                                    \
+				 : "d4", "memory");                                                \
 	} while (false)
+
+/** @endcond */
 
 #ifdef __cplusplus
 }

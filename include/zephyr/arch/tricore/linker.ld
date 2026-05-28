@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024 Infineon Technologies AG
- * 
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -66,7 +66,7 @@
 #define MPU_ALIGN(region_size) \
 	. = ALIGN(MPU_MIN_SIZE)
 
-/* Tricore MPU is different for code and data aligment rules */
+/* TriCore MPU is different for code and data alignment rules */
 #define MPU_MIN_CODE_SIZE 32
 #define MPU_MIN_CODE_SIZE_ALIGN . = ALIGN(MPU_MIN_CODE_SIZE);
 
@@ -168,12 +168,6 @@ SECTIONS
 		KEEP(*(SORT_BY_NAME(.vectors.irq*)))
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
-#ifdef CONFIG_TRICORE_MPU
-	SECTION_PROLOGUE(rom_text_mpu_padding,,)
-	{
-		MPU_MIN_CODE_SIZE_ALIGN
-	} GROUP_LINK_IN(ROMABLE_REGION)
-#endif
 	__text_region_end = .;
 
 	__rodata_region_start = .;
@@ -211,13 +205,6 @@ SECTIONS
 	 * RAMABLE_REGION in it.
 	 */
 #ifndef CONFIG_XIP
-#ifdef CONFIG_TRICORE_MPU
-	SECTION_PROLOGUE(rom_mpu_padding,,)
-	{
-		MPU_ALIGN(__rodata_region_end - __rom_region_start);
-	} GROUP_LINK_IN(ROMABLE_REGION)
-#endif /* CONFIG_TRICORE_MPU */
-
 	__rom_region_end = .;
 	__rom_region_size = __rom_region_end - __rom_region_start;
 #endif /* CONFIG_XIP */

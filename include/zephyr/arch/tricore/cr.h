@@ -4,8 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * @file
+ * @brief TriCore Core Special Function Register (CSFR) addresses
+ */
+
 #ifndef ZEPHYR_INCLUDE_ARCH_TRICORE_CR_H_
 #define ZEPHYR_INCLUDE_ARCH_TRICORE_CR_H_
+
+/** @cond INTERNAL_HIDDEN */
 
 /* CPU Register */
 #define TRICORE_SEGEN             0x1030
@@ -40,6 +47,28 @@
 #define TRICORE_FPU_TRAP_SRC3_U   0xA024
 #define TRICORE_FPU_SYNC_TRAP_CON 0xA030
 #define TRICORE_FPU_SYNC_TRAP_OPC 0xA034
+
+/* Virtualization Control Registers */
+#define TRICORE_VCON0        0xB000
+#define TRICORE_VCON1        0xB004
+#define TRICORE_VCON2        0xB008
+#define TRICORE_BHV          0xB010
+#define TRICORE_VM0_ICR      0xB100
+#define TRICORE_VM1_ICR      0xB104
+#define TRICORE_VM2_ICR      0xB108
+#define TRICORE_VM3_ICR      0xB10C
+#define TRICORE_VM4_ICR      0xB110
+#define TRICORE_VM5_ICR      0xB114
+#define TRICORE_VM6_ICR      0xB118
+#define TRICORE_VM7_ICR      0xB11C
+#define TRICORE_VM0_PETHRESH 0xB200
+#define TRICORE_VM1_PETHRESH 0xB204
+#define TRICORE_VM2_PETHRESH 0xB208
+#define TRICORE_VM3_PETHRESH 0xB20C
+#define TRICORE_VM4_PETHRESH 0xB210
+#define TRICORE_VM5_PETHRESH 0xB214
+#define TRICORE_VM6_PETHRESH 0xB218
+#define TRICORE_VM7_PETHRESH 0xB21C
 
 /* Data Protection Registers */
 #define TRICORE_DPR0_L  0xC000
@@ -233,7 +262,9 @@
 #define cr_write(cr, val)                                                                          \
 	({                                                                                         \
 		unsigned long __wv = (unsigned long)(val);                                         \
-		__asm__ volatile("mtcr " STRINGIFY(cr) ", %0\n\tisync" : : "r"(__wv) : "memory");             \
+		__asm__ volatile("mtcr " STRINGIFY(cr) ", %0\n\tisync" : : "r"(__wv) : "memory");  \
 	})
+
+/** @endcond */
 
 #endif /* ZEPHYR_INCLUDE_ARCH_TRICORE_CR_H_ */

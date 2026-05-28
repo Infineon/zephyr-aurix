@@ -15,6 +15,20 @@
 #include <zephyr/cache.h>
 #include <zephyr/sys/util.h>
 
+void arch_dcache_enable(void)
+{
+#if !defined(CONFIG_CPU_TC18)
+	cr_write(TRICORE_DCON0, 0U);
+#endif
+}
+
+void arch_dcache_disable(void)
+{
+#if !defined(CONFIG_CPU_TC18)
+	cr_write(TRICORE_DCON0, 2U);
+#endif
+}
+
 int arch_dcache_flush_all(void)
 {
 	return -ENOTSUP;
@@ -69,12 +83,26 @@ int arch_dcache_flush_and_invd_range(void *start_addr, size_t size)
 	return 0;
 }
 
+void arch_icache_enable(void)
+{
+#if !defined(CONFIG_CPU_TC18)
+	cr_write(TRICORE_PCON0, 0U);
+#endif
+}
+
+void arch_icache_disable(void)
+{
+#if !defined(CONFIG_CPU_TC18)
+	cr_write(TRICORE_PCON0, 2U);
+#endif
+}
+
 int arch_icache_flush_all(void)
 {
 	return -ENOTSUP;
 }
 
-int arch_icache_flush_and_invd_all(void)
+int arch_icache_invd_all(void)
 {
 	/* Start instruction cache invalidation via PCON1 */
 	cr_write(TRICORE_PCON1, 1);
@@ -83,6 +111,11 @@ int arch_icache_flush_and_invd_all(void)
 		return -ETIMEDOUT;
 	}
 	return 0;
+}
+
+int arch_icache_flush_and_invd_all(void)
+{
+	return -ENOTSUP;
 }
 
 int arch_icache_flush_range(void *start_addr, size_t size)

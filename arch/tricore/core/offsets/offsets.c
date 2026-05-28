@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2024 Infineon Technologies AG
- * 
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr/arch/structs.h>
 #include <zephyr/kernel.h>
 #include <kernel_arch_data.h>
 #include <gen_offset.h>
@@ -13,13 +14,11 @@
 
 /* struct coop member offsets */
 GEN_OFFSET_SYM(_callee_saved_t, pcxi);
-
-#if defined(CONFIG_SMP)
-GEN_OFFSET_SYM(_thread_arch_t, arg_mem);
-#endif
 GEN_OFFSET_SYM(_thread_base_t, thread_state);
+GEN_OFFSET_SYM(_cpu_arch_t, to_reclaim);
 
 /* CSA offsets */
+GEN_OFFSET_SYM(z_tricore_lower_context_t, d2);
 GEN_OFFSET_SYM(z_tricore_lower_context_t, a4);
 GEN_OFFSET_SYM(z_tricore_lower_context_t, a5);
 GEN_OFFSET_SYM(z_tricore_lower_context_t, a6);

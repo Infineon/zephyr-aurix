@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024 Infineon Technologies AG
- * 
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -23,6 +23,9 @@ GTEXT(z_tricore_switch)
 GTEXT(sys_trace_isr_enter)
 GTEXT(sys_trace_isr_exit)
 #endif
+#if CONFIG_MPU_STACK_GUARD
+GTEXT(z_tricore_mpu_stackguard_enable)
+#endif
 
 /**
  *
@@ -39,24 +42,18 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 	movh.a  %a15, hi:(_kernel + ___kernel_t_cpus_OFFSET)
 	lea     %a15, [%a15], lo:(_kernel + ___kernel_t_cpus_OFFSET)
 
-#if CONFIG_SMP
-	/* Get cpu structure for current core */
-	mfcr	%d15, TRICORE_CORE_ID
-	sub	%d15, %d15, CONFIG_TRICORE_CORE_ID
-	mul	%d15, %d15, ___cpu_t_SIZEOF
-	addsc.a %a15, %a15, %d15, 0
-#endif
-
 	ld.w %d15, [%a15]+___cpu_t_nested_OFFSET
-	addi %d14, %d15, 1
-	st.w [%a15]+___cpu_t_nested_OFFSET, %d14
+	addi %d15, %d15, 1
+	st.w [%a15]+___cpu_t_nested_OFFSET, %d15
 
 #if CONFIG_MPU_STACK_GUARD
-	jnz	%d15, no_stack_guard
-	mov.a	%a4, 0
-	/* Enable stack guard for ISR */
+	/* On outer ISR entry install the ISR-stack guard */
+	jne %d15, 1, _isr_skip_guard_enter
+	mov.a %a4, 0
 	call z_tricore_mpu_stackguard_enable
-no_stack_guard:
+	movh.a  %a15, hi:(_kernel + ___kernel_t_cpus_OFFSET)
+	lea     %a15, [%a15], lo:(_kernel + ___kernel_t_cpus_OFFSET)
+_isr_skip_guard_enter:
 #endif
 
 #ifdef CONFIG_TRACING_ISR
@@ -85,6 +82,9 @@ no_stack_guard:
 	call	sys_trace_isr_exit
 #endif
 
+GTEXT(z_tricore_irq_done)
+z_tricore_irq_done:
+
 	ld.w %d15, [%a15]+___cpu_t_nested_OFFSET
 	addi %d15, %d15, -1
 	st.w [%a15]+___cpu_t_nested_OFFSET, %d15
@@ -106,20 +106,52 @@ no_stack_guard:
 	call	z_get_next_switch_handle
 	jz.a	%a2, no_reschedule
 
-	/* Perform thread switch */
+	/* Perform thread switch.
+	 *
+	 * On an ISR self-abort, kernel/sched.c halt_thread() has dummified
+	 * _current (cpus[0].current = &_thread_dummy) before this point.
+	 * The live CSA chain still belongs to the aborting thread, which
+	 * the kernel reaches via to_reclaim. Saving that chain into the
+	 * dummy would leave the aborting thread's callee_saved.pcxi stale,
+	 * and the subsequent z_tricore_reclaim_csa walk would follow the
+	 * stale (long-recycled) chain into other threads' CSAs and strip
+	 * their UL/PIE bits -- which then traps Class 3 TIN 6 at the rfe
+	 * below. Use to_reclaim as the outgoing thread when set so the
+	 * chain saved matches the chain to be reclaimed.
+	 */
 	mov.aa	%a4, %a2
+	ld.a	%a13, [%a15]+_cpu_offset_to_to_reclaim
+	jz.a	%a13, 1f
+	mov.aa	%a5, %a13
+	j	2f
+1:
 	mov.aa	%a5, %a14
+2:
 	fcall	z_tricore_switch
-#endif
 
-#if CONFIG_MPU_STACK_GUARD
-	ld.a	%a4, [%a15]+___cpu_t_current_OFFSET
-	/* Enable stack guard for thread */
-	call z_tricore_mpu_stackguard_enable
+	/* z_tricore_switch clobbers %a15 across the MPU reconfigure */
+	movh.a	%a15, hi:(_kernel + ___kernel_t_cpus_OFFSET)
+	lea	%a15, [%a15], lo:(_kernel + ___kernel_t_cpus_OFFSET)
+
+	/* Reclaim CSAs if needed */
+	ld.a	%a13, [%a15]+_cpu_offset_to_to_reclaim
+	jz.a	%a13, no_reschedule
+	mov.aa	%a4, %a13
+	call	z_tricore_reclaim_csa
+	mov.a	%a12, 0
+	st.a	[%a15]+_cpu_offset_to_to_reclaim, %a12
+	st.a	[%a13]+_thread_offset_to_saved_pcxi, %a12
 #endif
 
 no_reschedule:
+#if CONFIG_MPU_STACK_GUARD
+	/* When returning to thread context restore the thread stack guard */
+	ld.w %d15, [%a15]+___cpu_t_nested_OFFSET
+	jnz %d15, _isr_skip_guard_exit
+	ld.a %a4, [%a15]+___cpu_t_current_OFFSET
+	call z_tricore_mpu_stackguard_enable
+_isr_skip_guard_exit:
+#endif
 	/* Return from interrupt */
 	rslcx
 	rfe
-

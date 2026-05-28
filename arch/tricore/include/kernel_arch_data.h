@@ -39,6 +39,7 @@ struct z_tricore_lower_context {
 	uint32_t d6;
 	uint32_t d7;
 };
+
 typedef struct z_tricore_lower_context z_tricore_lower_context_t;
 
 struct z_tricore_upper_context {
@@ -59,6 +60,7 @@ struct z_tricore_upper_context {
 	uint32_t d14;
 	uint32_t d15;
 };
+
 typedef struct z_tricore_upper_context z_tricore_upper_context_t;
 
 union z_tricore_context {

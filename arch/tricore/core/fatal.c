@@ -9,6 +9,9 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/arch/common/exc_handle.h>
 #include <zephyr/arch/tricore/exception.h>
+#if CONFIG_MPU_STACK_GUARD
+#include <zephyr/arch/tricore/mpu.h>
+#endif
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
@@ -130,7 +133,7 @@ void z_tricore_fatal_error(unsigned int reason, const struct arch_esf *lower)
 		upper->d11);
 	LOG_ERR("D12: %08x D13: %08x D14: %08x D15: %08x", upper->d12, upper->d13, upper->d14,
 		upper->d15);
-	LOG_ERR("PC:  %08x SP:  %08x PSW: %08x PCXI: %08x", upper->a11, upper->a10, upper->psw,
+	LOG_ERR("PC:  %08x SP:  %08x PSW: %08x PCXI: %08x", lower->a11, upper->a10, upper->psw,
 		upper->pcxi);
 #endif
 
@@ -142,16 +145,12 @@ K_KERNEL_STACK_ARRAY_DECLARE(z_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS, CONFIG_
 static bool bad_stack_pointer(struct z_tricore_upper_context *upper)
 {
 #if CONFIG_MPU_STACK_GUARD
-	const size_t stack_nr = IS_ENABLED(CONFIG_SMP) ?
-				arch_proc_id() - CONFIG_TRICORE_CORE_ID : 0;
-	if ((upper->psw & BIT(9)) != 0 &&
-	    upper->a10 >= POINTER_TO_UINT(z_interrupt_stacks[stack_nr]) &&
-	    upper->a10 <
-		    POINTER_TO_UINT(z_interrupt_stacks[stack_nr]) + Z_TRICORE_STACK_GUARD_SIZE) {
+	if ((upper->psw & BIT(9)) != 0 && upper->a10 >= POINTER_TO_UINT(z_interrupt_stacks[0]) &&
+	    upper->a10 < POINTER_TO_UINT(z_interrupt_stacks[0]) + Z_TRICORE_STACK_GUARD_SIZE) {
 		return true;
 	} else if ((upper->psw & BIT(11)) != 0 &&
-		   (upper->a10 >= _current->stack_info.start &&
-		    upper->a10 < _current->stack_info.start + Z_TRICORE_STACK_GUARD_SIZE)) {
+		   (upper->a10 >= _current->stack_info.start - Z_TRICORE_STACK_GUARD_SIZE &&
+		    upper->a10 < _current->stack_info.start)) {
 		return true;
 	}
 #endif
@@ -179,18 +178,34 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 
 #ifdef CONFIG_USERSPACE
 	/*
-	 * Perform an assessment whether an MPU fault shall be
-	 * treated as recoverable.
+	 * The user-string byte walker may trip either an MPU permission
+	 * trap when the address is denied by the active set, or a bus
+	 * DSE when the address decodes nowhere (e.g. a pointer aimed at
+	 * the unmapped end of the peripheral region). Both must redirect
+	 * to the per-walker fixup so the syscall returns an error rather
+	 * than a fatal CPU exception. RFE on this core consumes the A11
+	 * restored by the preceding RSLCX (i.e. the svlcx lower frame),
+	 * so the redirect target is patched into lower->a11. Returning
+	 * with rslcx + rfe is mandatory because the C epilogue's ret
+	 * would underflow PSW.CDC (cleared on trap entry).
 	 */
-	if (trap_class == TRICORE_TRAP_INTERNAL_PROTECTION_TRAPS &&
-	    (tin == TRICORE_TRAP1_MPR || tin == TRICORE_TRAP1_MPW)) {
+	bool is_mpu_trap = (trap_class == TRICORE_TRAP_INTERNAL_PROTECTION_TRAPS &&
+			    (tin == TRICORE_TRAP1_MPR || tin == TRICORE_TRAP1_MPW));
+	bool is_bus_dse = (trap_class == TRICORE_TRAP_SYSTEM_BUS_PERIPHERAL_ERRORS &&
+			   tin == TRICORE_TRAP4_DSE);
+
+	if (is_mpu_trap || is_bus_dse) {
 		for (int i = 0; i < ARRAY_SIZE(exceptions); i++) {
 			unsigned long start = (unsigned long)exceptions[i].start;
 			unsigned long end = (unsigned long)exceptions[i].end;
 
 			if (lower->a11 >= start && lower->a11 < end) {
-				lower->a11 = (unsigned long)exceptions[i].fixup;
-				return;
+				unsigned long fixup_pc = (unsigned long)exceptions[i].fixup;
+
+				lower->a11 = fixup_pc;
+				__asm volatile("dsync\n\tisync\n\trslcx\n\trfe\n"
+					       ::: "memory");
+				CODE_UNREACHABLE;
 			}
 		}
 	}
@@ -198,11 +213,19 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 
 	unsigned int reason = K_ERR_CPU_EXCEPTION;
 
+	/*
+	 * Map Class 3 CSA / call-depth traps to STACK_CHK_FAIL so the
+	 * ztest framework recognises them as stack overflows. TIN 4
+	 * (FCU) is unrecoverable and is routed via z_tricore_fault_fcu
+	 * directly from vectors.c.
+	 */
+	if (trap_class == TRICORE_TRAP_CONTEXT_MANAGEMENT &&
+	    (tin == TRICORE_TRAP3_FCD || tin == TRICORE_TRAP3_CDO ||
+	     tin == TRICORE_TRAP3_CDU || tin == TRICORE_TRAP3_CSU)) {
+		reason = K_ERR_STACK_CHK_FAIL;
+	}
+
 	if (bad_stack_pointer(upper)) {
-#ifdef CONFIG_MPU_STACK_GUARD
-		void z_tricore_mpu_stackguard_disable(struct k_thread * thread);
-		z_tricore_mpu_stackguard_disable(NULL);
-#endif
 		reason = K_ERR_STACK_CHK_FAIL;
 	}
 
@@ -214,9 +237,13 @@ void z_tricore_fault(uint8_t trap_class, uint8_t tin)
 
 void __weak z_tricore_fault_fcu(void)
 {
+#if CONFIG_TEST
+	__asm("debug");
+#else
 	while (1) {
 		/* FCU faults are not expected to be recoverable, so just loop here. */
 	}
+#endif
 }
 
 #ifdef CONFIG_USERSPACE
@@ -228,3 +255,35 @@ FUNC_NORETURN void arch_syscall_oops(void *ssf_ptr)
 }
 
 #endif
+
+/*
+ * Reached from the EXCEPT syscall trampoline in syscall_wrapper.S after
+ * z_except_reason()/k_oops()/k_panic() in user or kernel code. A user
+ * thread must not be able to forge arbitrary K_ERR_* reasons -- the
+ * kernel only honours K_ERR_STACK_CHK_FAIL from user mode; everything
+ * else collapses to K_ERR_KERNEL_OOPS. Kernel-mode callers (including
+ * a K_USER thread mid- arch_user_mode_enter that has not yet dropped
+ * its PSW.IO to user) keep the reason they passed, so the SAVED PSW.IO
+ * in the upper context -- not _current->user_options -- is what decides.
+ *
+ * z_tricore_fatal_error() may return when the test fatal handler
+ * recovers (e.g. test_essential_thread_abort_self), so this helper
+ * cannot be FUNC_NORETURN -- the compiler would omit the epilogue
+ * and execution would fall through into the next function in .text.
+ * The trampoline relies on a real ret here so it can fall into
+ * syscall_return.
+ */
+void z_tricore_user_except(unsigned int reason, const struct arch_esf *ssf)
+{
+#ifdef CONFIG_USERSPACE
+	struct z_tricore_upper_context *upper =
+		UINT_TO_POINTER(((ssf->pcxi & 0xF0000) << 12) |
+				((ssf->pcxi & 0xFFFF) << 6));
+	bool caller_was_user = ((upper->psw >> 10) & 0x3) != 0x2;
+
+	if (caller_was_user && reason != K_ERR_STACK_CHK_FAIL) {
+		reason = K_ERR_KERNEL_OOPS;
+	}
+#endif
+	z_tricore_fatal_error(reason, ssf);
+}

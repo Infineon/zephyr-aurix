@@ -4,11 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * @file
+ * @brief TriCore specific thread definitions
+ */
+
 #ifndef ZEPHYR_INCLUDE_ARCH_TRICORE_THREAD_H_
 #define ZEPHYR_INCLUDE_ARCH_TRICORE_THREAD_H_
 
 #ifndef _ASMLANGUAGE
 #include <zephyr/types.h>
+
+/** @cond INTERNAL_HIDDEN */
 
 struct _callee_saved {
 	uint32_t pcxi;
@@ -21,18 +28,13 @@ typedef struct _callee_saved _callee_saved_t;
 
 struct _thread_arch {
 	uint8_t prs;
-#if defined(CONFIG_SMP)
-	uint32_t *arg_mem;
-#endif
 };
 
 typedef struct _thread_arch _thread_arch_t;
 
-#define K_PROTECTION_SET(n)                                                                        \
-	BUILD_ASSERT(n > 0 && n < CONFIG_TRICORE_MPU_PROTECTION_SETS,                              \
-		     "Protection set number out of range");                                        \
-	(MAX(n, CONFIG_TRICORE_MPU_PROTECTION_SETS - 1) << 5)
 #define K_PROTECTION_SET_MASK GENMASK(7, 5)
+
+/** @endcond */
 
 #endif /* _ASMLANGUAGE */
 
