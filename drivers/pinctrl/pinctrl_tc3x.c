@@ -24,7 +24,7 @@
 #define TC3X_IOCR_PULL_UP    0x02
 
 #define PINCTRL_BASE DT_REG_ADDR_BY_IDX(DT_NODELABEL(pinctrl), 0)
-#define PORT_BASE(x) PINCTRL_BASE + 0x100 * x
+#define PORT_BASE(x) (PINCTRL_BASE + 0x100 * (x))
 
 static void ALWAYS_INLINE atomic_ldmst_iocr(uintptr_t addr, uint32_t offset, uint32_t value)
 {

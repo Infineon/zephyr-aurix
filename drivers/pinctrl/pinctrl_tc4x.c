@@ -12,20 +12,9 @@
 #include "pinctrl_aurix_modules.h"
 
 #define PINCTRL_BASE DT_REG_ADDR_BY_IDX(DT_NODELABEL(pinctrl), 0)
-#define PORT_BASE(x) (&MODULE_P00 + x)
+#define PORT_BASE(x) (&MODULE_P00 + (x))
 
-__maybe_unused static void ALWAYS_INLINE atomic_ldmst_pdr(void *addr, uint32_t offset,
-							  uint32_t value)
-{
-	__asm("	imask %%e14, %0, %1, 4\n"
-	      "	ldmst [%2]+0, %%e14\n"
-	      :
-	      : "d"(value), "d"(offset), "a"((uint32_t *)(addr))
-	      : "e14");
-}
-
-__maybe_unused static void ALWAYS_INLINE atomic_ldmst_bit(void *addr, uint32_t offset,
-							  uint32_t value)
+static void ALWAYS_INLINE atomic_ldmst_bit(void *addr, uint32_t offset, uint32_t value)
 {
 	__asm("	imask %%e14, %0, %1, 1\n"
 	      "	ldmst [%2]+0, %%e14\n"
@@ -39,15 +28,15 @@ static void pinctrl_configure_pin(const pinctrl_soc_pin_t *pin)
 	void *protse = (void *)&PORT_BASE(pin->port)->PROTSE;
 	if (pin->analog) {
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_CONFIG);
-		atomic_ldmst_bit((void *)PORT_BASE(pin->port) + offsetof(Ifx_P, PDISC), pin->pin,
-				 1);
+		atomic_ldmst_bit((uint8_t *)PORT_BASE(pin->port) + offsetof(Ifx_P, PDISC),
+				 pin->pin, 1);
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_RUN);
 		return;
 	}
 	if (pin->output_select) {
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_CONFIG);
-		atomic_ldmst_bit((void *)PORT_BASE(pin->port) + offsetof(Ifx_P, PCSRSEL), pin->pin,
-				 pin->output_select);
+		atomic_ldmst_bit((uint8_t *)PORT_BASE(pin->port) + offsetof(Ifx_P, PCSRSEL),
+				 pin->pin, pin->output_select);
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_RUN);
 	}
 
