@@ -34,26 +34,24 @@
 	 TRICORE_MPU_ACCESS_U_R | TRICORE_MPU_ACCESS_U_W | TRICORE_MPU_ACCESS_U_X)
 
 #define K_MEM_PARTITION_IS_EXECUTABLE(access_rights)                                               \
-	(access_rights & (TRICORE_MPU_ACCESS_P_X | TRICORE_MPU_ACCESS_U_X))
+	((access_rights) & (TRICORE_MPU_ACCESS_P_X | TRICORE_MPU_ACCESS_U_X))
 
 #define K_MEM_PARTITION_IS_WRITABLE(access_rights)                                                 \
-	(access_rights & (TRICORE_MPU_ACCESS_P_W | TRICORE_MPU_ACCESS_U_W))
+	((access_rights) & (TRICORE_MPU_ACCESS_P_W | TRICORE_MPU_ACCESS_U_W))
 
-/* Read-Write access permission attributes */
 #define K_MEM_PARTITION_P_RW_U_RW ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_RW_U_RW})
 #define K_MEM_PARTITION_P_RW_U_NA ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_RW_U_NA})
 #define K_MEM_PARTITION_P_RO_U_RO ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_RO_U_RO})
 #define K_MEM_PARTITION_P_RO_U_NA ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_RO_U_NA})
 #define K_MEM_PARTITION_P_NA_U_NA ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_NA_U_NA})
 
-/* Execution-allowed attributes */
 #define K_MEM_PARTITION_P_RX_U_RX   ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_RX_U_RX})
 #define K_MEM_PARTITION_P_RWX_U_RWX ((k_mem_partition_attr_t){TRICORE_MPU_ACCESS_P_RWX_U_RWX})
 
 struct tricore_mem_partition_attr {
-    uint32_t access_rights: 6;
-    uint32_t dpr : 5;
-    uint32_t cpr : 5;
+	uint32_t access_rights: 6;
+	uint32_t dpr: 5;
+	uint32_t cpr: 5;
 };
 
 typedef struct tricore_mem_partition_attr k_mem_partition_attr_t;
@@ -65,13 +63,10 @@ struct arch_mem_domain {
 	uint32_t dpwe;
 };
 
-#define Z_TRICORE_STACK_GUARD_SIZE  Z_POW2_CEIL(MAX(ARCH_STACK_PTR_ALIGN, CONFIG_MPU_STACK_GUARD_MIN_SIZE))
+#define Z_TRICORE_STACK_GUARD_SIZE                                                                 \
+	Z_POW2_CEIL(MAX(ARCH_STACK_PTR_ALIGN, CONFIG_MPU_STACK_GUARD_MIN_SIZE))
 
-
-struct tricore_mpu_config {
-	size_t num_regions;
-	const struct tricore_mpu_region *regions;
-};
+#define Z_TRICORE_USER_STACK_SYSCALL_SLACK 64U
 
 struct tricore_mpu_region {
 	uint32_t start;
@@ -80,6 +75,11 @@ struct tricore_mpu_region {
 	const char *name;
 };
 
+struct tricore_mpu_config {
+	size_t num_regions;
+	const struct tricore_mpu_region *regions;
+};
+
 extern const struct tricore_mpu_config mpu_config;
 
-#endif
+#endif /* ZEPHYR_INCLUDE_ARCH_TRICORE_MPU_H_ */

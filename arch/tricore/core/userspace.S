@@ -30,7 +30,8 @@ z_tricore_user_string_nlen_fault_start:
 	ld.bu	%d14, [%a15]    	# Load byte from user string
 z_tricore_user_string_nlen_fault_end:
 	jz	%d14, _arch_user_string_nlen_done	# Test string's end of line
-	jnei	%d2, %d4, loop		# Check if max length is reached
+	add	%d2, 1
+	jne	%d2, %d4, loop		# Check if max length is reached
 _arch_user_string_nlen_done:
 	ret
 

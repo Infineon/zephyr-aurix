@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Infineon Technologies AG
 # SPDX-License-Identifier: Apache-2.0
 
-menu "Tricore Options"
+menu "TriCore Architecture Options"
 	depends on TRICORE
 
 config ARCH
@@ -10,7 +10,6 @@ config ARCH
 
 config CPU_TC162
 	select ARCH_HAS_NOCACHE_MEMORY_SUPPORT
-	select ARCH_HAS_IRQ_OFFLOAD
 	select CPU_HAS_DCACHE
 	select CPU_HAS_ICACHE
 	select CPU_CACHE_INCOHERENT
@@ -20,45 +19,40 @@ config CPU_TC162
 
 config CPU_TC18
 	select ARCH_HAS_NOCACHE_MEMORY_SUPPORT
-	select ARCH_HAS_IRQ_OFFLOAD
 	select CPU_HAS_DCACHE
 	select CPU_HAS_ICACHE
 	select CPU_CACHE_INCOHERENT
-	select CPU_HAS_FPU
-	imply FPU
 	bool
 
 config TRICORE_CSA_COUNT
 	int "Number of Context Save Areas allocated"
 	default 256
-
-config TRICORE_CORE_ID
-	int "Core ID of the core if running in AMP mode"
-	default 0
 	help
-		Core ID of the TriCore core
+		This option controls the number of Context Save Areas (CSAs) allocated by the
+		kernel. CSAs are used to store the upper and lower context information during
+		function calls and interrupts. The default value of 256 is typically sufficient
+		for most applications, but it can be increased if your application has a large
+		number of nested function calls, interrupts or threads.
 
 config TRICORE_RESET_TRAMPOLINE
-	bool "Enable trampoline to jump to cached address"
+	bool "Trampoline to jump to cached address"
 	default y
 	help
 		Enable startup trampoline function which jumps from
 		any address (e.g. no cached) to the actual startup
 		function.
 
+menu "TriCore Processor Options"
+
 config CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS
 	bool "Custom fixed SoC MPU region definition"
 	help
-	  If enabled, this option signifies that the SoC will
-	  define and configure its own fixed MPU regions in the
-	  SoC definition. These fixed MPU regions are currently
-	  used to set Flash and SRAM default access policies and
-	  they are programmed at boot time.
-
-menu "Tricore Processor Options"
+	  If enabled, the SoC defines and configures its own fixed MPU regions in
+	  the SoC layer. These fixed MPU regions are programmed at boot time and
+	  typically set the default access policies for flash and SRAM.
 
 config TRICORE_MPU
-	bool "Tricore MPU Support"
+	bool "TriCore MPU Support"
 	select THREAD_STACK_INFO
 	select CPU_HAS_MPU
 	select MPU
@@ -66,31 +60,38 @@ config TRICORE_MPU
 	select ARCH_HAS_USERSPACE
 	select ARCH_HAS_STACK_PROTECTION
 	select ARCH_MEM_DOMAIN_SUPPORTS_ISOLATED_STACKS
-#	select ARCH_MEM_DOMAIN_SYNCHRONOUS_API if USERSPACE
 	select ARCH_MEM_DOMAIN_DATA if USERSPACE
+	select ARCH_MEM_DOMAIN_SYNCHRONOUS_API if USERSPACE
+	select MEM_DOMAIN_HAS_THREAD_LIST if USERSPACE
 	select SRAM_REGION_PERMISSIONS
-#	select THREAD_LOCAL_STORAGE if USERSPACE
 	help
-	  Tricore implements Memory Protection Unit.
+	  Enable the TriCore Memory Protection Unit. The MPU enforces per-region
+	  read, write and execute access permissions and provides stack guard and
+	  user-thread isolation when combined with USERSPACE.
 
 if TRICORE_MPU
+
 config TRICORE_MPU_CODE_REGIONS
 	int "Number of MPU code regions"
 	default 8
 	help
-	  Number of code regions supported by the MPU.
+	  Number of code-protection regions (CPRs) supported by the MPU on this
+	  SoC. Used to bound region allocation tables at compile time.
 
 config TRICORE_MPU_DATA_REGIONS
 	int "Number of MPU data regions"
 	default 16
 	help
-	  Number of data regions supported by the MPU.
+	  Number of data-protection regions (DPRs) supported by the MPU on this
+	  SoC.
 
 config TRICORE_MPU_PROTECTION_SETS
 	int "Number of MPU protection sets"
 	default 4
 	help
-	  Number of protection sets supported by the MPU.
+	  Number of protection sets (PRS) supported by the MPU on this SoC. PRS 0
+	  is used by kernel and ISR contexts.
+
 endif # TRICORE_MPU
 
 config MPU_STACK_GUARD
@@ -102,9 +103,9 @@ config MPU_STACK_GUARD_MIN_SIZE
 	depends on MPU_STACK_GUARD
 	default 512
 	help
-	  The Hardware Stack Protection implements a guard area at the bottom
-	  of the stack using the MPU to catch stack overflows by marking that
-	  guard area not accessible.
+	  Hardware stack protection installs a guard area at the bottom of the
+	  stack using the MPU. Accessing the guard area triggers a fault so stack
+	  overflows can be caught.
 
 if CPU_TC18
 config CPU_HAS_TRICORE_VIRTUALIZATION
@@ -112,13 +113,35 @@ config CPU_HAS_TRICORE_VIRTUALIZATION
 	default n
 
 config TRICORE_VIRTUALIZATION
-	bool "Tricore Virtualization"
+	bool "TriCore Virtualization Support"
+	depends on CPU_HAS_TRICORE_VIRTUALIZATION
 	default n
+	help
+		When enabled, the kernel will use the virtualization features of the TriCore
+		architecture to support running multiple virtual machines (VMs) on the same
+		hardware. Each VM can run its own instance of the operating system or
+		applications, providing isolation and security between them. This option is
+		only available on CPUs that support TriCore virtualization.
 
 config TRICORE_VM_ID
-	int "Tricore Virtual Machine ID"
+	int "TriCore Virtual Machine ID"
 	depends on TRICORE_VIRTUALIZATION
 	default 0
+	help
+		This option specifies the ID of the virtual machine (VM) that the kernel will
+		run on when TriCore virtualization is enabled.
+		 * VM0 is the hypervisor VM, which is responsible for managing the other VMs
+		and providing access to shared resources. It has dedicated hardware resources
+		(HRHV) and is responsible for handling hvcall instructions and IRQ requests
+		for VM2 - VM7.
+		 * VM1 is the real-time VM, which is designed for running real-time applications
+		that require low-latency and deterministic behavior. It has dedicated hardware
+		resources (HRA). IRQs mapped to VM1 are handled directly by the CPU and
+		do not trigger the hypervisor.
+		 * VM2 - VM7 are general-purpose VMs that can be used for running various
+		applications. They share a common hardware resource (HRB) and rely on the
+		hypervisor to schedule their execution. IRQs mapped to a VM that is not loaded
+		in HRB trigger the hypervisor.
 endif
 
 endmenu
@@ -138,5 +161,17 @@ config GEN_IRQ_VECTOR_TABLE
 config NUM_IRQ_PRIORITIES
 	int
 	default 256
+
+config MAIN_STACK_SIZE
+	default 4096 if TRICORE_MPU
+
+config IDLE_STACK_SIZE
+	default 2048 if TRICORE_MPU
+
+config ISR_STACK_SIZE
+	default 4096 if MPU_STACK_GUARD
+
+config TEST_EXTRA_STACK_SIZE
+	default 1024 if TRICORE_MPU
 
 endmenu

@@ -16,21 +16,25 @@
 #ifndef ZEPHYR_INCLUDE_ARCH_TRICORE_SYSCALL_H_
 #define ZEPHYR_INCLUDE_ARCH_TRICORE_SYSCALL_H_
 
-/* Syscall ids used */
-#define _SYSCALL_CALL 0
-#define _SYSCALL_SWITCH 1
-#define _SYSCALL_EXCEPT 2
+/** @cond INTERNAL_HIDDEN */
 
-#ifdef CONFIG_USERSPACE
+/* Syscall ids used */
+#define TRICORE_SYSCALL_CALL        0
+#define TRICORE_SYSCALL_SWITCH      1
+#define TRICORE_SYSCALL_EXCEPT      2
+#define TRICORE_SYSCALL_IRQ_OFFLOAD 3
+
 #ifndef _ASMLANGUAGE
 
 #include <zephyr/types.h>
 #include <stdbool.h>
+#include <zephyr/arch/tricore/cr.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define TRICORE_SYSCALL_CALL_STR STRINGIFY(TRICORE_SYSCALL_CALL)
 /*
  * Syscall invocation macros. tricore-specific machine constraints used to ensure
  * args land in the proper registers.
@@ -48,7 +52,7 @@ static inline uintptr_t arch_syscall_invoke6(uintptr_t arg1, uintptr_t arg2, uin
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0"
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR
 			 : "=r"(d2)
 			 : "r"(d4), "r"(d5), "r"(d6), "r"(d7), "r"(d8), "r"(d9), "r"(d0)
 			 : "memory");
@@ -66,7 +70,7 @@ static inline uintptr_t arch_syscall_invoke5(uintptr_t arg1, uintptr_t arg2, uin
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0"
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR
 			 : "=r"(d2)
 			 : "r"(d4), "r"(d5), "r"(d6), "r"(d7), "r"(d8), "r"(d0)
 			 : "memory");
@@ -83,7 +87,7 @@ static inline uintptr_t arch_syscall_invoke4(uintptr_t arg1, uintptr_t arg2, uin
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0"
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR
 			 : "=r"(d2)
 			 : "r"(d4), "r"(d5), "r"(d6), "r"(d7), "r"(d0)
 			 : "memory");
@@ -99,7 +103,10 @@ static inline uintptr_t arch_syscall_invoke3(uintptr_t arg1, uintptr_t arg2, uin
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0" : "=r"(d2) : "r"(d4), "r"(d5), "r"(d6), "r"(d0) : "memory");
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR
+			 : "=r"(d2)
+			 : "r"(d4), "r"(d5), "r"(d6), "r"(d0)
+			 : "memory");
 	return d2;
 }
 
@@ -110,7 +117,10 @@ static inline uintptr_t arch_syscall_invoke2(uintptr_t arg1, uintptr_t arg2, uin
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0" : "=r"(d2) : "r"(d4), "r"(d5), "r"(d0) : "memory");
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR
+			 : "=r"(d2)
+			 : "r"(d4), "r"(d5), "r"(d0)
+			 : "memory");
 	return d2;
 }
 
@@ -120,7 +130,10 @@ static inline uintptr_t arch_syscall_invoke1(uintptr_t arg1, uintptr_t call_id)
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0" : "=r"(d2) : "r"(d4), "r"(d0) : "memory");
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR
+			 : "=r"(d2)
+			 : "r"(d4), "r"(d0)
+			 : "memory");
 	return d2;
 }
 
@@ -129,7 +142,7 @@ static inline uintptr_t arch_syscall_invoke0(uintptr_t call_id)
 	register unsigned long d0 __asm__("d0") = call_id;
 	register unsigned long d2 __asm__("d2");
 
-	__asm__ volatile("syscall 0" : "=r"(d2) : "r"(d0) : "memory");
+	__asm__ volatile("syscall " TRICORE_SYSCALL_CALL_STR : "=r"(d2) : "r"(d0) : "memory");
 	return d2;
 }
 
@@ -137,8 +150,7 @@ static inline uintptr_t arch_syscall_invoke0(uintptr_t call_id)
 
 static inline bool arch_is_user_context(void)
 {
-	uint32_t psw;
-	__asm__ volatile("	mfcr %0, 0xFE04\n\t" : "=r"(psw));
+	uint32_t psw = cr_read(TRICORE_PSW);
 
 	if (((psw >> 10) & 0x3) == 0x2) {
 		return false;
@@ -153,5 +165,7 @@ static inline bool arch_is_user_context(void)
 #endif
 
 #endif /* _ASMLANGUAGE */
-#endif /* CONFIG_USERSPACE */
+
+/** @endcond */
+
 #endif /* ZEPHYR_INCLUDE_ARCH_TRICORE_SYSCALL_H_ */
