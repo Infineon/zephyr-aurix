@@ -6,7 +6,7 @@
 
 /dts-v1/;
 
-#include <infineon/tc3x/tc397xp.dtsi>
+#include <infineon/tc3x/tc397xa.dtsi>
 #include "kit_a2g_tc3x7_trb.dtsi"
 
 / {
@@ -16,14 +16,14 @@
 	             "infineon,tc3x";
 
 	chosen {
-		zephyr,flash = &flash5;
-		zephyr,sram = &dsram5;
-		zephyr,itcm = &psram5;
-		infineon,system-timer = &stm5;
+		zephyr,flash = &flash4;
+		zephyr,sram = &dsram4;
+		zephyr,itcm = &psram4;
+		infineon,system-timer = &stm4;
 	};
 };
 
-&stm5 {
+&stm4 {
 	status = "okay";
 	freeze;
 };

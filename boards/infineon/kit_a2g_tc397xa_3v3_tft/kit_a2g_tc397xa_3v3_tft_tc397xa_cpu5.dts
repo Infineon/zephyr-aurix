@@ -6,7 +6,7 @@
 
 /dts-v1/;
 
-#include <infineon/tc3x/tc397xp.dtsi>
+#include <infineon/tc3x/tc397xa.dtsi>
 #include "kit_a2g_tc397xa_3v3_tft.dtsi"
 
 / {

@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_SOC_INFINEON_AURIX_TC3X_SOC_H_
-#define ZEPHYR_SOC_INFINEON_AURIX_TC3X_SOC_H_
+#ifndef ZEPHYR_SOC_INFINEON_AURIX_TC4X_SOC_H_
+#define ZEPHYR_SOC_INFINEON_AURIX_TC4X_SOC_H_
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 #include "soc_tagid.h"
 #include "soc_prot.h"
+#include "soc_tos.h"
 
 #if !defined(_ASMLANGUAGE)
 #include "IfxCpu_reg.h"

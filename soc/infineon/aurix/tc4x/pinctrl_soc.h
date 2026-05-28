@@ -29,12 +29,12 @@ struct tc4x_pinctrl {
 
 typedef struct tc4x_pinctrl pinctrl_soc_pin_t;
 
-#define __HSFAST_DRIVE_MODE(drive_strength, slew_rate, output_select)                              \
-	(output_select == 0 ? __NORMAL_DRIVE_MODE(drive_strength, slew_rate) : drive_strength)
-#define __NORMAL_DRIVE_MODE(drive_strength, slew_rate) ((drive_strength << 1) | slew_rate)
+#define HSFAST_DRIVE_MODE(drive_strength, slew_rate, output_select)                                \
+	((output_select) == 0 ? NORMAL_DRIVE_MODE(drive_strength, slew_rate) : (drive_strength))
+#define NORMAL_DRIVE_MODE(drive_strength, slew_rate) (((drive_strength) << 1) | (slew_rate))
 #define PINCTRL_PAD_DRIVER(pad_type, drive_strength, slew_rate, output_select)                     \
-	(pad_type ? __HSFAST_DRIVE_MODE(drive_strength, slew_rate, output_select)                  \
-		  : __NORMAL_DRIVE_MODE(drive_strength, slew_rate))
+	((pad_type) ? HSFAST_DRIVE_MODE(drive_strength, slew_rate, output_select)                  \
+		    : NORMAL_DRIVE_MODE(drive_strength, slew_rate))
 
 #define Z_PINCTRL_STATE_PIN_INIT(node, prop, idx)                                                  \
 	{.port = AURIX_PINMUX_PORT(DT_PROP_BY_IDX(node, prop, idx)),                               \

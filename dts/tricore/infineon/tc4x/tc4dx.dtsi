@@ -485,6 +485,66 @@
             status = "disabled";
         };
 
+        stm0: timer@f8800000 {
+            compatible = "infineon,aurix-stm";
+            reg = <0xf8800000 0x200>;
+            clocks = <&fstm>;
+            interrupts = <IRQ_STMCPU0_SR0 1>, <IRQ_STMCPU0_SR2 1>,
+                         <IRQ_STMCPU0_SR4 1>, <IRQ_STMCPU0_SR6 1>,
+                         <IRQ_STMCPU0_SR8 1>, <IRQ_STMCPU0_SR10 1>,
+                         <IRQ_STMCPU0_SR12 1>, <IRQ_STMCPU0_SR14 1>;
+        };
+
+        stm1: timer@f8840000 {
+            compatible = "infineon,aurix-stm";
+            reg = <0xf8840000 0x200>;
+            clocks = <&fstm>;
+            interrupts = <IRQ_STMCPU1_SR0 1>, <IRQ_STMCPU1_SR2 1>,
+                         <IRQ_STMCPU1_SR4 1>, <IRQ_STMCPU1_SR6 1>,
+                         <IRQ_STMCPU1_SR8 1>, <IRQ_STMCPU1_SR10 1>,
+                         <IRQ_STMCPU1_SR12 1>, <IRQ_STMCPU1_SR14 1>;
+        };
+
+        stm2: timer@f8880000 {
+            compatible = "infineon,aurix-stm";
+            reg = <0xf8880000 0x200>;
+            clocks = <&fstm>;
+            interrupts = <IRQ_STMCPU2_SR0 1>, <IRQ_STMCPU2_SR2 1>,
+                         <IRQ_STMCPU2_SR4 1>, <IRQ_STMCPU2_SR6 1>,
+                         <IRQ_STMCPU2_SR8 1>, <IRQ_STMCPU2_SR10 1>,
+                         <IRQ_STMCPU2_SR12 1>, <IRQ_STMCPU2_SR14 1>;
+        };
+
+        stm3: timer@f88c0000 {
+            compatible = "infineon,aurix-stm";
+            reg = <0xf88c0000 0x200>;
+            clocks = <&fstm>;
+            interrupts = <IRQ_STMCPU3_SR0 1>, <IRQ_STMCPU3_SR2 1>,
+                         <IRQ_STMCPU3_SR4 1>, <IRQ_STMCPU3_SR6 1>,
+                         <IRQ_STMCPU3_SR8 1>, <IRQ_STMCPU3_SR10 1>,
+                         <IRQ_STMCPU3_SR12 1>, <IRQ_STMCPU3_SR14 1>;
+        };
+
+        stm4: timer@f8900000 {
+            compatible = "infineon,aurix-stm";
+            reg = <0xf8900000 0x200>;
+            clocks = <&fstm>;
+            interrupts = <IRQ_STMCPU4_SR0 1>, <IRQ_STMCPU4_SR2 1>,
+                         <IRQ_STMCPU4_SR4 1>, <IRQ_STMCPU4_SR6 1>,
+                         <IRQ_STMCPU4_SR8 1>, <IRQ_STMCPU4_SR10 1>,
+                         <IRQ_STMCPU4_SR12 1>, <IRQ_STMCPU4_SR14 1>;
+        };
+
+        stm5: timer@f8940000 {
+            compatible = "infineon,aurix-stm";
+            reg = <0xf8940000 0x200>;
+            clocks = <&fstm>;
+            interrupts = <IRQ_STMCPU5_SR0 1>, <IRQ_STMCPU5_SR2 1>,
+                         <IRQ_STMCPU5_SR4 1>, <IRQ_STMCPU5_SR6 1>,
+                         <IRQ_STMCPU5_SR8 1>, <IRQ_STMCPU5_SR10 1>,
+                         <IRQ_STMCPU5_SR12 1>, <IRQ_STMCPU5_SR14 1>;
+        };
+
         pinctrl: pinctrl@f003a000 {
             compatible = "infineon,tc4x-pinctrl";
             reg = <0xF003A000 0xA400>;

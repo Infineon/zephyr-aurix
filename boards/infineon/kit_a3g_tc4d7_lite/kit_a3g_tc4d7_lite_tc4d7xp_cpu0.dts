@@ -16,9 +16,14 @@
 		zephyr,itcm = &psram0;
 		zephyr,console = &asclin0;
 		zephyr,shell-uart = &asclin0;
+		infineon,system-timer = &stm0;
 	};
 };
 
 &asclin0 {
+	status = "okay";
+};
+
+&stm0 {
 	status = "okay";
 };

@@ -12,4 +12,4 @@ board:
       - name: "1.0.0"
       - name: "2.0.0"
   socs:
-    - name: tc397xp
+    - name: tc397xa

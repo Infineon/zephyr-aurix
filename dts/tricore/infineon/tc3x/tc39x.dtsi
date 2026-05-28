@@ -195,37 +195,37 @@
 		ranges;
 
 		stm0: timer@f0001000 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001000 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM0_SR0 1>;
 		};
 		stm1: timer@f0001100 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001100 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM1_SR0 1>;
 		};
 		stm2: timer@f0001200 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001200 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM2_SR0 1>;
 		};
 		stm3: timer@f0001300 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001300 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM3_SR0 1>;
 		};
 		stm4: timer@f0001400 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001400 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM4_SR0 1>;
 		};
 		stm5: timer@f0001500 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001500 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM5_SR0 1>;
@@ -848,6 +848,24 @@
 			interrupt-names = "tx", "rx", "err";
 			clocks = <&ccu CLOCK_FQSPI>;
 			status = "disabled";
+		};
+
+		cpu3_wdt: wdt@f0036270 {
+			compatible = "infineon,aurix-watchdog";
+			reg = <0xF0036270 12>;
+			status = "okay";
+		};
+
+		cpu4_wdt: wdt@f003627c {
+			compatible = "infineon,aurix-watchdog";
+			reg = <0xF003627C 12>;
+			status = "okay";
+		};
+
+		cpu5_wdt: wdt@f0036288 {
+			compatible = "infineon,aurix-watchdog";
+			reg = <0xF0036288 12>;
+			status = "okay";
 		};
 	};
 };

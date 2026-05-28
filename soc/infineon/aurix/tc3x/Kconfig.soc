@@ -55,12 +55,12 @@ config SOC_TC387QP
 	bool
 	select SOC_TC38x
 	
-config SOC_TC397XP 
+config SOC_TC397XA 
 	bool
 	select SOC_TC39xB
 
 config SOC
 	default "tc375tp" if SOC_TC375TP
 	default "tc377tx" if SOC_TC377TX
-	default "tc387qp" if SOC_TC3787QP
-	default "tc397xp" if SOC_TC397XP
+	default "tc387qp" if SOC_TC387QP
+	default "tc397xa" if SOC_TC397XA

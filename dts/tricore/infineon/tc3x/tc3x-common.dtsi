@@ -343,6 +343,18 @@
 			status = "okay";
 		};
 
+		cpu1_wdt: wdt@f0036258 {
+			compatible = "infineon,aurix-watchdog";
+			reg = <0xF0036258 12>;
+			status = "okay";
+		};
+
+		cpu2_wdt: wdt@f0036264 {
+			compatible = "infineon,aurix-watchdog";
+			reg = <0xF0036264 12>;
+			status = "okay";
+		};
+
 		ccu: clock_controller@f0036000 {
 			#clock-cells = <1>;
 			compatible = "infineon,tc3x-ccu";

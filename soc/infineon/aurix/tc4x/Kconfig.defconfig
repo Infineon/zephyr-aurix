@@ -6,15 +6,6 @@ if SOC_SERIES_TC4X
 config NUM_IRQS
     default 2048
 
-config AURIX_CORE_TOS
-	default 0 if TRICORE_CORE_ID = 0
-	default 1 if TRICORE_CORE_ID = 1
-	default 2 if TRICORE_CORE_ID = 2
-	default 3 if TRICORE_CORE_ID = 3
-	default 4 if TRICORE_CORE_ID = 4
-	default 5 if TRICORE_CORE_ID = 5
-	default 6 if TRICORE_CORE_ID = 6
-
 config AURIX_NEXT_CORE_START_ADDRESS
 	default 0x80400000 if (AURIX_NEXT_CORE_ID=1)
 	default 0x80800000 if (AURIX_NEXT_CORE_ID=2)

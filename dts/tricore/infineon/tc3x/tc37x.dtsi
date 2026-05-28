@@ -110,19 +110,19 @@
 		ranges;
 
 		stm0: timer@f0001000 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001000 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM0_SR0 1>;
 		};
 		stm1: timer@f0001100 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001100 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM1_SR0 1>;
 		};
 		stm2: timer@f0001200 {
-			compatible = "infineon,tc3x-stm";
+			compatible = "infineon,aurix-stm";
 			reg = <0xF0001200 256>;
 			clocks = <&fstm>;
 			interrupts = <IRQ_STM2_SR0 1>;

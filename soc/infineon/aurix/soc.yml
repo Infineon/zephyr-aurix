@@ -22,7 +22,7 @@ family:
       - name: cpu1
       - name: cpu2
       - name: cpu3
-    - name: tc397xp
+    - name: tc397xa
       cpuclusters:
       - name: cpu0
       - name: cpu1

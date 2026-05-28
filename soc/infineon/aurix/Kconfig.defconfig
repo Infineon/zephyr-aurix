@@ -15,6 +15,15 @@ config CLOCK_CONTROL
 config TRICORE_MPU
 	default y
 
+config BUILD_OUTPUT_HEX
+	default y
+
+if TEST
+# Increase the default CSA count to pass the tests
+config TRICORE_CSA_COUNT
+	default 384
+endif
+
 rsource "*/Kconfig.defconfig"
 
 endif # SOC_FAMILY_AURIX

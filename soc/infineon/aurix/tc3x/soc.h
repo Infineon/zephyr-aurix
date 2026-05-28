@@ -9,6 +9,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 
+#include "soc_tagid.h"
+#include "soc_tos.h"
+
 #ifndef _ASMLANGUAGE
 
 void aurix_cpu_endinit_enable(bool enabled);

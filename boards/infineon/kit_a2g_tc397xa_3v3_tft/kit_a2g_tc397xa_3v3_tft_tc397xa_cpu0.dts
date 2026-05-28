@@ -6,20 +6,22 @@
 
 /dts-v1/;
 
-#include <infineon/tc3x/tc397xp.dtsi>
-#include "kit_a2g_tc3x7_trb.dtsi"
+#include <infineon/tc3x/tc397xa.dtsi>
+#include "kit_a2g_tc397xa_3v3_tft.dtsi"
 
 / {
-	model = "Infineon TC397 TriBoard";
-	compatible = "infineon,kit_a2g_tc397_trb",
+	model = "Infineon TC397 ADAS Application Kit";
+	compatible = "infineon,kit_a2g_tc397xa_3v3_tft",
 	             "infineon,tc397",
-	             "infineon,tc3x";
+	             "infineon,tc3xx";
 
 	chosen {
 		zephyr,flash = &flash0;
 		zephyr,sram = &dsram0;
 		zephyr,itcm = &psram0;
 		zephyr,console = &asclin0;
+		zephyr,shell-uart = &asclin0;
+		zephyr,canbus = &can02;
 		infineon,system-timer = &stm0;
 	};
 };
