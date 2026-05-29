@@ -6161,6 +6161,16 @@ West:
   labels:
     - "platform: Infineon"
 
+"West project: hal_infineon-aurix":
+  status: maintained
+  maintainers:
+    - parthitce
+  collaborators:
+    - sreeramIfx
+  files: []
+  labels:
+    - "platform: Infineon"
+
 "West project: hal_intel":
   status: maintained
   maintainers:
