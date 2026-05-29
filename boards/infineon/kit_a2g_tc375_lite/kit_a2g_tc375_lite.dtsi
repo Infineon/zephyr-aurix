@@ -120,6 +120,7 @@
 	aliases {
 		led0 = &led0;
 		led1 = &led1;
+		test-qspi = &qspi4;
 	};
 
 	can_phy0: can-phy0 {
@@ -196,6 +197,6 @@ arduino_serial: &asclin0 {
 qspi4: &qspi4 {
 	pinctrl-0 = <&qspi4_pin>;
 	pinctrl-names = "default";
-	max_clock_frequency = <50000000>;
+	max-clock-frequency = <50000000>;
 	status = "okay";
 };
