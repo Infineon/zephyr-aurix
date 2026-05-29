@@ -416,10 +416,25 @@ static void eth_qos_dma_rx_process(const struct device *dev, uint8_t dma_ch)
 		if (eth_qos_rdes_context(desc)) {
 			net_buf_unref(frag);
 		} else {
-			net_buf_add(frag, !eth_qos_rdes_last(desc)
-						  ? CONFIG_NET_BUF_DATA_SIZE
-						  : eth_qos_rdes_packet_length(desc) -
-							    net_pkt_get_len(pkt));
+			size_t add_len = eth_qos_rdes_last(desc)
+						 ? eth_qos_rdes_packet_length(desc) -
+							   net_pkt_get_len(pkt)
+						 : CONFIG_NET_BUF_DATA_SIZE;
+			size_t room = net_buf_tailroom(frag);
+
+			/*
+			 * Clamp to the fragment capacity. A corrupt or error
+			 * descriptor can report a length that exceeds the buffer
+			 * (or, via unsigned wrap when the reported total is below
+			 * what was already received, a huge value); writing it
+			 * would overrun the RX buffer pool and corrupt unrelated
+			 * memory. The packet error checks below then drop it.
+			 */
+			if (add_len > room) {
+				add_len = room;
+			}
+
+			net_buf_add(frag, add_len);
 			net_pkt_frag_add(pkt, frag);
 			sys_cache_data_invd_range(frag->data, frag->size);
 		}
