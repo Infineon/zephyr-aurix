@@ -61,7 +61,7 @@
 #define CLOCK_DIV_WITH_INST(clock, compat) ((DT_HAS_COMPAT_STATUS_OKAY(compat)) ? clock##_div : 0)
 #define CLOCK_DIV_WITH_STATUS(clock) (DT_NODE_HAS_STATUS(CLOCK(clock), okay) ? clock##_div : 0)
 #define CLOCK_SEL_WITH_INST(clock, source0, source1, compat)                                       \
-	(IS_ENABLED(DT_CAT3(DT_N_INST_, compat, _NUM_OKAY))                                        \
+	(DT_HAS_COMPAT_STATUS_OKAY(compat)                                                         \
 		 ? CLOCK_SOURCE_IS(clock, source0) ? 1 : 0x2                                       \
 		 : 0x0)
 
