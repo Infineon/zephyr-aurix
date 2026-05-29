@@ -21,6 +21,7 @@ LOG_MODULE_REGISTER(eth_qos, CONFIG_ETHERNET_LOG_LEVEL);
 #include <zephyr/sys/barrier.h>
 #include <zephyr/sys/sys_io.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/random/random.h>
 
 #include <ethernet/eth_stats.h>
 #include "eth_qos_reg.h"
@@ -622,6 +623,13 @@ void eth_qos_iface_init(struct net_if *iface)
 
 	data->iface = iface;
 	data->started = false;
+
+	if ((data->mac_addr[0] | data->mac_addr[1] | data->mac_addr[2] | data->mac_addr[3] |
+	     data->mac_addr[4] | data->mac_addr[5]) == 0U) {
+		sys_rand_get(data->mac_addr, sizeof(data->mac_addr));
+		data->mac_addr[0] |= 0x02U;
+		data->mac_addr[0] &= (uint8_t)~0x01U;
+	}
 
 	net_if_set_link_addr(iface, data->mac_addr, sizeof(data->mac_addr), NET_LINK_ETHERNET);
 	if (!cfg->dma_only) {
