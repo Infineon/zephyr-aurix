@@ -4,9 +4,9 @@
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-if (CONFIG_CPU_TC162)
+if(CONFIG_CPU_TC162)
     set(GCC_M_CPU tc3xx)
-elseif (CONFIG_CPU_TC18)
+elseif(CONFIG_CPU_TC18)
     set(GCC_M_CPU tc4xx)
 else()
     message(FATAL_ERROR "Unsupported TriCore CPU")
