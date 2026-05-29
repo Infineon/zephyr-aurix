@@ -3,7 +3,7 @@
 #include <zephyr/drivers/spi.h>
 #include <zephyr/sys/printk.h>
 
-#define SPI_NODE DT_NODELABEL(qspi4)
+#define SPI_NODE DT_ALIAS(test_qspi)
 
 static const struct device *spi_dev = DEVICE_DT_GET(SPI_NODE);
 
@@ -26,8 +26,6 @@ int main(void)
         .buffers = &tx_buf,
         .count = 1,
     };
-
-    int dcount = 0;
 
     /* Dummy RX buffer (optional but safe) */
     uint8_t rx_data[sizeof(tx_data) / sizeof(uint8_t)] = {0};
@@ -54,17 +52,6 @@ int main(void)
 
     int ret = spi_transceive(spi_dev, &spi_cfg, &tx, &rx);
 
-    for(int i = 0 ; i < data_len ; i++)
-    {
-        if(rx_data[i] == tx_data[i])
-        {
-            dcount++;
-        }
-        else
-        {
-            dcount = dcount;
-        }
-    }
     if (ret == 0) {
         printk("SPI transfer done\n");
     } else {
