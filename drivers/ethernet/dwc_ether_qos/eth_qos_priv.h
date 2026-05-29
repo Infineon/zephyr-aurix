@@ -10,6 +10,7 @@
 #include <zephyr/cache.h>
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/net_buf.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_pkt.h>
@@ -112,6 +113,8 @@ struct eth_qos_config {
 	/* Device nodes */
 	/** Phy deivce */
 	const struct device *phy;
+	/** Pin control configuration */
+	const struct pinctrl_dev_config *pincfg;
 #if CONFIG_PTP_CLOCK
 	/** PTP Clock Device */
 	const struct device *ptp_clock;
@@ -1037,6 +1040,7 @@ static inline void eth_qos_set_mac_addr(const struct device *dev, uint8_t nr, ui
 	{.init = eth_qos##n##_init,                                                                \
 	 .base = DT_INST_REG_ADDR(n),                                                              \
 	 .phy = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(n, phy_handle)),                             \
+	 .pincfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),                                              \
 	 .dma_rx_channel = ETH_QOS_RX_CHANNELS_TO_USE(n),                                          \
 	 .dma_tx_channel = ETH_QOS_TX_CHANNELS_TO_USE(n),                                          \
 	 .dma_rx = eth_qos##n##_dma_rx_config,                                                     \

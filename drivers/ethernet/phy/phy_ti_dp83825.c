@@ -261,9 +261,9 @@ static int phy_ti_dp83825_static_cfg(const struct device *dev)
 	}
 
 	if (config->phy_iface == DP83825_RMII) {
-		reg_val |= PHY_TI_DP83825_RCSR_REF_CLK_SEL;
-	} else {
 		reg_val &= ~PHY_TI_DP83825_RCSR_REF_CLK_SEL;
+	} else {
+		reg_val |= PHY_TI_DP83825_RCSR_REF_CLK_SEL;
 	}
 
 	ret = phy_ti_dp83825_write(dev, PHY_TI_DP83825_RCSR_REG, (uint32_t)reg_val);
