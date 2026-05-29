@@ -6,6 +6,10 @@ family:
   series:
   - name: tc3x
     socs:
+    - name: tc366dp
+      cpuclusters:
+      - name: cpu0
+      - name: cpu1
     - name: tc375tp
       cpuclusters:
       - name: cpu0

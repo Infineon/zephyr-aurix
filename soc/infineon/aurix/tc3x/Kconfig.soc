@@ -43,6 +43,10 @@ config SOC_TC39xB
 	bool
 	select SOC_SERIES_TC3X
 
+config SOC_TC366DP
+	bool
+	select SOC_TC36x
+
 config SOC_TC375TP
 	bool
 	select SOC_TC37x
@@ -60,6 +64,7 @@ config SOC_TC397XA
 	select SOC_TC39xB
 
 config SOC
+	default "tc366dp" if SOC_TC366DP
 	default "tc375tp" if SOC_TC375TP
 	default "tc377tx" if SOC_TC377TX
 	default "tc387qp" if SOC_TC387QP
