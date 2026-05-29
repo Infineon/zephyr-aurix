@@ -24,7 +24,7 @@ properties:
   pinctrl-names:
     required: true
 
-  max_clock_frequency:
+  max-clock-frequency:
     type: int
     required: true
     description: |
