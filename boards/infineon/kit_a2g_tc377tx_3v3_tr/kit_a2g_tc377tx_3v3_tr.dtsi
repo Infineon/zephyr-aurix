@@ -36,6 +36,7 @@
 
 	aliases {
 		led0 = &led0;
+		test-qspi = &qspi3;
 	};
 
 	can_phy0: can-phy0 {
