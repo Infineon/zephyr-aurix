@@ -228,7 +228,7 @@ FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry, void *p1, v
 		  [arg3] "d"((uint32_t)(uintptr_t)p3),
 		  [stack] "d"((uint32_t)(uintptr_t)sp),
 		  [psw_val] "d"(psw)
-		: "memory", "a4", "a5", "a6", "a7", "a10");
+		: "memory", "a4", "a5", "a6", "a7");
 
 	CODE_UNREACHABLE;
 }
