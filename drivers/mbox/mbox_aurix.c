@@ -175,7 +175,7 @@ static void mbox_aurix_isr(void *user_data)
 	}
 }
 
-struct mbox_driver_api mbox_aurix_api = {
+DEVICE_API(mbox, mbox_aurix_api) = {
 	.send = mbox_aurix_send,
 	.register_callback = mbox_aurix_register_callback,
 	.mtu_get = mbox_aurix_mtu_get,

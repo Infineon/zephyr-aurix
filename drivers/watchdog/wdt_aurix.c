@@ -220,7 +220,7 @@ static int wdt_aurix_init(const struct device *dev)
 	return 0;
 };
 
-struct wdt_driver_api wdt_aurix_api = {
+DEVICE_API(wdt, wdt_aurix_api) = {
 	.disable = wdt_aurix_disable,
 	.feed = wdt_aurix_feed,
 	.install_timeout = wdt_aurix_install_timeout,

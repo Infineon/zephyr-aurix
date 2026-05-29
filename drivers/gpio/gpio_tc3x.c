@@ -297,7 +297,7 @@ static int gpio_tc3x_manage_callback(const struct device *dev, struct gpio_callb
 	return gpio_manage_callback(&data->callbacks, callback, set);
 }
 
-static const struct gpio_driver_api gpio_tc3x_driver = {
+static DEVICE_API(gpio, gpio_tc3x_driver) = {
 	.pin_configure = gpio_tc3x_config,
 #if defined(CONFIG_GPIO_GET_CONFIG)
 	.pin_get_config = gpio_tc3x_get_config,

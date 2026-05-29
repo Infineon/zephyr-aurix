@@ -460,7 +460,7 @@ static int i2c_aurix_init(const struct device *dev)
 	return 0;
 }
 
-static const struct i2c_driver_api i2c_aurix_api = {
+static DEVICE_API(i2c, i2c_aurix_api) = {
 	.configure = i2c_aurix_configure,
 	.get_config = i2c_aurix_get_config,
 	.transfer = i2c_aurix_transfer,
