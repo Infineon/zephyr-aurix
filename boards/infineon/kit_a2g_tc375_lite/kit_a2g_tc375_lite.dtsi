@@ -140,6 +140,17 @@ arduino_serial: &asclin0 {
 	pinctrl-0 = <&i2c0_default>;
 	pinctrl-names = "default";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	status = "okay";
+
+	eth_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <256>;
+		address-width = <8>;
+		pagesize = <8>;
+		timeout = <5>;
+		read-only;
+	};
 };
 
 &fosc {
@@ -159,6 +170,7 @@ arduino_serial: &asclin0 {
 	pinctrl-names = "default";
 	phy-connection-type = "rmii";
 	phy-handle = <&eth0_phy>;
+	mac-eeprom = <&eth_eeprom>;
 };
 
 &mdio0 {

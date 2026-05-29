@@ -19,10 +19,10 @@
 
 	i2c0_default: i2c0_default {
 		group1 {
-			pinmux = <I2C0_SCL_IN_P15_4>, <I2C0_SDA_IN_P15_5>;
+			pinmux = <I2C0_SCL_IN_P13_1>, <I2C0_SDA_IN_P13_2>;
 		};
 		group2 {
-			pinmux = <I2C0_SCL_OUT_P15_4>, <I2C0_SDA_OUT_P15_5>;
+			pinmux = <I2C0_SCL_OUT_P13_1>, <I2C0_SDA_OUT_P13_2>;
 			output-enable;
 			drive-open-drain;
 		};
