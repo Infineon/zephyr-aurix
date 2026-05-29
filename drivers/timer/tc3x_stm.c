@@ -13,6 +13,7 @@
 #include <zephyr/sys/util.h>
 
 #include "IfxStm_reg.h"
+#include <soc.h>
 
 #define TIMER_BASE_ADDR DT_REG_ADDR_BY_IDX(DT_CHOSEN(infineon_system_timer), 0)
 
@@ -171,6 +172,10 @@ void sys_clock_disable()
 
 static int sys_clock_driver_init(void)
 {
+	if (!aurix_enable_clock(TIMER_BASE_ADDR + offsetof(Ifx_STM, CLC), 1000)) {
+        return -EIO;
+    }
+
 	IRQ_CONNECT(DT_IRQ_BY_IDX(DT_CHOSEN(infineon_system_timer), 0, irq),
 		    DT_IRQ_BY_IDX(DT_CHOSEN(infineon_system_timer), 0, priority), sys_clock_isr,
 		    NULL, 0);
@@ -181,7 +186,9 @@ static int sys_clock_driver_init(void)
 
 	/* Set debug freeze if selected */
 #if DT_PROP(DT_CHOSEN(infineon_system_timer), freeze)
+    aurix_cpu_endinit_enable(false);
 	sys_write32(0x12000000, TIMER_BASE_ADDR + offsetof(Ifx_STM, OCS));
+	aurix_cpu_endinit_enable(true);
 #endif
 	/* Set compare window */
 	Ifx_STM_CMCON cmcon = {.B.MSIZE0 = 31, .B.MSTART0 = 0};
