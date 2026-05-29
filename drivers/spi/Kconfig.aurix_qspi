@@ -1,21 +1,19 @@
 
-# Copyright (c) 2026 Infineon Technologies AG,
+#Copyright(c) 2026 Infineon Technologies AG,
 # or an affiliate of Infineon Technologies AG.
 
-# SPDX-License-Identifier: Apache-2.0
-
+#SPDX - License - Identifier : Apache - 2.0
 
 config INFINEON_AURIX_QSPI
-bool "Infineon Aurix QSPI driver"
-default y
-depends on DT_HAS_INFINEON_AURIX_QSPI_ENABLED
-select GPIO
-help
+	bool "Infineon Aurix QSPI driver"
+	default y
+	depends on DT_HAS_INFINEON_AURIX_QSPI_ENABLED
+	help
 	  This option enables the driver for Queued Synchronous Peripheral Interface.
 
 config SPI_AURIX_QSPI_MAX_SLAVE
-int "Maximum number of QSPI slaves"
-default 16
-depends on INFINEON_AURIX_QSPI
-help
+	int "Maximum number of QSPI slaves"
+	default 16
+	depends on INFINEON_AURIX_QSPI
+	help
 	  This option sets the maximum number of QSPI slaves supported by the driver.

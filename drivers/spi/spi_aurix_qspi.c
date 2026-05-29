@@ -38,7 +38,7 @@ LOG_MODULE_REGISTER(aurix_spi, CONFIG_SPI_LOG_LEVEL);
 #define QSPI_MAX_TIMEOUT            1000
 
 struct spi_aurix_qspi_config {
-	Ifx_QSPI *const base;
+	Ifx_QSPI * const base;
 	const struct device *const clkctrl;
 	const struct pinctrl_dev_config *const pinctrl;
 	uint32_t clk;
@@ -63,7 +63,7 @@ struct spi_aurix_qspi_data {
 	uint8_t dfs_value;
 };
 
-void qspi_writebacon_beginstream(const struct device *dev, const struct spi_config *spi_cfg)
+static void qspi_writebacon_beginstream(const struct device *dev, const struct spi_config *spi_cfg)
 {
 	const struct spi_aurix_qspi_config *cfg = dev->config;
 #ifdef CONFIG_SOC_SERIES_TC3X
@@ -78,23 +78,20 @@ void qspi_writebacon_beginstream(const struct device *dev, const struct spi_conf
 	bacon.B.TRAIL = 7;
 	LOG_DBG("BACON DL = %u, CS = %u , MSB = %u", bacon.B.DL, bacon.B.CS, bacon.B.MSB);
 	cfg->base->BACONENTRY.U = bacon.U;
-	//  LOG_DBG("The Bacon Value is %u",cfg->base->BACON.U);
 }
 
-void qspi_writebacon_endstream(const struct device *dev, const struct spi_config *spi_cfg)
+static void qspi_writebacon_endstream(const struct device *dev, const struct spi_config *spi_cfg)
 {
 	const struct spi_aurix_qspi_config *cfg = dev->config;
-	// LOG_DBG("In Last Write");
 #ifdef CONFIG_SOC_SERIES_TC3X
-	Ifx_QSPI_BACON bacon;
+	Ifx_QSPI_BACON bacon = {0};
 #elif CONFIG_SOC_SERIES_TC4X
-	Ifx_QSPI_BACONENTRY bacon;
+	Ifx_QSPI_BACONENTRY bacon = {0};
 #endif
 	bacon.B.DL = SPI_WORD_SIZE_GET(spi_cfg->operation) - 1;
 	bacon.B.CS = spi_cfg->slave;
 	bacon.B.LAST = 1;
 	cfg->base->BACONENTRY.U = bacon.U;
-	// LOG_DBG("Ending Convo");
 }
 
 static uint8_t get_dfs_value(struct spi_context *ctx)
@@ -115,7 +112,7 @@ static uint32_t spi_aurix_qspi_res_div(void)
 	}
 }
 
-int spi_aurix_qspi_set_frequency(const struct device *dev, uint32_t freq)
+static int spi_aurix_qspi_set_frequency(const struct device *dev, uint32_t freq)
 {
 	const struct spi_aurix_qspi_config *cfg = dev->config;
 	struct spi_aurix_qspi_data *data = dev->data;
@@ -126,13 +123,10 @@ int spi_aurix_qspi_set_frequency(const struct device *dev, uint32_t freq)
 	int ret;
 	uint32_t slave_id;
 
-	// LOG_DBG("Entered SPI SET");
 	slave_id = ctx->config->slave;
 
-	if (slave_id > QSPI_ECONZ_NUM) {
+	if (slave_id >= QSPI_ECONZ_NUM) {
 		slave_id = slave_id % QSPI_ECONZ_NUM;
-	} else {
-		slave_id = slave_id;
 	}
 
 	ret = clock_control_get_rate(cfg->clkctrl, &cfg->clk, &fqspi);
@@ -160,7 +154,7 @@ int spi_aurix_qspi_set_frequency(const struct device *dev, uint32_t freq)
 	return 0;
 }
 
-int spi_aurix_qspi_config(const struct device *dev, const struct spi_config *spi_cfg)
+static int spi_aurix_qspi_config(const struct device *dev, const struct spi_config *spi_cfg)
 {
 	const struct spi_aurix_qspi_config *cfg = dev->config;
 	struct spi_aurix_qspi_data *data = dev->data;
@@ -168,15 +162,11 @@ int spi_aurix_qspi_config(const struct device *dev, const struct spi_config *spi
 	int slave_id = spi_cfg->slave;
 	uint32_t result;
 
-	// LOG_DBG("Entered SPI CONFIG");
-
 	/* Activate the slave select */
 	cfg->base->SSOC.B.OEN = QSPI_SLAVE_ENABLE(slave_id);
 
-	if (slave_id > QSPI_ECONZ_NUM) {
+	if (slave_id >= QSPI_ECONZ_NUM) {
 		slave_id = slave_id % QSPI_ECONZ_NUM;
-	} else {
-		slave_id = slave_id;
 	}
 
 	/* Set the data rate */
@@ -184,7 +174,6 @@ int spi_aurix_qspi_config(const struct device *dev, const struct spi_config *spi
 	if (result != 0) {
 		return result;
 	}
-	// LOG_DBG("SPI Frequency Configured");
 
 	/* Slave ID should not surpass the maximum value */
 	if (slave_id > CONFIG_SPI_AURIX_QSPI_MAX_SLAVE) {
@@ -210,8 +199,6 @@ int spi_aurix_qspi_config(const struct device *dev, const struct spi_config *spi
 
 	data->first_write = true;
 
-	//  LOG_DBG("SPI CPOL = %u, CPHA = %u", cfg->base->ECON[slave_id].B.CPOL,
-	//  cfg->base->ECON[slave_id].B.CPH);
 	/* Enable Single Move Mode for the TXFIFO */
 	cfg->base->GLOBALCON1.B.TXFM = QSPI_FIFO_SINGLE_MOVE_MODE;
 
@@ -244,7 +231,6 @@ static int spi_aurix_qspi_init(const struct device *dev)
 	/* Configure dt provided device signals when available */
 	ret = pinctrl_apply_state(cfg->pinctrl, PINCTRL_STATE_DEFAULT);
 
-	// LOG_DBG("Configured PISEL : %u",cfg->base->PISEL.B.MRIS);
 	if (ret < 0) {
 		return ret;
 	}
@@ -312,10 +298,8 @@ static int qspi_transfer_short(const struct device *dev)
 		}
 		qspi_writebacon_endstream(dev, ctx->config);
 	} else {
-		// LOG_DBG("Normal Nesting");
 		if (SPI_WORD_SIZE_GET(ctx->config->operation) == 8) {
 			cfg->base->DATAENTRY[0].U = *((uint8_t *)ctx->tx_buf);
-			//  LOG_DBG("Wrote to fifo %u ",*(uint8_t*)ctx->tx_buf);
 			spi_context_update_tx(ctx, data->dfs_value, 1);
 		} else if (SPI_WORD_SIZE_GET(ctx->config->operation) == 16) {
 			cfg->base->DATAENTRY[0].U = *((uint16_t *)ctx->tx_buf);
@@ -340,67 +324,66 @@ static int qspi_receive_short(const struct device *dev)
 	LOG_DBG("In Receive API");
 	if (ctx->rx_len == 0) {
 		return 0;
-	} 
-        else {
+	}
 
-		if (SPI_WORD_SIZE_GET(ctx->config->operation) == 8) {
-			if (ctx->rx_buf == NULL) {
+	if (SPI_WORD_SIZE_GET(ctx->config->operation) == 8) {
+
+		if (ctx->rx_buf == NULL) {
 #ifdef CONFIG_SOC_SERIES_TC3X
-				uint8_t val = (cfg->base->RXEXIT.U & 0XFF);
+			uint8_t val = (cfg->base->RXEXIT.U & 0xFF);
 #elif CONFIG_SOC_SERIES_TC4X
-				uint8_t val = (cfg->base->RXEXIT[0].U & 0XFF);
+			uint8_t val = (cfg->base->RXEXIT[0].U & 0xFF);
 #endif
-				spi_context_update_rx(ctx, data->dfs_value, 1);
-				LOG_DBG("Received %u", val);
-			} else {
-				uint32_t rec_val;
-#ifdef CONFIG_SOC_SERIES_TC3X
-				rec_val = (cfg->base->RXEXIT.U & 0XFF);
-#elif CONFIG_SOC_SERIES_TC4X
-				rec_val = (cfg->base->RXEXIT[0].U & 0XFF);
-#endif
-				LOG_DBG("Recevied Value %u", rec_val);
-				memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
-				spi_context_update_rx(ctx, data->dfs_value, 1);
-			}
-		} else if (SPI_WORD_SIZE_GET(ctx->config->operation) == 16) {
-			if (ctx->rx_buf == NULL) {
-#ifdef CONFIG_SOC_SERIES_TC3X
-				uint16_t val = (cfg->base->RXEXIT.U & 0XFFFF);
-#elif CONFIG_SOC_SERIES_TC4X
-				uint16_t val = (cfg->base->RXEXIT[0].U & 0XFFFF);
-#endif
-				spi_context_update_rx(ctx, data->dfs_value, 1);
-				LOG_DBG("Received %u", val);
-			} else {
-				uint32_t rec_val;
-#ifdef CONFIG_SOC_SERIES_TC3X
-				rec_val = (cfg->base->RXEXIT.U & 0XFFFF);
-#elif CONFIG_SOC_SERIES_TC4X
-				rec_val = (cfg->base->RXEXIT[0].U & 0XFFFF);
-#endif
-				memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
-				spi_context_update_rx(ctx, data->dfs_value, 1);
-			}
+			spi_context_update_rx(ctx, data->dfs_value, 1);
+			LOG_DBG("Received %u", val);
 		} else {
-			if (ctx->rx_buf == NULL) {
+			uint32_t rec_val;
 #ifdef CONFIG_SOC_SERIES_TC3X
-				uint32_t val = (cfg->base->RXEXIT.U);
+			rec_val = (cfg->base->RXEXIT.U & 0xFF);
 #elif CONFIG_SOC_SERIES_TC4X
-				uint32_t val = (cfg->base->RXEXIT[0].U);
+			rec_val = (cfg->base->RXEXIT[0].U & 0xFF);
 #endif
-				spi_context_update_rx(ctx, data->dfs_value, 1);
-				LOG_DBG("Received %u", val);
-			} else {
-				uint32_t rec_val;
+			LOG_DBG("Recevied Value %u", rec_val);
+			memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
+			spi_context_update_rx(ctx, data->dfs_value, 1);
+		}
+	} else if (SPI_WORD_SIZE_GET(ctx->config->operation) == 16) {
+		if (ctx->rx_buf == NULL) {
 #ifdef CONFIG_SOC_SERIES_TC3X
-				rec_val = (cfg->base->RXEXIT.U);
+			uint16_t val = (cfg->base->RXEXIT.U & 0xFFFF);
 #elif CONFIG_SOC_SERIES_TC4X
-				rec_val = (cfg->base->RXEXIT[0].U);
+			uint16_t val = (cfg->base->RXEXIT[0].U & 0xFFFF);
 #endif
-				memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
-				spi_context_update_rx(ctx, data->dfs_value, 1);
-			}
+			spi_context_update_rx(ctx, data->dfs_value, 1);
+			LOG_DBG("Received %u", val);
+		} else {
+			uint32_t rec_val;
+#ifdef CONFIG_SOC_SERIES_TC3X
+			rec_val = (cfg->base->RXEXIT.U & 0xFFFF);
+#elif CONFIG_SOC_SERIES_TC4X
+			rec_val = (cfg->base->RXEXIT[0].U & 0xFFFF);
+#endif
+			memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
+			spi_context_update_rx(ctx, data->dfs_value, 1);
+		}
+	} else {
+		if (ctx->rx_buf == NULL) {
+#ifdef CONFIG_SOC_SERIES_TC3X
+			uint32_t val = (cfg->base->RXEXIT.U);
+#elif CONFIG_SOC_SERIES_TC4X
+			uint32_t val = (cfg->base->RXEXIT[0].U);
+#endif
+			spi_context_update_rx(ctx, data->dfs_value, 1);
+			LOG_DBG("Received %u", val);
+		} else {
+			uint32_t rec_val;
+#ifdef CONFIG_SOC_SERIES_TC3X
+			rec_val = (cfg->base->RXEXIT.U);
+#elif CONFIG_SOC_SERIES_TC4X
+			rec_val = (cfg->base->RXEXIT[0].U);
+#endif
+			memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
+			spi_context_update_rx(ctx, data->dfs_value, 1);
 		}
 	}
 
@@ -411,16 +394,17 @@ static int transceive(const struct device *dev, const struct spi_config *spi_cfg
 		      const struct spi_buf_set *tx_bufs, const struct spi_buf_set *rx_bufs,
 		      bool asynchronous, spi_callback_t cb, void *userdata)
 {
-	int result;
+	int result = 0;
 	struct spi_aurix_qspi_config *const cfg = dev->config;
 	struct spi_aurix_qspi_data *const data = dev->data;
 	struct spi_context *ctx = &data->ctx;
 
 	ctx->config = spi_cfg;
 
-	LOG_DBG("Entered SPI Transceive");
+	
+        spi_context_release(ctx, result);
+        spi_context_lock(ctx, asynchronous, cb, userdata, spi_cfg);
 
-	//  LOG_DBG("Configuring SPI");
 	result = spi_aurix_qspi_config(dev, spi_cfg);
 	if (result) {
 		LOG_ERR("Error in SPI Configuration (result: 0x%x)", result);
@@ -438,6 +422,8 @@ static int transceive(const struct device *dev, const struct spi_config *spi_cfg
 	qspi_transfer_short(dev);
 
 	result = spi_context_wait_for_completion(&data->ctx);
+
+        spi_context_release(ctx, result);
 
 	return result;
 }
@@ -482,11 +468,6 @@ static void spi_aurix_qspi_isr(const struct device *dev)
 
 		/* Handle Transmit */
 		qspi_transfer_short(dev);
-
-		if (ctx->tx_len == 0) {
-			spi_context_cs_control(ctx, false);
-			spi_context_complete(ctx, dev, 0);
-		}
 	}
 	if (cfg->base->STATUS.B.RXF) {
 		LOG_DBG("Receive Interrupt Triggered");
@@ -494,13 +475,11 @@ static void spi_aurix_qspi_isr(const struct device *dev)
 		cfg->base->FLAGSCLEAR.B.RXC = true;
 		/* Handle Receive */
 		qspi_receive_short(dev);
-		if (ctx->rx_len == 0) {
-			// LOG_DBG("SPI Transfer Complete");
-			spi_context_cs_control(ctx, false);
-			// LOG_DBG("SPI Context Released");
-			spi_context_complete(ctx, dev, 0);
-			// LOG_DBG("SPI Context Completed");
-		}
+	}
+
+	if (ctx->tx_len == 0 && ctx->rx_len == 0) {
+		spi_context_cs_control(ctx, false);
+		spi_context_complete(ctx, dev, 0);
 	}
 }
 
@@ -510,7 +489,7 @@ static DEVICE_API(spi, qspi_driver_api) = {
 };
 #define SPI_AURIX_QSPI_INIT(n)                                                                     \
 	PINCTRL_DT_INST_DEFINE(n);                                                                 \
-	static void ifx_cat1_spi_irq_config_func_##n(const struct device *dev)                     \
+	static void spi_aurix_qspi_irq_config_func_##n(const struct device *dev)                   \
 	{                                                                                          \
 		IRQ_CONNECT(DT_INST_IRQ_BY_NAME(n, tx, irq), DT_INST_IRQ_BY_NAME(n, tx, priority), \
 			    spi_aurix_qspi_isr, DEVICE_DT_INST_GET(n), 0);                         \
@@ -535,7 +514,7 @@ static DEVICE_API(spi, qspi_driver_api) = {
 		.irq_prio_tx = DT_INST_IRQ_BY_NAME(n, tx, priority),                               \
 		.irq_prio_rx = DT_INST_IRQ_BY_NAME(n, rx, priority),                               \
 		.irq_prio_err = DT_INST_IRQ_BY_NAME(n, err, priority),                             \
-		.irq_config_func = ifx_cat1_spi_irq_config_func_##n,                               \
+		.irq_config_func = spi_aurix_qspi_irq_config_func_##n,                             \
 	};                                                                                         \
                                                                                                    \
 	static struct spi_aurix_qspi_data spi_aurix_qspi_data_##n = {                              \
