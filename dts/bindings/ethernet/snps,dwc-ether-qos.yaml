@@ -19,6 +19,13 @@ properties:
     type: boolean
   snps,dma:
     type: phandle
+  mac-eeprom:
+    type: phandle
+    description: EEPROM holding a factory EUI-48 to use as the MAC address.
+  mac-eeprom-offset:
+    type: int
+    default: 250
+    description: Byte offset of the EUI-48 within the mac-eeprom (default 0xFA).
   snps,ptp-clock:
     type: phandle
   snps,tx-queue-sources:

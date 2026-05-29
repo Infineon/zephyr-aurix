@@ -120,6 +120,8 @@ struct eth_qos_config {
 	/* Device nodes */
 	/** Phy deivce */
 	const struct device *phy;
+	const struct device *mac_eeprom;
+	uint16_t mac_eeprom_offset;
 #if CONFIG_PTP_CLOCK
 	/** PTP Clock Device */
 	const struct device *ptp_clock;
@@ -1047,6 +1049,8 @@ static inline void eth_qos_set_mac_addr(const struct device *dev, uint8_t nr, ui
 	{.init = eth_qos##n##_init,                                                                \
 	 .base = DT_INST_REG_ADDR(n),                                                              \
 	 .phy = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(n, phy_handle)),                             \
+	 .mac_eeprom = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(n, mac_eeprom)),                      \
+	 .mac_eeprom_offset = DT_INST_PROP_OR(n, mac_eeprom_offset, 0xFA),                         \
 	 .dma_rx_channel = ETH_QOS_RX_CHANNELS_TO_USE(n),                                          \
 	 .dma_tx_channel = ETH_QOS_TX_CHANNELS_TO_USE(n),                                          \
 	 .dma_rx = eth_qos##n##_dma_rx_config,                                                     \

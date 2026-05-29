@@ -6,6 +6,7 @@ config ETH_DWC_ETHER_QOS
     default y
     depends on DT_HAS_SNPS_DWC_ETHER_QOS_ENABLED
     select NET_PKT_LINKING
+    select EEPROM if $(dt_compat_any_has_prop,$(DT_COMPAT_SNPS_DWC_ETHER_QOS),mac-eeprom)
 
 if ETH_DWC_ETHER_QOS
 
