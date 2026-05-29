@@ -5,7 +5,7 @@
 
  #include <zephyr/dt-bindings/i2c/i2c.h>
  #include <infineon/tc4x/tc4x7_com-gpio_irq.h>
- 
+
  #include "kit_tc4x7_com_trb-pinctrl.dtsi"
 
 / {

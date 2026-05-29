@@ -269,7 +269,7 @@ static inline int clock_control_tc4x_ccu_set_divider()
 		.B.MCANHDIV = CLOCK_DIV_WITH_INST(fmcanh, infineon_mcmcan),
 		.B.LETHDIV = CLOCK_DIV_WITH_INST(fleth, infineon_tc4x_leth),
 #if DT_NODE_EXISTS(DT_NODELABEL(fcanxl))
-		.B.CANXLHDIV = CLOCK_DIV_WITH_INST(fcanxl, infineon_canxl), 
+		.B.CANXLHDIV = CLOCK_DIV_WITH_INST(fcanxl, infineon_canxl),
 #endif
 #if DT_NODE_EXISTS(DT_NODELABEL(fgtm))
 		.B.GTMDIV = CLOCK_DIV_WITH_STATUS(fgtm_div),

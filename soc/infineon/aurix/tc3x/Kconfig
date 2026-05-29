@@ -7,4 +7,3 @@ config SOC_SERIES_TC3X
 	select CPU_HAS_FPU
 	select CPU_HAS_MPU
 	select HAS_INFINEON_TC3X_HAL
-

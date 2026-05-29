@@ -63,7 +63,7 @@
 			pinmux = <GETH_MDIO_P12_1>;
 		};
 	};
-	
+
 	can0_default: can0_default {
 		group1 {
 			pinmux = <CAN00_TX_P20_8>;

@@ -54,8 +54,8 @@ config SOC_TC377TX
 config SOC_TC387QP
 	bool
 	select SOC_TC38x
-	
-config SOC_TC397XA 
+
+config SOC_TC397XA
 	bool
 	select SOC_TC39xB
 

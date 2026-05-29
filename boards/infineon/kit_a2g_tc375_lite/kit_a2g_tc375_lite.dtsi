@@ -40,7 +40,7 @@
 		#gpio-cells = <2>;
 		gpio-map-mask = <0xffffffff 0xffffffc0>;
 		gpio-map-pass-thru = <0 0x3f>;
-		gpio-map = 
+		gpio-map =
 			<3 0 &p33 11 0>,
 			<4 0 &p33 12 0>,
 			<5 0 &p33 13 0>,
@@ -81,7 +81,7 @@
 		#gpio-cells = <2>;
 		gpio-map-mask = <0xffffffff 0xffffffc0>;
 		gpio-map-pass-thru = <0 0x3f>;
-		gpio-map = 
+		gpio-map =
 			<2 0 &p00 0 0>,
 			<3 0 &p00 2 0>,
 			<4 0 &p00 6 0>,
