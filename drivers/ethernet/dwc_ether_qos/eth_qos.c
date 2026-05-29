@@ -440,7 +440,7 @@ static void eth_qos_dma_rx_process(const struct device *dev, uint8_t dma_ch)
 
 		/* Packet reception error */
 		if (eth_qos_rdes_pkt_error(desc)) {
-			eth_stats_update_errors_rx(p->iface);
+			eth_stats_update_errors_rx(data->iface);
 			net_pkt_unref(pkt);
 			pkt = NULL;
 			goto next;
@@ -850,7 +850,7 @@ void eth_qos_common_isr(const struct device *dev)
 				eth_qos_dma_rx_fill_desc(dev, dma_ch);
 			}
 #endif
-			dma_ch_status &= ~(1 << dma_ch);
+			dma_status &= ~BIT(dma_ch);
 		}
 	}
 	if (mtl_status) {
@@ -966,9 +966,16 @@ int eth_qos_init(const struct device *dev)
 	const struct eth_qos_config *cfg = dev->config;
 	struct eth_qos_data *data = dev->data;
 	uint32_t dma_ch;
+	int ret;
 
 	if (cfg->skip_init) {
 		return 0;
+	}
+
+	ret = pinctrl_apply_state(cfg->pincfg, PINCTRL_STATE_DEFAULT);
+	if (ret < 0) {
+		LOG_ERR("%s: failed to apply pinctrl: %d", dev->name, ret);
+		return ret;
 	}
 
 	if (!cfg->dma_only && cfg->phy != NULL && !device_is_ready(cfg->phy)) {
@@ -1037,6 +1044,7 @@ struct ethernet_api eth_qos_api = {
 };
 
 #define ETH_QOS_INIT(n)                                                                            \
+	PINCTRL_DT_INST_DEFINE(n);                                                                  \
 	ETH_QOS_INIT_FUNC(n)                                                                       \
 	ETH_QOS_DMA_INIT(n);                                                                       \
 	ETH_QOS_MTL_INIT(n);                                                                       \

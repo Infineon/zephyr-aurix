@@ -16,6 +16,75 @@ LOG_MODULE_REGISTER(mdio_qos, CONFIG_MDIO_LOG_LEVEL);
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/sys/util.h>
 
+#if defined(CONFIG_SOC_FAMILY_AURIX)
+#include "soc.h"
+/* GETH CLC register on TC3xx — separate from MAC reg region (0xF001D000).
+ * Confirmed against iLLD TC37A IfxGeth_reg.h.
+ */
+#define GETH_CLC_ADDR  0xf001f000
+/* GETH wrapper GPCTL: bits [24:22] EPR = PHY interface mode.
+ * 0=MII, 1=RGMII, 4=RMII (iLLD IfxGeth_PhyInterfaceMode).
+ * Upstream dwc_ether_qos does not touch this; without EPR=RMII the GETH
+ * does not output the 50 MHz REF_CLK to the PHY, so the PHY can't link.
+ */
+#define GETH_GPCTL_ADDR     0xf001f008
+#define GETH_GPCTL_EPR_RMII (4u << 22)
+#define GETH_GPCTL_EPR_MASK (7u << 22)
+#define GETH_SKEWCTL_ADDR   0xf001f040
+#define SCU_CCUCON5_ADDR    0xf003604c
+#define SCU_CCUCON5_GETHDIV_MASK 0xfu
+#define SCU_CCUCON5_GETHDIV_150MHZ 2u
+#define SCU_CCUCON5_UP      BIT(30)
+#define SCU_CCUCON5_LCK     BIT(31)
+/* GETH kernel reset registers — required by iLLD before DMA SWR.
+ * Keep this sequence local to GETH: iLLD writes KRST0/KRST1 first,
+ * waits for KRST0.RSTSTAT, then clears KRSTCLR.
+ */
+#define GETH_KRST0_ADDR   0xf001f014
+
+static int aurix_geth_enable_clock_source(uint32_t timeout)
+{
+	uint32_t before = sys_read32(SCU_CCUCON5_ADDR);
+	uint32_t target = (before & ~(SCU_CCUCON5_GETHDIV_MASK | SCU_CCUCON5_LCK)) |
+		SCU_CCUCON5_GETHDIV_150MHZ | SCU_CCUCON5_UP;
+
+	if ((before & SCU_CCUCON5_GETHDIV_MASK) != SCU_CCUCON5_GETHDIV_150MHZ) {
+		if (!WAIT_FOR((sys_read32(SCU_CCUCON5_ADDR) & SCU_CCUCON5_LCK) == 0,
+			      timeout, k_busy_wait(1))) {
+			LOG_ERR("GETH CCUCON5 lock did not clear before update");
+			return 0;
+		}
+		aurix_safety_endinit_enable(false);
+		sys_write32(target, SCU_CCUCON5_ADDR);
+		aurix_safety_endinit_enable(true);
+	}
+	if (!WAIT_FOR(((sys_read32(SCU_CCUCON5_ADDR) & SCU_CCUCON5_LCK) == 0) &&
+		      ((sys_read32(SCU_CCUCON5_ADDR) & SCU_CCUCON5_GETHDIV_MASK) ==
+		       SCU_CCUCON5_GETHDIV_150MHZ), timeout, k_busy_wait(1))) {
+		LOG_ERR("GETH CCUCON5.GETHDIV update timed out");
+		return 0;
+	}
+	return 1;
+}
+
+static int aurix_geth_kernel_reset(uint32_t timeout)
+{
+	aurix_cpu_endinit_enable(false);
+	sys_write32(1, GETH_KRST0_ADDR);
+	sys_write32(1, GETH_KRST0_ADDR + 4);
+	aurix_cpu_endinit_enable(true);
+	int ok = WAIT_FOR((sys_read32(GETH_KRST0_ADDR) & 0x2) == 0x2,
+			  timeout, k_busy_wait(1));
+	if (ok) {
+		aurix_cpu_endinit_enable(false);
+		sys_write32(1, GETH_KRST0_ADDR + 8);
+		aurix_cpu_endinit_enable(true);
+	}
+
+	return ok;
+}
+#endif
+
 #define PHY_OPERATION_TIMEOUT_US 250000
 
 #define MAC_MDIO_ADDRESS      0x0
@@ -113,7 +182,7 @@ static int mdio_qos_read(const struct device *dev, uint8_t prtad, uint8_t regad,
 
 	qos_mdio_transfer(dev, prtad, regad, false, false);
 
-	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_sleep(K_USEC(1000)))) {
+	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_busy_wait(1000))) {
 		LOG_ERR("phy timeout");
 		k_sem_give(&dev_data->sem);
 		return -ETIMEDOUT;
@@ -160,7 +229,7 @@ static int mdio_qos_write(const struct device *dev, uint8_t prtad, uint8_t regad
 	sys_write32(data, cfg->base_addr + MAC_MDIO_DATA);
 	qos_mdio_transfer(dev, prtad, regad, true, false);
 
-	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_sleep(K_USEC(1000)))) {
+	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_busy_wait(1000))) {
 		LOG_ERR("phy timeout");
 		err = -ETIMEDOUT;
 	}
@@ -205,7 +274,7 @@ static int mdio_qos_read_c45(const struct device *dev, uint8_t prtad, uint8_t de
 	sys_write32((regad << 16), cfg->base_addr + MAC_MDIO_DATA);
 	qos_mdio_transfer(dev, prtad, devad, false, true);
 
-	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_sleep(K_USEC(1000)))) {
+	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_busy_wait(1000))) {
 		LOG_ERR("phy timeout");
 		k_sem_give(&dev_data->sem);
 		err = -ETIMEDOUT;
@@ -252,7 +321,7 @@ static int mdio_qos_write_c45(const struct device *dev, uint8_t prtad, uint8_t d
 	sys_write32((regad << 16) | data, cfg->base_addr + MAC_MDIO_DATA);
 	qos_mdio_transfer(dev, prtad, devad, true, true);
 
-	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_sleep(K_USEC(1000)))) {
+	if (!WAIT_FOR(!qos_mdio_busy(dev), PHY_OPERATION_TIMEOUT_US, k_busy_wait(1000))) {
 		LOG_ERR("phy timeout");
 		k_sem_give(&dev_data->sem);
 		err = -ETIMEDOUT;
@@ -307,6 +376,47 @@ static int mdio_qos_initialize(const struct device *dev)
 	struct mdio_qos_dev_data *const dev_data = dev->data;
 	int ret;
 	uint32_t rate;
+
+#if defined(CONFIG_SOC_FAMILY_AURIX)
+	if (!aurix_geth_enable_clock_source(1000)) {
+		LOG_ERR("GETH fGETH clock divider update timed out");
+		return -EIO;
+	}
+
+	LOG_INF("Enabling GETH module clock (CLC=0x%x)", GETH_CLC_ADDR);
+	if (!aurix_enable_clock(GETH_CLC_ADDR, 1000)) {
+		LOG_ERR("GETH CLC unlock timed out");
+		return -EIO;
+	}
+	LOG_INF("GETH clock enabled");
+
+	/* Follow iLLD IfxGeth_Eth_initModule sequence:
+	 *   GPCTL.EPR = 0  → SKEWCTL = 0  → resetModule (KRST0/1/CLR)  → wait
+	 *   → GPCTL.EPR = RMII  → (eth_qos will then do DMA SWR)
+	 * Skipping the kernel reset leaves the DMA in a state where SWR
+	 * never self-clears, producing "Failed to reset mac".
+	 */
+	sys_write32(sys_read32(GETH_GPCTL_ADDR) & ~GETH_GPCTL_EPR_MASK,
+		    GETH_GPCTL_ADDR);
+	sys_write32(0, GETH_SKEWCTL_ADDR);
+	if (!aurix_geth_kernel_reset(1000)) {
+		LOG_ERR("GETH kernel reset timed out");
+		return -EIO;
+	}
+	k_busy_wait(10); /* ≥35 fSPB cycles per iLLD GETH_TC.002 */
+
+	/* KRST also re-asserts CLC.DISR, so any GETH MMR access after
+	 * the kernel reset (e.g. PHY driver MDIO probe at next init
+	 * priority) would trap (Class 4 TIN 2) just like at cold boot.
+	 * Re-unlock CLC before continuing.
+	 */
+	if (!aurix_enable_clock(GETH_CLC_ADDR, 1000)) {
+		LOG_ERR("GETH CLC re-unlock after KRST timed out");
+		return -EIO;
+	}
+
+	sys_write32(GETH_GPCTL_EPR_RMII | 0x3u, GETH_GPCTL_ADDR);
+#endif
 
 	k_sem_init(&dev_data->sem, 1, 1);
 
