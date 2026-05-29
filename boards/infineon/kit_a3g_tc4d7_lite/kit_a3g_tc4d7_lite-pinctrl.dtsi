@@ -1,16 +1,21 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include <infineon/tc4x/tc4x7_com-pinctrl.h>
 
 &pinctrl {
 	eeprom_i2c: eeprom_i2c {
-	    group1 {
-		pinmux = <I2C0_SCL_IN_P13_1>, <I2C0_SDA_IN_P13_2>;
-	    };
+		group1 {
+			pinmux = <I2C0_SCL_IN_P13_1>, <I2C0_SDA_IN_P13_2>;
+		};
 
-	    group2 {
-		pinmux = <I2C0_SCL_OUT_P13_1>, <I2C0_SDA_OUT_P13_2>;
-		output-enable;
-		drive-open-drain;
-	    };
+		group2 {
+			pinmux = <I2C0_SCL_OUT_P13_1>, <I2C0_SDA_OUT_P13_2>;
+			output-enable;
+			drive-open-drain;
+		};
 	};
 
 	uart0_default: uart0_default {
@@ -18,6 +23,7 @@
 			pinmux = <ASCLIN0_TX_P14_0>;
 			output-enable;
 		};
+
 		group2 {
 			pinmux = <ASCLIN0_RX_P14_1>;
 		};
@@ -43,6 +49,7 @@
 			output-enable;
 			drive-strength = "strong";
 		};
+
 		group2 {
 			pinmux = <CAN01_RX_P1_4>;
 			drive-strength = "strong";
@@ -51,7 +58,7 @@
 
 	qspi4_pin: qspi4_pin {
 		group1 {
-			pinmux = <QSPI4_M_SCLK_P22_3>, <QSPI4_M_MTSR_P22_0> , <QSPI4_M_SLSO3_P22_2>;
+			pinmux = <QSPI4_M_SCLK_P22_3>, <QSPI4_M_MTSR_P22_0>, <QSPI4_M_SLSO3_P22_2>;
 			output-enable;
 			drive-push-pull;
 		};
@@ -60,6 +67,4 @@
 			pinmux = <QSPI4_M_MRST_P22_1>;
 		};
 	};
-
-
 };

@@ -9,9 +9,11 @@
 / {
 	leds: leds {
 		compatible = "gpio-leds";
+
 		led0: led_0 {
 			gpios = <&p03 9 GPIO_ACTIVE_LOW>;
 		};
+
 		led1: led_1 {
 			gpios = <&p03 10 GPIO_ACTIVE_LOW>;
 		};
@@ -19,6 +21,7 @@
 
 	buttons: buttons {
 		compatible = "gpio-keys";
+
 		button0: button_0 {
 			gpios = <&p03 11 GPIO_ACTIVE_LOW>;
 		};
@@ -69,20 +72,20 @@
 };
 
 &i2c0 {
-        status = "okay";
-        pinctrl-0 = <&eeprom_i2c>;
-        pinctrl-names = "default";
-        clock-frequency = <I2C_BITRATE_FAST>;
+	status = "okay";
+	pinctrl-0 = <&eeprom_i2c>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_FAST>;
 
-        eeprom: eeprom@50 {
-                compatible = "microchip,24aa02e48", "atmel,at24";
-                reg = <0x50>;
-                size = <256>;
-                pagesize = <8>;
-                address-width = <8>;
-                timeout = <5>;
-                read-only;
-        };
+	eeprom: eeprom@50 {
+		compatible = "microchip,24aa02e48", "atmel,at24";
+		reg = <0x50>;
+		size = <256>;
+		pagesize = <8>;
+		address-width = <8>;
+		timeout = <5>;
+		read-only;
+	};
 };
 
 qspi4: &qspi4 {

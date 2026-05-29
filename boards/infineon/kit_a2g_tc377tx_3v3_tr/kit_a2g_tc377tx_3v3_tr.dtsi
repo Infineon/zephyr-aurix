@@ -8,27 +8,35 @@
 / {
 	leds: leds {
 		compatible = "gpio-leds";
+
 		led0: led_0 {
 			gpios = <&p33 4 GPIO_ACTIVE_LOW>;
 		};
+
 		led1: led_1 {
 			gpios = <&p33 5 GPIO_ACTIVE_LOW>;
 		};
+
 		led2: led_2 {
 			gpios = <&p33 6 GPIO_ACTIVE_LOW>;
 		};
+
 		led3: led_3 {
 			gpios = <&p33 7 GPIO_ACTIVE_LOW>;
 		};
+
 		led4: led_4 {
 			gpios = <&p01 4 GPIO_ACTIVE_LOW>;
 		};
+
 		led5: led_5 {
 			gpios = <&p01 5 GPIO_ACTIVE_LOW>;
 		};
+
 		led6: led_6 {
 			gpios = <&p01 6 GPIO_ACTIVE_LOW>;
 		};
+
 		led7: led_7 {
 			gpios = <&p01 7 GPIO_ACTIVE_LOW>;
 		};
@@ -70,7 +78,6 @@
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-names = "default";
 };
-
 
 &eth0 {
 	pinctrl-0 = <&eth0_rgmii_default>;

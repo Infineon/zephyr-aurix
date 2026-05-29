@@ -12,6 +12,7 @@
 			pinmux = <ASCLIN0_TX_P14_0>;
 			output-enable;
 		};
+
 		group2 {
 			pinmux = <ASCLIN0_RX_P14_1>;
 		};
@@ -20,21 +21,22 @@
 	eth0_rgmii_default: eth0_rgmii_default {
 		group1 {
 			pinmux = <GETH_GREFCLK_P11_5>,
-			         <GETH_RXCLK_P11_12>,
-			         <GETH_RXDV_P11_11>,
-			         <GETH_RXD0_P11_10>,
-			         <GETH_RXD1_P11_9>,
-			         <GETH_RXD2_P11_8>,
-			         <GETH_RXD3_P11_7>;
+				 <GETH_RXCLK_P11_12>,
+				 <GETH_RXDV_P11_11>,
+				 <GETH_RXD0_P11_10>,
+				 <GETH_RXD1_P11_9>,
+				 <GETH_RXD2_P11_8>,
+				 <GETH_RXD3_P11_7>;
 			drive-strength = "rgmii";
 		};
+
 		group2 {
 			pinmux = <GETH_TXCLK_P11_4>,
-			         <GETH_TXEN_P11_6>,
-			         <GETH_TXD0_P11_3>,
-			         <GETH_TXD1_P11_2>,
-			         <GETH_TXD2_P11_1>,
-			         <GETH_TXD3_P11_0>;
+				 <GETH_TXEN_P11_6>,
+				 <GETH_TXD0_P11_3>,
+				 <GETH_TXD1_P11_2>,
+				 <GETH_TXD2_P11_1>,
+				 <GETH_TXD3_P11_0>;
 			drive-strength = "rgmii";
 			output-enable;
 			output-select;
@@ -46,6 +48,7 @@
 			pinmux = <GETH_MDC_P12_0>;
 			output-enable;
 		};
+
 		group2 {
 			pinmux = <GETH_MDIO_P12_1>;
 		};
@@ -54,21 +57,22 @@
 	eth1_rgmii_default: eth1_rgmii_default {
 		group1 {
 			pinmux = <GETH1_GREFCLK_P22_7>,
-			         <GETH1_RXCLK_P22_5>,
-			         <GETH1_RXDV_P22_6>,
-			         <GETH1_RXD0_P22_4>,
-			         <GETH1_RXD1_P23_7>,
-			         <GETH1_RXD2_P23_6>,
-			         <GETH1_RXD3_P23_5>;
+				 <GETH1_RXCLK_P22_5>,
+				 <GETH1_RXDV_P22_6>,
+				 <GETH1_RXD0_P22_4>,
+				 <GETH1_RXD1_P23_7>,
+				 <GETH1_RXD2_P23_6>,
+				 <GETH1_RXD3_P23_5>;
 			drive-strength = "rgmii";
 		};
+
 		group2 {
 			pinmux = <GETH1_TXCLK_P22_12>,
-			         <GETH1_TXEN_P22_11>,
-			         <GETH1_TXD0_P22_10>,
-			         <GETH1_TXD1_P23_4>,
-			         <GETH1_TXD2_P23_3>,
-			         <GETH1_TXD3_P23_2>;
+				 <GETH1_TXEN_P22_11>,
+				 <GETH1_TXD0_P22_10>,
+				 <GETH1_TXD1_P23_4>,
+				 <GETH1_TXD2_P23_3>,
+				 <GETH1_TXD3_P23_2>;
 			drive-strength = "rgmii";
 			output-enable;
 			output-select;
@@ -80,6 +84,7 @@
 			pinmux = <GETH1_MDC_P22_8>;
 			output-enable;
 		};
+
 		group2 {
 			pinmux = <GETH1_MDIO_P22_9>;
 		};
@@ -90,15 +95,18 @@
 			pinmux = <CAN02_TX_P10_3>;
 			output-enable;
 		};
+
 		group2 {
 			pinmux = <CAN02_RX_P10_2>;
 		};
 	};
+
 	can1_default: can1_default {
 		group1 {
 			pinmux = <CAN12_TX_P10_7>;
 			output-enable;
 		};
+
 		group2 {
 			pinmux = <CAN12_RX_P10_8>;
 		};
@@ -106,7 +114,7 @@
 
 	qspi3_pin: qspi3_pin {
 		group1 {
-			pinmux = <QSPI3_M_SCLK_P1_7>, <QSPI3_M_MTSR_P1_6> , <QSPI3_M_SLSO1_P1_4>;
+			pinmux = <QSPI3_M_SCLK_P1_7>, <QSPI3_M_MTSR_P1_6>, <QSPI3_M_SLSO1_P1_4>;
 			output-enable;
 			drive-push-pull;
 		};
