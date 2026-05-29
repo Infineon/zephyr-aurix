@@ -1,4 +1,7 @@
-# Kconfig - Infineon AURIX ASCLIN LIN driver
+# Infineon AURIX ASCLIN LIN driver configuration options
+
+# Copyright (c) 2026 Linumiz
+# SPDX-License-Identifier: Apache-2.0
 
 config LIN_ASCLIN
 	bool "Infineon AURIX ASCLIN LIN driver"

@@ -68,11 +68,11 @@ static void lin_asclin_set_baudrate(Ifx_ASCLIN *base, uint32_t baudrate, uint32_
 				    uint8_t oversampling)
 {
 	const uint32_t fovs = baudrate * oversampling;
-	float div = (float)fovs / (float)fpd;
+	float ratio = (float)fovs / (float)fpd;
 	int32_t m[2][2] = { { 1, 0 }, { 0, 1 } };
 	int32_t ai;
 
-	while (m[1][0] * (ai = (int32_t)div) + m[1][1] <= 4095) {
+	while (m[1][0] * (ai = (int32_t)ratio) + m[1][1] <= 4095) {
 		int32_t t;
 
 		t = m[0][0] * ai + m[0][1];
@@ -81,7 +81,7 @@ static void lin_asclin_set_baudrate(Ifx_ASCLIN *base, uint32_t baudrate, uint32_
 		t = m[1][0] * ai + m[1][1];
 		m[1][1] = m[1][0];
 		m[1][0] = t;
-		div = 1.0f / (div - (float)ai);
+		ratio = 1.0f / (ratio - (float)ai);
 	}
 
 	base->BRG.B = (Ifx_ASCLIN_BRG_Bits) { .NUMERATOR = m[0][0], .DENOMINATOR = m[1][0] };
