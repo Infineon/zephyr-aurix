@@ -303,6 +303,8 @@ static void eth_qos_dma_init(const struct device *dev)
 	}
 }
 
+static void eth_qos_dma_rx_refill_work(struct k_work *work);
+
 static inline void eth_qos_dma_rx_data_init(const struct device *dev, uint8_t dma_ch)
 {
 	const struct eth_qos_config *cfg = dev->config;
@@ -316,8 +318,11 @@ static inline void eth_qos_dma_rx_data_init(const struct device *dev, uint8_t dm
 	dma_data->head = 0;
 	dma_data->tail = 0;
 	dma_data->packet = NULL;
+	dma_data->dev = dev;
+	dma_data->ch = dma_ch;
 	k_sem_init(&dma_data->desc_used, dma_cfg->descs_count - 1, dma_cfg->descs_count - 1);
 	sys_slist_init(&dma_data->frags);
+	k_work_init_delayable(&dma_data->refill_work, eth_qos_dma_rx_refill_work);
 }
 
 static void eth_qos_dma_rx_fill_desc(const struct device *dev, uint8_t dma_ch)
@@ -327,9 +332,12 @@ static void eth_qos_dma_rx_fill_desc(const struct device *dev, uint8_t dma_ch)
 	const struct eth_qos_dma_ch_config *dma_cfg = &cfg->dma_rx[dma_ch];
 	struct eth_qos_dma_rx_ch_data *dma_data = &data->dma_rx[dma_ch];
 	struct net_buf *frag;
-	const uint32_t desc_free = k_sem_count_get(&dma_data->desc_used);
+	uint32_t desc_free;
 	uint32_t descs;
 	int ret;
+	k_spinlock_key_t key = k_spin_lock(&dma_data->lock);
+
+	desc_free = k_sem_count_get(&dma_data->desc_used);
 
 	for (descs = 0; descs < desc_free; descs++) {
 		ret = k_sem_take(&dma_data->desc_used, K_NO_WAIT);
@@ -361,6 +369,29 @@ static void eth_qos_dma_rx_fill_desc(const struct device *dev, uint8_t dma_ch)
 	}
 
 	sys_write32(DMA_CHi_STATUS_RBU, cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_rx[dma_ch].nr));
+
+	/*
+	 * If descriptors remain unbacked the RX DMA is or will be suspended on
+	 * RBU. Once buffers are returned to the pool no further RBU interrupt
+	 * is raised, so schedule a deferred refill to re-arm the ring and
+	 * guarantee recovery instead of a permanent RX stall.
+	 */
+	ret = (k_sem_count_get(&dma_data->desc_used) != 0U);
+
+	k_spin_unlock(&dma_data->lock, key);
+
+	if (ret) {
+		(void)k_work_reschedule(&dma_data->refill_work, K_MSEC(1));
+	}
+}
+
+static void eth_qos_dma_rx_refill_work(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct eth_qos_dma_rx_ch_data *dma_data =
+		CONTAINER_OF(dwork, struct eth_qos_dma_rx_ch_data, refill_work);
+
+	eth_qos_dma_rx_fill_desc(dma_data->dev, dma_data->ch);
 }
 
 static void eth_qos_dma_rx_process(const struct device *dev, uint8_t dma_ch)
@@ -397,7 +428,15 @@ static void eth_qos_dma_rx_process(const struct device *dev, uint8_t dma_ch)
 
 		/* Check for valid packet */
 		if (!pkt) {
-			net_buf_unref(frag);
+			if (frag) {
+				net_buf_unref(frag);
+			}
+			goto next;
+		}
+
+		if (!frag) {
+			net_pkt_unref(pkt);
+			pkt = NULL;
 			goto next;
 		}
 
@@ -879,13 +918,14 @@ void eth_qos_common_isr(const struct device *dev)
 			}
 			uint32_t dma_ch_status =
 				sys_read32(cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_rx[dma_ch].nr));
-			if (dma_ch_status & DMA_CHi_STATUS_RI) {
+			if (dma_ch_status & (DMA_CHi_STATUS_RI | DMA_CHi_STATUS_RBU)) {
 				/* Process descriptors */
 				eth_qos_dma_rx_process(dev, dma_ch);
 				/* Fill up descriptors again */
 				eth_qos_dma_rx_fill_desc(dev, dma_ch);
 			}
-			sys_write32(DMA_CHi_STATUS_NIS | DMA_CHi_STATUS_ERI,
+			sys_write32(DMA_CHi_STATUS_NIS | DMA_CHi_STATUS_AIS | DMA_CHi_STATUS_ERI |
+					    DMA_CHi_STATUS_RBU,
 				    cfg->DMA_BASE + DMA_CHi_STATUS(cfg->dma_rx[dma_ch].nr));
 		}
 	}

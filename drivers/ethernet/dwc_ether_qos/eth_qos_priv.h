@@ -52,6 +52,14 @@ struct eth_qos_dma_rx_ch_data {
 #endif
 	/** Currently processed packet */
 	struct net_pkt *packet;
+	/** Owning device, for deferred refill work */
+	const struct device *dev;
+	/** DMA channel index, for deferred refill work */
+	uint8_t ch;
+	/** Serializes refill between ISR and refill work */
+	struct k_spinlock lock;
+	/** Deferred refill when RX buffers are momentarily exhausted */
+	struct k_work_delayable refill_work;
 };
 
 typedef uint32_t __attribute__((aligned(16))) eth_qos_desc[4];
@@ -399,7 +407,8 @@ static inline void eth_qos_dma_rx_irq_enable(const struct device *dev, uint8_t d
 			    DMA_CHi_INTERRUPT_ENABLE_RIE |
 #endif
 			    DMA_CHi_INTERRUPT_ENABLE_NIE | DMA_CHi_INTERRUPT_ENABLE_FBEE |
-			    DMA_CHi_INTERRUPT_ENABLE_CDEE | DMA_CHi_INTERRUPT_ENABLE_AIE,
+			    DMA_CHi_INTERRUPT_ENABLE_CDEE | DMA_CHi_INTERRUPT_ENABLE_AIE |
+			    DMA_CHi_INTERRUPT_ENABLE_RBUE,
 		    cfg->DMA_BASE + DMA_CHi_INTERRUPT_ENABLE(cfg->dma_tx[dma_ch].nr));
 }
 
