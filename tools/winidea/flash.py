@@ -73,7 +73,8 @@ def winidea_lock(instance_id: str, timeout: float = 600.0):
                     if time.monotonic() >= deadline:
                         raise SystemExit(
                             f'timed out after {timeout:.0f}s waiting for '
-                            f'{path}; another flasher is still holding it')
+                            f'{path}; another flasher is still holding it'
+                        ) from None
                     time.sleep(0.5)
         os.ftruncate(fd, 0)
         os.write(fd, f'{os.getpid()} {time.time():.0f}\n'.encode())
@@ -88,63 +89,102 @@ def winidea_lock(instance_id: str, timeout: float = 600.0):
 
 
 def parse_args(argv=None):
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__,
+        allow_abbrev=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     p.add_argument('elf', help='Path to the local ELF (or .out) to flash')
-    p.add_argument('--host', default=os.environ.get('WINIDEA_HOST', '192.168.1.2'),
-                   help='IP of the Windows host running winIDEA '
-                        '(default: %(default)s; env WINIDEA_HOST)')
-    p.add_argument('--ssh-user', default=os.environ.get('WINIDEA_SSH_USER', 'bharathi'),
-                   help='SSH user on the Windows host (default: %(default)s; '
-                        'env WINIDEA_SSH_USER). Password from SSHPASS env var.')
-    p.add_argument('--remote-dir', default=os.environ.get('WINIDEA_REMOTE_DIR',
-                                                          'D:/Parthiban'),
-                   help='Remote directory to drop the ELF into '
-                        '(default: %(default)s; env WINIDEA_REMOTE_DIR)')
-    p.add_argument('--remote-name', default=None,
-                   help='Filename to give the ELF on the remote side '
-                        '(default: same as local basename)')
-    p.add_argument('--instance-id', required=True,
-                   help='winIDEA instance id, e.g. '
-                        'com.tasking.winIDEA.instance.id-TC4D7')
-    p.add_argument('--no-scp', action='store_true',
-                   help='Skip the scp step (assume the ELF is already at '
-                        '<remote-dir>/<remote-name>)')
-    p.add_argument('--no-run', action='store_true',
-                   help='Download but do not resetAndRun afterwards')
-    p.add_argument('--watch-seconds', type=int, default=5,
-                   help='Poll the CPU for unexpected stops for N seconds after '
-                        'resetAndRun and dump regs/stack on a trap '
-                        '(default: %(default)s, set 0 to disable)')
-    p.add_argument('--no-capture-console', dest='capture_console',
-                   action='store_false', default=True,
-                   help='Skip auto-capture of the serial console during the '
-                        'lock window')
-    p.add_argument('--console-host', default=os.environ.get(
-                       'WINIDEA_CONSOLE_HOST', DEFAULT_CONSOLE_HOST),
-                   help='Lab host exposing the serial-over-TCP consoles '
-                        '(default: %(default)s; env WINIDEA_CONSOLE_HOST)')
-    p.add_argument('--console-port', type=int, default=None,
-                   help='TCP port on --console-host for this board\'s serial '
-                        'console (no default; required if capture is on)')
-    p.add_argument('--console-seconds', type=float, default=0.0,
-                   help='Capture the console for this many seconds '
-                        '(0 = use --watch-seconds)')
-    p.add_argument('--console-log', default=None,
-                   help='Path to write the captured console to '
-                        '(default: ./console-<instance-id>.log next to cwd)')
+    p.add_argument(
+        '--host',
+        default=os.environ.get('WINIDEA_HOST', '192.168.1.2'),
+        help='IP of the Windows host running winIDEA (default: %(default)s; env WINIDEA_HOST)',
+    )
+    p.add_argument(
+        '--ssh-user',
+        default=os.environ.get('WINIDEA_SSH_USER', 'bharathi'),
+        help='SSH user on the Windows host (default: %(default)s; '
+        'env WINIDEA_SSH_USER). Password from SSHPASS env var.',
+    )
+    p.add_argument(
+        '--remote-dir',
+        default=os.environ.get('WINIDEA_REMOTE_DIR', 'D:/Parthiban'),
+        help='Remote directory to drop the ELF into (default: %(default)s; env WINIDEA_REMOTE_DIR)',
+    )
+    p.add_argument(
+        '--remote-name',
+        default=None,
+        help='Filename to give the ELF on the remote side (default: same as local basename)',
+    )
+    p.add_argument(
+        '--instance-id',
+        required=True,
+        help='winIDEA instance id, e.g. com.tasking.winIDEA.instance.id-TC4D7',
+    )
+    p.add_argument(
+        '--no-scp',
+        action='store_true',
+        help='Skip the scp step (assume the ELF is already at <remote-dir>/<remote-name>)',
+    )
+    p.add_argument(
+        '--no-run', action='store_true', help='Download but do not resetAndRun afterwards'
+    )
+    p.add_argument(
+        '--watch-seconds',
+        type=int,
+        default=5,
+        help='Poll the CPU for unexpected stops for N seconds after '
+        'resetAndRun and dump regs/stack on a trap '
+        '(default: %(default)s, set 0 to disable)',
+    )
+    p.add_argument(
+        '--no-capture-console',
+        dest='capture_console',
+        action='store_false',
+        default=True,
+        help='Skip auto-capture of the serial console during the lock window',
+    )
+    p.add_argument(
+        '--console-host',
+        default=os.environ.get('WINIDEA_CONSOLE_HOST', DEFAULT_CONSOLE_HOST),
+        help='Lab host exposing the serial-over-TCP consoles '
+        '(default: %(default)s; env WINIDEA_CONSOLE_HOST)',
+    )
+    p.add_argument(
+        '--console-port',
+        type=int,
+        default=None,
+        help='TCP port on --console-host for this board\'s serial '
+        'console (no default; required if capture is on)',
+    )
+    p.add_argument(
+        '--console-seconds',
+        type=float,
+        default=0.0,
+        help='Capture the console for this many seconds (0 = use --watch-seconds)',
+    )
+    p.add_argument(
+        '--console-log',
+        default=None,
+        help='Path to write the captured console to '
+        '(default: ./console-<instance-id>.log next to cwd)',
+    )
     p.add_argument('-v', '--verbose', action='store_true')
     return p.parse_args(argv)
 
 
 def scp(local: Path, host: str, user: str, remote: str) -> None:
     if 'SSHPASS' not in os.environ:
-        raise SystemExit('SSHPASS env var must hold the Windows password '
-                         'for sshpass+scp')
-    cmd = ['sshpass', '-e', 'scp',
-           '-o', 'StrictHostKeyChecking=no',
-           str(local),
-           f'{user}@{host}:/{remote}']
+        raise SystemExit('SSHPASS env var must hold the Windows password for sshpass+scp')
+    cmd = [
+        'sshpass',
+        '-e',
+        'scp',
+        '-o',
+        'StrictHostKeyChecking=no',
+        str(local),
+        f'{user}@{host}:/{remote}',
+    ]
     log.info('scp %s -> %s:%s', local.name, host, remote)
     log.debug('  %s', ' '.join(shlex.quote(c) for c in cmd))
     subprocess.run(cmd, check=True)
@@ -152,6 +192,7 @@ def scp(local: Path, host: str, user: str, remote: str) -> None:
 
 def set_path(mgr, opt_path: str, new_path: str) -> None:
     import isystem.connect as ic
+
     opt = ic.COptionController(mgr, opt_path)
     if opt.size() == 0:
         opt.add()
@@ -164,6 +205,7 @@ def set_path(mgr, opt_path: str, new_path: str) -> None:
 
 def watch_for_trap(mgr, watch_seconds: int) -> bool:
     import isystem.connect as ic
+
     exec_ctrl = ic.CExecutionController(mgr)
     deadline = time.time() + watch_seconds
     while time.time() < deadline:
@@ -188,10 +230,14 @@ def watch_for_trap(mgr, watch_seconds: int) -> bool:
         log.error('Call stack (%d frames):', len(frames))
         for i, frame in enumerate(frames):
             fn = frame.getFunction().getName() or '?'
-            log.error('  #%d  0x%08x  %s  %s:%d', i,
-                      frame.getAddress(), fn,
-                      frame.getFileName() or '?',
-                      frame.getLineNumber())
+            log.error(
+                '  #%d  0x%08x  %s  %s:%d',
+                i,
+                frame.getAddress(),
+                fn,
+                frame.getFileName() or '?',
+                frame.getLineNumber(),
+            )
     except Exception as e:
         log.error('  stack frame read failed: %s', e)
     return False
@@ -216,7 +262,7 @@ def console_recorder(host, port, log_path, capture):
         return
     sock.settimeout(0.5)
     Path(log_path).parent.mkdir(parents=True, exist_ok=True)
-    fp = open(log_path, 'wb', buffering=0)
+    fp = open(log_path, 'wb', buffering=0)  # noqa: SIM115
     stop = threading.Event()
 
     class _Recorder:
@@ -226,7 +272,7 @@ def console_recorder(host, port, log_path, capture):
         while not stop.is_set():
             try:
                 chunk = sock.recv(4096)
-            except socket.timeout:
+            except TimeoutError:
                 continue
             except OSError:
                 break
@@ -241,20 +287,16 @@ def console_recorder(host, port, log_path, capture):
         yield _Recorder
     finally:
         stop.set()
-        try:
+        with contextlib.suppress(OSError):
             sock.shutdown(socket.SHUT_RDWR)
-        except OSError:
-            pass
         sock.close()
         t.join(timeout=2)
         fp.close()
         try:
-            tail = Path(log_path).read_bytes().decode('utf-8',
-                                                      errors='replace')
+            tail = Path(log_path).read_bytes().decode('utf-8', errors='replace')
             lines = tail.splitlines()
             shown = lines[-20:]
-            log.info('console.log tail (%d/%d lines):',
-                     len(shown), len(lines))
+            log.info('console.log tail (%d/%d lines):', len(shown), len(lines))
             for line in shown:
                 log.info('| %s', line)
         except OSError:
@@ -278,24 +320,23 @@ def main(argv=None):
     try:
         import isystem.connect as ic
     except ImportError:
-        raise SystemExit("isystem.connect not importable; "
-                         "pip install --user isystem.connect")
+        raise SystemExit(
+            "isystem.connect not importable; pip install --user isystem.connect"
+        ) from None
 
     with winidea_lock(args.instance_id):
         if not args.no_scp:
             scp(elf, args.host, args.ssh_user, remote_path)
 
         mgr = ic.ConnectionMgr()
-        cfg = (ic.CConnectionConfig()
-               .host(args.host)
-               .instanceId(args.instance_id))
+        cfg = ic.CConnectionConfig().host(args.host).instanceId(args.instance_id)
         cfg.start_existing()
         mgr.connect(cfg)
         if not mgr.isConnected():
-            raise SystemExit(f'could not attach to winIDEA instance '
-                             f'{args.instance_id!r} on {args.host}')
-        log.info('connected to winIDEA on %s (id=%s)',
-                 args.host, args.instance_id)
+            raise SystemExit(
+                f'could not attach to winIDEA instance {args.instance_id!r} on {args.host}'
+            )
+        log.info('connected to winIDEA on %s (id=%s)', args.host, args.instance_id)
         try:
             exec_ctrl = ic.CExecutionController(mgr)
             if exec_ctrl.getCPUStatus(False).isRunning():
@@ -319,24 +360,21 @@ def main(argv=None):
                 log.info('--no-run: leaving CPU stopped')
                 return 0
 
-            console_log = args.console_log or (
-                f'./console-{args.instance_id}.log')
-            with console_recorder(args.console_host, args.console_port,
-                                  console_log, args.capture_console) as rec:
+            console_log = args.console_log or (f'./console-{args.instance_id}.log')
+            with console_recorder(
+                args.console_host, args.console_port, console_log, args.capture_console
+            ) as rec:
                 log.info('resetAndRun')
                 exec_ctrl.resetAndRun()
                 time.sleep(0.4)
-                log.info('CPU running: %s',
-                         exec_ctrl.getCPUStatus(False).isRunning())
+                log.info('CPU running: %s', exec_ctrl.getCPUStatus(False).isRunning())
 
                 rc = 0
-                if args.watch_seconds > 0:
-                    if not watch_for_trap(mgr, args.watch_seconds):
-                        rc = 2
+                if args.watch_seconds > 0 and not watch_for_trap(mgr, args.watch_seconds):
+                    rc = 2
 
                 if rec is not None:
-                    seconds = (args.console_seconds
-                               or args.watch_seconds or 5)
+                    seconds = args.console_seconds or args.watch_seconds or 5
                     elapsed = time.time() - rec.started_at
                     remaining = seconds - elapsed
                     if remaining > 0:

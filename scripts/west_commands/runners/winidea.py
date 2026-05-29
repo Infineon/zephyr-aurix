@@ -80,7 +80,8 @@ def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
                     if time.monotonic() >= deadline:
                         raise RuntimeError(
                             f'timed out after {timeout:.0f}s waiting for '
-                            f'{path}; another flasher is still holding it')
+                            f'{path}; another flasher is still holding it'
+                        ) from None
                     time.sleep(0.5)
         os.ftruncate(fd, 0)
         os.write(fd, f'{os.getpid()} {time.time():.0f}\n'.encode())
@@ -92,6 +93,7 @@ def _winidea_lock(instance_id: str, timeout: float, log: logging.Logger):
             fcntl.flock(fd, fcntl.LOCK_UN)
         finally:
             os.close(fd)
+
 
 # Map (board, qualifier) -> winIDEA instance id, remote ELF basename, and
 # the TCP serial-console endpoint exposed by the lab "kural" host. Add new
@@ -118,11 +120,26 @@ BOARD_PROFILES = {
 class WinIDEABinaryRunner(ZephyrBinaryRunner):
     '''Flash AURIX targets via remote winIDEA + isystem.connect.'''
 
-    def __init__(self, cfg, *, host, ssh_user, remote_dir, instance_id,
-                 remote_name, watch, watch_seconds, lock_timeout,
-                 capture_console, console_host, console_port,
-                 console_seconds, console_log, extra_elf=None,
-                 winidea_port=None):
+    def __init__(
+        self,
+        cfg,
+        *,
+        host,
+        ssh_user,
+        remote_dir,
+        instance_id,
+        remote_name,
+        watch,
+        watch_seconds,
+        lock_timeout,
+        capture_console,
+        console_host,
+        console_port,
+        console_seconds,
+        console_log,
+        extra_elf=None,
+        winidea_port=None,
+    ):
         super().__init__(cfg)
         self.host = host
         self.ssh_user = ssh_user
@@ -150,66 +167,107 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
 
     @classmethod
     def do_add_parser(cls, parser):
-        parser.add_argument('--winidea-host', default=DEFAULT_WINIDEA_HOST,
-                            help='IP of the Windows host running winIDEA '
-                                 '(default: %(default)s)')
-        parser.add_argument('--ssh-user', default=DEFAULT_SSH_USER,
-                            help='SSH username on the Windows host '
-                                 '(default: %(default)s); password from '
-                                 'SSHPASS env var')
-        parser.add_argument('--remote-dir', default=DEFAULT_REMOTE_DIR,
-                            help='Remote directory to drop the ELF into '
-                                 '(default: %(default)s)')
-        parser.add_argument('--instance-id', default=None,
-                            help='winIDEA instance id; defaults to the one '
-                                 'baked in for the active board')
-        parser.add_argument('--winidea-port', type=int, default=None,
-                            help='Connect to winIDEA SDK by TCP port instead '
-                                 'of instance-id discovery (useful when the '
-                                 'iConnect helper is in a stale state)')
-        parser.add_argument('--remote-name', default=None,
-                            help='Filename to give the ELF on the remote '
-                                 'side; defaults to the per-board value')
-        parser.add_argument('--no-watch', dest='watch', action='store_false',
-                            default=True,
-                            help='Skip the post-run CPU-state poll that '
-                                 'dumps registers/stack on a trap')
-        parser.add_argument('--watch-seconds', type=int,
-                            default=DEFAULT_WATCH_SECONDS,
-                            help='How long to poll for an unexpected stop '
-                                 'after resetAndRun (default: %(default)s)')
+        parser.add_argument(
+            '--winidea-host',
+            default=DEFAULT_WINIDEA_HOST,
+            help='IP of the Windows host running winIDEA (default: %(default)s)',
+        )
+        parser.add_argument(
+            '--ssh-user',
+            default=DEFAULT_SSH_USER,
+            help='SSH username on the Windows host '
+            '(default: %(default)s); password from '
+            'SSHPASS env var',
+        )
+        parser.add_argument(
+            '--remote-dir',
+            default=DEFAULT_REMOTE_DIR,
+            help='Remote directory to drop the ELF into (default: %(default)s)',
+        )
+        parser.add_argument(
+            '--instance-id',
+            default=None,
+            help='winIDEA instance id; defaults to the one baked in for the active board',
+        )
+        parser.add_argument(
+            '--winidea-port',
+            type=int,
+            default=None,
+            help='Connect to winIDEA SDK by TCP port instead '
+            'of instance-id discovery (useful when the '
+            'iConnect helper is in a stale state)',
+        )
+        parser.add_argument(
+            '--remote-name',
+            default=None,
+            help='Filename to give the ELF on the remote side; defaults to the per-board value',
+        )
+        parser.add_argument(
+            '--no-watch',
+            dest='watch',
+            action='store_false',
+            default=True,
+            help='Skip the post-run CPU-state poll that dumps registers/stack on a trap',
+        )
+        parser.add_argument(
+            '--watch-seconds',
+            type=int,
+            default=DEFAULT_WATCH_SECONDS,
+            help='How long to poll for an unexpected stop after resetAndRun (default: %(default)s)',
+        )
 
-        parser.add_argument('--lock-timeout', type=float,
-                            default=DEFAULT_LOCK_TIMEOUT,
-                            help='Seconds to wait for the per-board winIDEA '
-                                 'lock if another flasher (e.g. the NuttX '
-                                 'flash.sh) holds it (default: %(default)s)')
+        parser.add_argument(
+            '--lock-timeout',
+            type=float,
+            default=DEFAULT_LOCK_TIMEOUT,
+            help='Seconds to wait for the per-board winIDEA '
+            'lock if another flasher (e.g. the NuttX '
+            'flash.sh) holds it (default: %(default)s)',
+        )
 
-        parser.add_argument('--no-capture-console', dest='capture_console',
-                            action='store_false', default=True,
-                            help='Skip auto-capture of the serial console to '
-                                 '<build_dir>/console.log during the lock '
-                                 'window')
-        parser.add_argument('--console-host', default=DEFAULT_CONSOLE_HOST,
-                            help='Lab host exposing the serial-over-TCP '
-                                 'consoles (default: %(default)s)')
-        parser.add_argument('--console-port', type=int, default=None,
-                            help='Override the per-board TCP port for the '
-                                 'serial console')
-        parser.add_argument('--console-seconds', type=float,
-                            default=DEFAULT_CONSOLE_SECONDS,
-                            help='Capture the console for this many seconds '
-                                 'after resetAndRun (0 = use --watch-seconds)')
-        parser.add_argument('--console-log', default=None,
-                            help='Path to write the captured console to '
-                                 '(default: <build_dir>/console.log)')
-        parser.add_argument('--extra-elf', action='append', default=[],
-                            metavar='LOCAL[:REMOTE]',
-                            help='Additional ELF to scp + flash into the '
-                                 'same winIDEA debug session (for AMP). '
-                                 'Repeatable. LOCAL is the local ELF path; '
-                                 'optional REMOTE is the basename to scp '
-                                 'to (defaults to the source basename).')
+        parser.add_argument(
+            '--no-capture-console',
+            dest='capture_console',
+            action='store_false',
+            default=True,
+            help='Skip auto-capture of the serial console to '
+            '<build_dir>/console.log during the lock '
+            'window',
+        )
+        parser.add_argument(
+            '--console-host',
+            default=DEFAULT_CONSOLE_HOST,
+            help='Lab host exposing the serial-over-TCP consoles (default: %(default)s)',
+        )
+        parser.add_argument(
+            '--console-port',
+            type=int,
+            default=None,
+            help='Override the per-board TCP port for the serial console',
+        )
+        parser.add_argument(
+            '--console-seconds',
+            type=float,
+            default=DEFAULT_CONSOLE_SECONDS,
+            help='Capture the console for this many seconds '
+            'after resetAndRun (0 = use --watch-seconds)',
+        )
+        parser.add_argument(
+            '--console-log',
+            default=None,
+            help='Path to write the captured console to (default: <build_dir>/console.log)',
+        )
+        parser.add_argument(
+            '--extra-elf',
+            action='append',
+            default=[],
+            metavar='LOCAL[:REMOTE]',
+            help='Additional ELF to scp + flash into the '
+            'same winIDEA debug session (for AMP). '
+            'Repeatable. LOCAL is the local ELF path; '
+            'optional REMOTE is the basename to scp '
+            'to (defaults to the source basename).',
+        )
 
     @staticmethod
     def _board_target_from_build(build_dir):
@@ -225,16 +283,19 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
 
     @classmethod
     def do_create(cls, cfg, args):
-        board_target = (os.environ.get('BOARD_TARGET')
-                        or cls._board_target_from_build(cfg.build_dir)
-                        or (cfg.board_dir and Path(cfg.board_dir).name))
+        board_target = (
+            os.environ.get('BOARD_TARGET')
+            or cls._board_target_from_build(cfg.build_dir)
+            or (cfg.board_dir and Path(cfg.board_dir).name)
+        )
         profile = BOARD_PROFILES.get(board_target, {})
         instance_id = args.instance_id or profile.get('instance_id')
         remote_name = args.remote_name or profile.get('remote_name')
         if not instance_id:
             raise RuntimeError(
                 f'no winIDEA instance id known for board {board_target!r}; '
-                f'pass --instance-id or extend BOARD_PROFILES')
+                f'pass --instance-id or extend BOARD_PROFILES'
+            )
         if not remote_name:
             elf = cfg.elf_file and Path(cfg.elf_file).name
             remote_name = elf or 'zephyr.out'
@@ -242,22 +303,24 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         console_log = args.console_log
         if console_log is None and cfg.build_dir:
             console_log = str(Path(cfg.build_dir) / 'console.log')
-        return cls(cfg,
-                   host=args.winidea_host,
-                   ssh_user=args.ssh_user,
-                   remote_dir=args.remote_dir,
-                   instance_id=instance_id,
-                   remote_name=remote_name,
-                   watch=args.watch,
-                   watch_seconds=args.watch_seconds,
-                   lock_timeout=args.lock_timeout,
-                   capture_console=args.capture_console,
-                   console_host=args.console_host,
-                   console_port=console_port,
-                   console_seconds=args.console_seconds,
-                   console_log=console_log,
-                   extra_elf=args.extra_elf,
-                   winidea_port=args.winidea_port)
+        return cls(
+            cfg,
+            host=args.winidea_host,
+            ssh_user=args.ssh_user,
+            remote_dir=args.remote_dir,
+            instance_id=instance_id,
+            remote_name=remote_name,
+            watch=args.watch,
+            watch_seconds=args.watch_seconds,
+            lock_timeout=args.lock_timeout,
+            capture_console=args.capture_console,
+            console_host=args.console_host,
+            console_port=console_port,
+            console_seconds=args.console_seconds,
+            console_log=console_log,
+            extra_elf=args.extra_elf,
+            winidea_port=args.winidea_port,
+        )
 
     def do_run(self, command, **kwargs):
         if command != 'flash':
@@ -266,12 +329,11 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             import isystem.connect as ic  # noqa: F401
         except ImportError as exc:
             raise RuntimeError(
-                'isystem.connect is not importable; install with '
-                '`pip install isystem.connect`') from exc
+                'isystem.connect is not importable; install with `pip install isystem.connect`'
+            ) from exc
 
         if not self.cfg.elf_file:
-            raise RuntimeError('no ELF available for flashing; check the '
-                               'build directory')
+            raise RuntimeError('no ELF available for flashing; check the build directory')
         elf = Path(self.cfg.elf_file)
         if not elf.is_file():
             raise RuntimeError(f'ELF not found: {elf}')
@@ -290,8 +352,7 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             local_path = Path(local)
             if not local_path.is_file():
                 raise RuntimeError(f'--extra-elf not found: {local_path}')
-            extras_resolved.append(
-                (local_path, f'{self.remote_dir}/{remote_basename}'))
+            extras_resolved.append((local_path, f'{self.remote_dir}/{remote_basename}'))
             remote_paths.append(f'{self.remote_dir}/{remote_basename}')
 
         with _winidea_lock(self.instance_id, self.lock_timeout, self.logger):
@@ -302,11 +363,13 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
 
     def _scp(self, src: Path, dst_remote: str) -> None:
         if 'SSHPASS' not in os.environ:
-            raise RuntimeError('SSHPASS env var must hold the Windows '
-                               'password for sshpass+scp')
+            raise RuntimeError('SSHPASS env var must hold the Windows password for sshpass+scp')
         cmd = [
-            'sshpass', '-e', 'scp',
-            '-o', 'StrictHostKeyChecking=no',
+            'sshpass',
+            '-e',
+            'scp',
+            '-o',
+            'StrictHostKeyChecking=no',
             str(src),
             f'{self.ssh_user}@{self.host}:/{dst_remote}',
         ]
@@ -319,6 +382,7 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             remote_elfs = [remote_elfs]
         primary_elf = remote_elfs[0]
         import isystem.connect as ic
+
         mgr = ic.ConnectionMgr()
         cfg = ic.CConnectionConfig().host(self.host)
         if self.winidea_port:
@@ -330,10 +394,10 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             cfg.start_existing()
         mgr.connect(cfg)
         if not mgr.isConnected():
-            raise RuntimeError(
-                f'could not attach to winIDEA ({attach_via}) on {self.host}')
-        self.logger.info('connected to winIDEA %s on %s (%s)',
-                         mgr.getWinIDEAVersion(), self.host, attach_via)
+            raise RuntimeError(f'could not attach to winIDEA ({attach_via}) on {self.host}')
+        self.logger.info(
+            'connected to winIDEA %s on %s (%s)', mgr.getWinIDEAVersion(), self.host, attach_via
+        )
         exec_ctrl = ic.CExecutionController(mgr)
         try:
             if exec_ctrl.getCPUStatus(False).isRunning():
@@ -358,9 +422,12 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
 
             with self._console_recorder() as console:
                 if console is not None:
-                    self.logger.info('capturing console %s:%d -> %s',
-                                     self.console_host, self.console_port,
-                                     self.console_log)
+                    self.logger.info(
+                        'capturing console %s:%d -> %s',
+                        self.console_host,
+                        self.console_port,
+                        self.console_log,
+                    )
                 self.logger.info('resetAndRun')
                 exec_ctrl.resetAndRun()
                 time.sleep(0.4)
@@ -383,20 +450,18 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
 
     @contextlib.contextmanager
     def _console_recorder(self):
-        if not self.capture_console or not self.console_port \
-                or not self.console_log:
+        if not self.capture_console or not self.console_port or not self.console_log:
             yield None
             return
         try:
-            sock = socket.create_connection(
-                (self.console_host, self.console_port), timeout=5)
+            sock = socket.create_connection((self.console_host, self.console_port), timeout=5)
         except OSError as e:
             self.logger.warning('console capture disabled: %s', e)
             yield None
             return
         sock.settimeout(0.5)
         Path(self.console_log).parent.mkdir(parents=True, exist_ok=True)
-        log_fp = open(self.console_log, 'wb', buffering=0)
+        log_fp = open(self.console_log, 'wb', buffering=0)  # noqa: SIM115
         stop = threading.Event()
 
         class _Recorder:
@@ -406,7 +471,7 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             while not stop.is_set():
                 try:
                     chunk = sock.recv(4096)
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except OSError:
                     break
@@ -420,10 +485,8 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             yield _Recorder
         finally:
             stop.set()
-            try:
+            with contextlib.suppress(OSError):
                 sock.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
             sock.close()
             t.join(timeout=2)
             log_fp.close()
@@ -437,17 +500,16 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         text = data.decode('utf-8', errors='replace').splitlines()
         if not text:
             return
-        self.logger.info('console.log tail (%d/%d lines):',
-                         min(lines, len(text)), len(text))
+        self.logger.info('console.log tail (%d/%d lines):', min(lines, len(text)), len(text))
         for line in text[-lines:]:
             self.logger.info('| %s', line)
 
     def _set_path(self, mgr, opt_path: str, new_path: str) -> None:
         self._set_path_at(mgr, opt_path, 0, new_path)
 
-    def _set_path_at(self, mgr, opt_path: str, idx: int,
-                     new_path: str) -> None:
+    def _set_path_at(self, mgr, opt_path: str, idx: int, new_path: str) -> None:
         import isystem.connect as ic
+
         opt = ic.COptionController(mgr, opt_path)
         while opt.size() <= idx:
             opt.add()
@@ -455,16 +517,15 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
         cur = entry.get('Path')
         if cur != new_path:
             entry.set('Path', new_path)
-            self.logger.info('  %s[%d].Path: %s -> %s',
-                             opt_path, idx, cur, new_path)
+            self.logger.info('  %s[%d].Path: %s -> %s', opt_path, idx, cur, new_path)
 
     def _trim_paths(self, mgr, opt_path: str, keep: int) -> None:
         import isystem.connect as ic
+
         opt = ic.COptionController(mgr, opt_path)
         while opt.size() > keep:
             opt.remove(opt.size() - 1)
-            self.logger.info('  %s: trimmed entry %d',
-                             opt_path, opt.size())
+            self.logger.info('  %s: trimmed entry %d', opt_path, opt.size())
 
     def _watch_for_trap(self, mgr, exec_ctrl, ic) -> None:
         deadline = time.time() + self.watch_seconds
@@ -475,18 +536,15 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
                 stopped = True
                 break
         if not stopped:
-            self.logger.info('CPU still running after %ds (no trap observed)',
-                             self.watch_seconds)
+            self.logger.info('CPU still running after %ds (no trap observed)', self.watch_seconds)
             return
 
-        self.logger.error('!! CPU halted unexpectedly within %ds of run',
-                          self.watch_seconds)
+        self.logger.error('!! CPU halted unexpectedly within %ds of run', self.watch_seconds)
         data = ic.CDataController(mgr)
         for reg in ('PC', 'PSW', 'PCXI', 'A10', 'A11'):
             try:
                 v = data.readRegister(ic.IConnectDebug.fRealTime, reg)
-                self.logger.error('  %-4s = 0x%08x',
-                                  reg, v.getInt() & 0xFFFFFFFF)
+                self.logger.error('  %-4s = 0x%08x', reg, v.getInt() & 0xFFFFFFFF)
             except Exception as e:
                 self.logger.error('  %-4s read failed: %s', reg, e)
 
@@ -496,9 +554,13 @@ class WinIDEABinaryRunner(ZephyrBinaryRunner):
             self.logger.error('Call stack (%d frames):', len(frames))
             for i, frame in enumerate(frames):
                 fn = frame.getFunction().getName() or '?'
-                self.logger.error('  #%d  0x%08x  %s  %s:%d', i,
-                                  frame.getAddress(), fn,
-                                  frame.getFileName() or '?',
-                                  frame.getLineNumber())
+                self.logger.error(
+                    '  #%d  0x%08x  %s  %s:%d',
+                    i,
+                    frame.getAddress(),
+                    fn,
+                    frame.getFileName() or '?',
+                    frame.getLineNumber(),
+                )
         except Exception as e:
             self.logger.error('  stack frame read failed: %s', e)
