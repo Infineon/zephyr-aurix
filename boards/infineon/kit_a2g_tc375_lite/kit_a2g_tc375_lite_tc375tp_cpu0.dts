@@ -58,6 +58,10 @@
 	status = "okay";
 };
 
+&eth0_phy {
+	status = "okay";
+};
+
 &ptp_clock0 {
 	status = "okay";
 };
