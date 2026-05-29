@@ -339,7 +339,7 @@ static void eth_qos_dma_rx_fill_desc(const struct device *dev, uint8_t dma_ch)
 
 		__ASSERT(eth_qos_rdes_own((void *)&dma_cfg->descs[dma_data->tail]) == false,
 			 "desc[%d]=0x%x: still owned by HW", dma_data->tail,
-			 dma_cfg->descs[dma_data->tail].des3);
+			 dma_cfg->descs[dma_data->tail][3]);
 
 		/* Reserve new rx data */
 		frag = net_pkt_get_reserve_rx_data(CONFIG_NET_BUF_DATA_SIZE, K_NO_WAIT);
