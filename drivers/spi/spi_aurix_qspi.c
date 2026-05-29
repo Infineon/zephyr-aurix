@@ -38,7 +38,7 @@ LOG_MODULE_REGISTER(aurix_spi, CONFIG_SPI_LOG_LEVEL);
 #define QSPI_MAX_TIMEOUT            1000
 
 struct spi_aurix_qspi_config {
-	Ifx_QSPI * const base;
+	Ifx_QSPI *const base;
 	const struct device *const clkctrl;
 	const struct pinctrl_dev_config *const pinctrl;
 	uint32_t clk;
@@ -343,7 +343,7 @@ static int qspi_receive_short(const struct device *dev)
 #elif CONFIG_SOC_SERIES_TC4X
 			rec_val = (cfg->base->RXEXIT[0].U & 0xFF);
 #endif
-			LOG_DBG("Recevied Value %u", rec_val);
+			LOG_DBG("Received Value %u", rec_val);
 			memcpy(ctx->rx_buf, &rec_val, data->dfs_value);
 			spi_context_update_rx(ctx, data->dfs_value, 1);
 		}
@@ -401,9 +401,8 @@ static int transceive(const struct device *dev, const struct spi_config *spi_cfg
 
 	ctx->config = spi_cfg;
 
-	
-        spi_context_release(ctx, result);
-        spi_context_lock(ctx, asynchronous, cb, userdata, spi_cfg);
+	spi_context_release(ctx, result);
+	spi_context_lock(ctx, asynchronous, cb, userdata, spi_cfg);
 
 	result = spi_aurix_qspi_config(dev, spi_cfg);
 	if (result) {
@@ -423,7 +422,7 @@ static int transceive(const struct device *dev, const struct spi_config *spi_cfg
 
 	result = spi_context_wait_for_completion(&data->ctx);
 
-        spi_context_release(ctx, result);
+	spi_context_release(ctx, result);
 
 	return result;
 }
