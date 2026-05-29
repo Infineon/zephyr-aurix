@@ -96,6 +96,6 @@ static int eth_tc3xx_geth_init(const struct device *dev)
 		.eth_pins = ETH_TC3XX_GETH_ETH_PINS(n),                                            \
 		.interface = ETH_TC3XX_GETH_INTERFACE(ETH_TC3XX_GETH_GET_CON_TYPE(n))};            \
 	DEVICE_DT_INST_DEFINE(n, eth_tc3xx_geth_init, NULL, NULL, &geth_config##n, POST_KERNEL,    \
-			      CONFIG_PTP_CLOCK_INIT_PRIORITY, NULL);
+			      CONFIG_ETH_INIT_PRIORITY, NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(ETH_TC3XX_GETH_INIT)
