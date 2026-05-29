@@ -11,7 +11,6 @@ LOG_MODULE_REGISTER(aurix_pinctrl, CONFIG_PINCTRL_LOG_LEVEL);
 #include "IfxAsclin_regdef.h"
 #include "IfxQspi_regdef.h"
 
-
 void pinctrl_configure_asclin_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base)
 {
 	uint32_t iocr = 0;
@@ -51,13 +50,14 @@ void pinctrl_configure_qspi_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt,
 {
 	volatile Ifx_QSPI *qspi = (Ifx_QSPI *)base;
 	uint32_t i;
+
 	LOG_DBG("Entered Pinctrl Config");
-	for (i = 0; i<pin_cnt; i++) {
+	for (i = 0; i < pin_cnt; i++) {
 		if (pins[i].output) {
 			continue;
 		}
 		qspi->PISEL.B.MRIS = pins[i].alt;
-		LOG_DBG("Configured %u",qspi->PISEL.B.MRIS);
+		LOG_DBG("Configured %u", qspi->PISEL.B.MRIS);
 		break;
 	}
 }
