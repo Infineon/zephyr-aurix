@@ -47,6 +47,10 @@
 	status = "okay";
 };
 
+&phy {
+	status = "okay";
+};
+
 &ptp_clock0 {
 	status = "okay";
 };

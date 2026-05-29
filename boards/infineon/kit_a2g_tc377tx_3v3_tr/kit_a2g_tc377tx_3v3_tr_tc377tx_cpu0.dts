@@ -62,6 +62,10 @@
 	status = "okay";
 };
 
+&phy0 {
+	status = "okay";
+};
+
 &mcmcan0 {
 	status = "okay";
 };
