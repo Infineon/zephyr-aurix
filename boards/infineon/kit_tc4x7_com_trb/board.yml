@@ -3,7 +3,7 @@
 
 board:
   name: kit_tc4x7_com_trb
-  full_name: TriBoard TC4x7 COM 
+  full_name: TriBoard TC4x7 COM
   vendor: infineon
   socs:
     - name: tc4d7xp

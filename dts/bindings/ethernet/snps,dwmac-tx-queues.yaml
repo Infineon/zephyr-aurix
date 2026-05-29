@@ -59,16 +59,16 @@ child-binding:
         TX queue will be working in AVB.
         Queue 0 is reserved for legacy traffic and so no AVB is
         available in this queue.
-    snps,send_slope:
+    snps,send-slope:
       type: int
       description: enable Low Power Interface
-    snps,idle_slope:
+    snps,idle-slope:
       type: int
       description: unlock on WoL
-    snps,high_credit:
+    snps,high-credit:
       type: int
       description: max write outstanding req. limit
-    snps,low_credit:
+    snps,low-credit:
       type: int
       description: max read outstanding req. limit
     snps,priority:

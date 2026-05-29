@@ -13,10 +13,10 @@ include: [base.yaml, mailbox-controller.yaml]
 properties:
   reg:
     required: true
-  
+
   interrupts:
     required: true
-  
+
   rx-channels:
     type: array
 

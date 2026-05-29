@@ -43,7 +43,7 @@ child-binding:
         enum:
           - "sharp"
           - "medium"
-        
+
       drive-strength:
         description: |
           Drive strength of the output pin.
@@ -53,7 +53,7 @@ child-binding:
           - "strong"
           - "medium"
           - "rgmii"
-      
+
       input-level:
         type: string
         description: |
@@ -63,7 +63,7 @@ child-binding:
           - "automotive"
           - "ttl_5v"
           - "ttl_3v3"
-      
+
       output-select:
         type: boolean
         description: Use advanced output select function (e.g. RGMII, SCR, SMU)

@@ -5,7 +5,7 @@ description: Infineon ASCLIN Uart
 
 compatible: "infineon,asclin-uart"
 
-include: [uart-controller.yaml,  pinctrl-device.yaml]
+include: [uart-controller.yaml, pinctrl-device.yaml]
 
 properties:
   reg:

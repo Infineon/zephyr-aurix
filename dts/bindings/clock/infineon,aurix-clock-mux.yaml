@@ -12,7 +12,7 @@ properties:
   clocks:
     type: phandle-array
     description: input clock source
-  
+
   clock-names:
     type: string-array
     description: name of each clock

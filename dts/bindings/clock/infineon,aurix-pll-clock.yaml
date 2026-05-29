@@ -13,12 +13,12 @@ properties:
     required: true
 
   k-div:
-      type: int
-      required: true
-  
+    type: int
+    required: true
+
   k-pre-div:
-      type: string
-      enum: ["1.0", "1.1", "1.2", "1.4", "1.6", "1.7", "2.0"]
+    type: string
+    enum: ["1.0", "1.1", "1.2", "1.4", "1.6", "1.7", "2.0"]
 
   clocks:
     type: phandle-array
