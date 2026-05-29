@@ -66,6 +66,26 @@
 	status = "okay";
 };
 
+&geth1 {
+	status = "okay";
+};
+
+&ptp_clock1 {
+	status = "okay";
+};
+
+&eth1 {
+	status = "okay";
+};
+
+&mdio1 {
+	status = "okay";
+};
+
+&phy1 {
+	status = "okay";
+};
+
 &mcmcan0 {
 	status = "okay";
 };
