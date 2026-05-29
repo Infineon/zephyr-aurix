@@ -1,0 +1,14 @@
+# Copyright 2026 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+board:
+  name: kit_a2g_tc3x6_trb
+  full_name: TriBoard TC3X6
+  vendor: infineon
+  revision:
+    format: major.minor.patch
+    default: "1.0.0"
+    revisions:
+      - name: "1.0.0"
+  socs:
+    - name: tc366dp

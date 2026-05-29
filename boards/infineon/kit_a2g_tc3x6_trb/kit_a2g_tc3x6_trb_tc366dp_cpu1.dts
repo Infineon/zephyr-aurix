@@ -1,0 +1,29 @@
+/*
+ * Copyright (c) 2024 Infineon Technologies AG
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <infineon/tc3x/tc366dp.dtsi>
+#include "kit_a2g_tc3x6_trb.dtsi"
+
+/ {
+	model = "Infineon TC397 TriBoard";
+	compatible = "infineon,kit_a2g_tc397_trb",
+		     "infineon,tc397",
+		     "infineon,tc3x";
+
+	chosen {
+		zephyr,flash = &flash1;
+		zephyr,sram = &dsram1;
+		zephyr,itcm = &psram1;
+		infineon,system-timer = &stm1;
+	};
+};
+
+&stm1 {
+	status = "okay";
+	freeze;
+};
