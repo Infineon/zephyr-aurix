@@ -362,6 +362,8 @@ static int clock_control_tc4x_ccu_on(const struct device *dev, clock_control_sub
 	/*case CLOCK_FADC: return fadc_div != 0 ? 0 : -ENOSYS; */
 	case CLOCK_FI2C:
 		return fi2c_div != 0 ? 0 : -ENOSYS;
+	case CLOCK_FLETH100:
+		return fleth100_div != 0 ? 0 : -ENOSYS;
 	default:
 		return -EINVAL;
 	}
@@ -443,6 +445,9 @@ static int clock_control_tc4x_ccu_get_rate(const struct device *dev, clock_contr
 		return 0; */
 	case CLOCK_FI2C:
 		*rate = data->fsource2 / fi2c_div;
+		return 0;
+	case CLOCK_FLETH100:
+		*rate = data->fsource2;
 		return 0;
 	default:
 		return -EINVAL;

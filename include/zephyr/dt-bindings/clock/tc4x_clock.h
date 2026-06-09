@@ -23,5 +23,6 @@
 #define CLOCK_FQSPI    0xD
 #define CLOCK_FADC     0xE
 #define CLOCK_FI2C     0xF
+#define CLOCK_FLETH100 0x10
 
 #endif
