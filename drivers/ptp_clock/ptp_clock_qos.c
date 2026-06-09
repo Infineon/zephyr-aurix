@@ -55,7 +55,6 @@ struct ptp_clock_qos_config {
 
 struct ptp_clock_qos_data {
 	double clock_ratio;
-	double clock_ratio_adjust;
 	struct k_spinlock lock;
 };
 
@@ -143,19 +142,16 @@ static int ptp_clock_qos_rate_adjust(const struct device *dev, double ratio)
 		return 0;
 	}
 
-	ratio *= (double)data->clock_ratio_adjust;
-
 	/* Limit possible ratio */
 	if (ratio < 0.9 || ratio > 1.1) {
 		return -EINVAL;
 	}
-	addend = UINT32_MAX * (double)data->clock_ratio * ratio;
+	addend = UINT32_MAX * data->clock_ratio * ratio;
 
 	key = k_spin_lock(&data->lock);
-	/* Save new ratio */
-	data->clock_ratio_adjust = ratio;
 	sys_write32(addend, cfg->base + MAC_TIMESTAMP_ADDEND);
-	sys_write32(MAC_TS_CTRL_TSADDREG, cfg->base + MAC_TIMESTAMP_CONTROL);
+	sys_write32(sys_read32(cfg->base + MAC_TIMESTAMP_CONTROL) | MAC_TS_CTRL_TSADDREG,
+		    cfg->base + MAC_TIMESTAMP_CONTROL);
 	if (!WAIT_FOR((sys_read32(cfg->base + MAC_TIMESTAMP_CONTROL) & MAC_TS_CTRL_TSADDREG) == 0,
 		      10, k_busy_wait(1))) {
 		ret = -EIO;
@@ -194,7 +190,7 @@ static int ptp_clock_qos_init(const struct device *port)
 	/* Convert ptp_period into sub second increment value */
 	sub_sec_increment = (uint32_t)(ptp_period * (double)(1 << 16)) & 0xFFFF00;
 	/* Store the clock ratio for addent register. Also take the error of the
-	 * conversion between period and sub_sec_increment into aacount. */
+	 * conversion between period and sub_sec_increment into account. */
 	data->clock_ratio = clock_period / ((double)sub_sec_increment / (double)(1 << 16));
 
 	sys_write32(sub_sec_increment, cfg->base + MAC_SUB_SECOND_INCREMENT);
