@@ -26,8 +26,6 @@ properties:
     type: int
     default: 250
     description: Byte offset of the EUI-48 within the mac-eeprom (default 0xFA).
-  snps,ptp-clock:
-    type: phandle
   snps,tx-queue-sources:
     type: phandle-array
     ignore-dependencies: true

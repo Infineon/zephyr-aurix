@@ -1237,7 +1237,7 @@
             eth2: leth@f9410000 {
                 compatible = "snps,dwc-ether-qos";
                 reg = <0xF9410000 0x2000>;
-                snps,ptp-clock = <&ptp_clock2>;
+                ptp-clock = <&ptp_clock2>;
                 snps,dma = <&leth0_dma>;
                 snps,rx-channel-targets = <&leth0_dma 0>;
                 snps,tx-queue-sources = <&leth0_dma 0>;
@@ -1249,7 +1249,7 @@
             eth3: leth@f9412000 {
                 compatible = "snps,dwc-ether-qos";
                 reg = <0xF9412000 0x2000>;
-                snps,ptp-clock = <&ptp_clock3>;
+                ptp-clock = <&ptp_clock3>;
                 snps,dma = <&leth0_dma>;
                 snps,address-aligned-burst;
                 snps,fixed-burst-length;
@@ -1259,7 +1259,7 @@
             eth4: leth@f9414000 {
                 compatible = "snps,dwc-ether-qos";
                 reg = <0xF9414000 0x2000>;
-                snps,ptp-clock = <&ptp_clock4>;
+                ptp-clock = <&ptp_clock4>;
                 snps,dma = <&leth0_dma>;
                 snps,address-aligned-burst;
                 snps,fixed-burst-length;
@@ -1269,7 +1269,7 @@
             eth5: leth@f9416000 {
                 compatible = "snps,dwc-ether-qos";
                 reg = <0xF9416000 0x2000>;
-                snps,ptp-clock = <&ptp_clock5>;
+                ptp-clock = <&ptp_clock5>;
                 snps,dma = <&leth0_dma>;
                 snps,address-aligned-burst;
                 snps,fixed-burst-length;
@@ -1381,7 +1381,7 @@
                 snps,rx-channel-targets = <&geth0_dma 0>;
                 interrupts = <IRQ_GETH0_DMA0 10>, <IRQ_GETH0_DMA8 10>;
                 interrupt-names = "tx-ch0", "rx-ch0";
-                snps,ptp-clock = <&ptp_clock0>;
+                ptp-clock = <&ptp_clock0>;
                 status = "disabled";
             };
             eth1: ethernet-controller@f9012000 {
@@ -1395,7 +1395,7 @@
                              <IRQ_GETH0_DMA9 10>;
                 interrupt-names = "tx-ch0",
                                   "rx-ch0";
-                snps,ptp-clock = <&ptp_clock1>;
+                ptp-clock = <&ptp_clock1>;
                 status = "disabled";
             };
 

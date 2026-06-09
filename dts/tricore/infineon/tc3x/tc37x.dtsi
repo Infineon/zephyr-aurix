@@ -420,7 +420,7 @@
 				                  "rx_ch1",
 				                  "rx_ch2",
 				                  "rx_ch3";
-				snps,ptp-clock = <&ptp_clock0>;
+				ptp-clock = <&ptp_clock0>;
 				snps,address-aligned-burst;
 				snps,fixed-burst-length;
 				snps,burst-length = <8>;
