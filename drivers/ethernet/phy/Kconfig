@@ -118,6 +118,16 @@ config PHY_TI_DP83867
 	help
 	  Enable TI DP83867 Ethernet PHY Driver
 
+config PHY_REALTEK_RTL8201F
+	bool "Realtek RTL8201F PHY Driver"
+	default y
+	depends on DT_HAS_REALTEK_RTL8201F_ENABLED
+	select MDIO
+	select GPIO if ($(dt_compat_any_has_prop,$(DT_COMPAT_REALTEK_RTL8201F),reset-gpios) || \
+			$(dt_compat_any_has_prop,$(DT_COMPAT_REALTEK_RTL8201F),int-gpios))
+	help
+	  Enable Realtek RTL8201F Ethernet PHY Driver
+
 config PHY_REALTEK_RTL8211F
 	bool "Realtek RTL8211F PHY Driver"
 	default y
