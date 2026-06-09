@@ -68,11 +68,9 @@ int pinctrl_configure_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, uintp
 		DT_FOREACH_STATUS_OKAY(infineon_asclin_lin, ASCLIN_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(infineon_aurix_i2c, I2C_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(infineon_aurix_qspi, QSPI_ENABLED_CASE)
-#if SOC_SERIES_TC4X
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_qos, LETH_MAC_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_qos_mdio, LETH_MDIO_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_xgmac_mdio, GETH_MDIO_ENABLED_CASE)
-#endif
 	}
 
 	for (uint8_t i = 0U; i < pin_cnt; i++) {
