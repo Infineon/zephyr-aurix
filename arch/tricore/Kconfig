@@ -42,6 +42,15 @@ config TRICORE_RESET_TRAMPOLINE
 		any address (e.g. no cached) to the actual startup
 		function.
 
+config TRICORE_STACK_PROTECTION
+	bool
+	default y if HW_STACK_PROTECTION
+	select MPU_STACK_GUARD if TRICORE_MPU
+	help
+		Enable hardware stack protection. When enabled, the kernel will use the
+		MPU to create a guard area at the bottom of each thread's stack. Accessing this
+		guard area will trigger a fault, allowing stack overflows to be detected.
+
 menu "TriCore Processor Options"
 
 config CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS
@@ -95,13 +104,13 @@ config TRICORE_MPU_PROTECTION_SETS
 endif # TRICORE_MPU
 
 config MPU_STACK_GUARD
-	def_bool y
+	bool
 	depends on HW_STACK_PROTECTION
 
 config MPU_STACK_GUARD_MIN_SIZE
 	int "Stack Guard area size"
 	depends on MPU_STACK_GUARD
-	default 512
+	default 128
 	help
 	  Hardware stack protection installs a guard area at the bottom of the
 	  stack using the MPU. Accessing the guard area triggers a fault so stack
