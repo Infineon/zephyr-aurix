@@ -1,0 +1,1 @@
+zephyr_library_sources_ifdef(CONFIG_ETH_DWC_ETHER_XGMAC eth_xgmac.c)

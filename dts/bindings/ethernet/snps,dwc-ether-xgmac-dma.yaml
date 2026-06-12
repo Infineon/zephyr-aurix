@@ -1,0 +1,26 @@
+# Copyright (c) 2024, Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Synopsys IP Ethernet XGMAC DMA
+
+compatible: "snps,dwc-ether-xgmac-dma"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true
+  snps,channel:
+    type: int
+    default: 8
+  '#snps,tx-queue-source-cells':
+    type: int
+    const: 1
+  '#snps,rx-channel-target-cells':
+    type: int
+    const: 1
+
+snps,tx-queue-source-cells:
+  - channel
+snps,rx-channel-target-cells:
+  - channel

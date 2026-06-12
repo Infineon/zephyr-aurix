@@ -1,0 +1,64 @@
+# Copyright (c) 2024, Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Synopsys Controller IP XGMAC - 10G Ethernet MAC
+
+compatible: "snps,dwc-ether-xgmac"
+
+include: 
+  - ethernet-controller.yaml
+  - pinctrl-device.yaml
+
+properties:
+  reg:
+    required: true
+  snps,do-reset:
+    type: boolean
+  snps,skip-init:
+    type: boolean
+  snps,dma-only:
+    type: boolean
+  mac-eeprom:
+    type: phandle
+    description: EEPROM holding a factory EUI-48 to use as the MAC address.
+  mac-eeprom-offset:
+    type: int
+    default: 250
+    description: Byte offset of the EUI-48 within the mac-eeprom (default 0xFA).
+  snps,tx-queue-sources:
+    type: phandle-array
+    ignore-dependencies: True
+  snps,rx-channel-targets:
+    type: phandle-array
+    ignore-dependencies: True
+  snps,rx-channel-to-use:
+    type: int
+    default: 1
+  snps,tx-channel-to-use:
+    type: int
+    default: 1
+  snps,channel-nr:
+    type: array
+  snps,address-aligned-burst:
+    type: boolean
+  snps,fixed-burst-length:
+    type: boolean
+  snps,burst-length:
+    type: int
+    enum: [ 1, 2, 4, 8, 16, 32, 64, 128, 256]
+    default: 1
+  snps,loopback:
+    type: boolean
+  snps,da-duplication:
+    type: boolean
+  '#snps,tx-queue-source-cells':
+    type: int
+    const: 1
+  '#snps,rx-channel-target-cells':
+    type: int
+    const: 1
+
+snps,tx-queue-source-cells:
+  - channel
+snps,rx-channel-target-cells:
+  - channel

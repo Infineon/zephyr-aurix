@@ -5,6 +5,6 @@ config PTP_CLOCK_DWC_ETHER_QOS
 	bool "Synopsis DWC Ether QoS PTP Clock"
 	default y
 	depends on DT_HAS_SNPS_DWC_ETHER_QOS_PTP_CLOCK_ENABLED && NET_L2_PTP
-	depends on ETH_DWC_ETHER_QOS
+	depends on ETH_DWC_ETHER_QOS || ETH_DWC_ETHER_XGMAC
 	help
 	  Enable Synopsis Designwer Ethernet QoS PTP Clock

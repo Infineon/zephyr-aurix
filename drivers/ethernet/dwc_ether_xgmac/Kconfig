@@ -1,0 +1,31 @@
+config ETH_DWC_ETHER_XGMAC
+    bool
+    default y
+    depends on DT_HAS_SNPS_DWC_ETHER_XGMAC_ENABLED
+    select NET_PKT_LIST
+    select CACHE_MANAGEMENT if CPU_HAS_DCACHE
+    select NET_CHECKSUM_OFFLOAD_SUPPORTED if NET_L2_ETHERNET
+    select EEPROM if $(dt_compat_any_has_prop,$(DT_COMPAT_SNPS_DWC_ETHER_QOS),mac-eeprom)
+
+if ETH_DWC_ETHER_XGMAC
+
+config ETH_XGMAC_NUM_RX_DMA_DESCRIPTORS
+    int "Number of RX DMA descriptors"
+    default 16
+
+config ETH_XGMAC_NUM_TX_DMA_DESCRIPTORS
+    int "Number of TX DMA descriptors"
+    default 16
+
+config ETH_XGMAC_SHARED_DMA
+    bool "Shared DMA between multiple MACs"
+    default n
+
+config ETH_XGMAC_TARGET_TIME_CALLBACK
+    bool "Target time callback for event triggers"
+    default n
+
+config ETH_XGMAC_DMA_PER_CH_IRQ
+    bool "DMA per channel interrupt"
+    default n
+endif
