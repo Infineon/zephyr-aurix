@@ -1067,15 +1067,10 @@ int eth_qos_init(const struct device *dev)
 	if (cfg->do_reset) {
 		sys_write32(DMA_MODE_SWR, cfg->DMA_BASE + DMA_MODE);
 	}
-	/*
-	 * The GETH kernel reset already cleared the module. The DMA software
-	 * reset only self-clears once every MAC clock domain is live; for
-	 * RGMII the RX domain is clocked by the PHY, which is not up yet at
-	 * init, so the bit can linger. Warn and continue rather than aborting.
-	 */
 	if (!WAIT_FOR((sys_read32(cfg->DMA_BASE + DMA_MODE) & DMA_MODE_SWR) == 0, 1000,
 		      k_busy_wait(10))) {
-		LOG_WRN("MAC software reset still pending, continuing");
+		LOG_ERR("Failed to reset mac");
+		return -EIO;
 	}
 
 	cfg->init();
