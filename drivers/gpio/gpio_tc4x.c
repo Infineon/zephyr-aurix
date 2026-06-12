@@ -265,8 +265,6 @@ static int gpio_tc4x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 		MODULE_EGTM.CLS[irq_src->cls].CCM.PROT.U = 1;
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_RUN);
 
-		irq_enable((0x1E60 / 4 + irq_src->cls * 8 + irq_src->ch));
-
 		return 0;
 	}
 
