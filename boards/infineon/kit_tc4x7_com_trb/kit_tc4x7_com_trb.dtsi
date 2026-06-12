@@ -72,11 +72,17 @@
 	compatible = "infineon,asclin-uart";
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-names = "default";
+	status = "okay";
+};
+
+&geth0 {
+	status = "okay";
 };
 
 &mdio0 {
 	pinctrl-0 = <&geth0_p0_mdio>;
 	pinctrl-names = "default";
+	status = "okay";
 
 	geth0_phy: phy@1 {
 		compatible = "realtek,rtl822x";
@@ -85,6 +91,7 @@
 		int-gpios = <&p10 2 GPIO_ACTIVE_LOW>;
 		realtek,serdes-interface = "2500Base-X+SGMII";
 		realtek,serdes-auto-negotiation;
+		status = "okay";
 	};
 
 	geth1_phy: phy@2 {
@@ -94,28 +101,45 @@
 		int-gpios = <&p10 3 GPIO_ACTIVE_LOW>;
 		realtek,serdes-interface = "2500Base-X+SGMII";
 		realtek,serdes-auto-negotiation;
+		status = "okay";
 	};
+};
+
+&hsphy {
+	status = "okay";
 };
 
 &xpcs0 {
 	phy-handle = <&geth0_phy>;
+	status = "okay";
 };
 
 &xpcs1 {
 	phy-handle = <&geth1_phy>;
+	status = "okay";
 };
 
 &eth0 {
 	phy-handle = <&xpcs0>;
 	phy-connection-type = "usxgmii";
+	status = "okay";
 };
 
 &eth1 {
 	phy-handle = <&xpcs1>;
 	phy-connection-type = "usxgmii";
+	status = "okay";
 };
 
-&mdio5 {
+&ptp_clock0 {
+	status = "okay";
+};
+
+&ptp_clock1 {
+	status = "okay";
+};
+
+&mdio1 {
 	pinctrl-0 = <&geth0_p1_mdio>;
 	pinctrl-names = "default";
 };
@@ -124,6 +148,7 @@
 	pinctrl-0 = <&eeprom_i2c>;
 	pinctrl-names = "default";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	status = "okay";
 
 	geth0_eeprom: eeprom@50 {
 		compatible = "microchip,24aa025e64", "atmel,at24";
@@ -132,6 +157,7 @@
 		pagesize = <16>;
 		address-width = <8>;
 		timeout = <5>;
+		status = "okay";
 	};
 
 	geth1_eeprom: eeprom@51 {
@@ -141,6 +167,7 @@
 		pagesize = <16>;
 		address-width = <8>;
 		timeout = <5>;
+		status = "okay";
 	};
 };
 
@@ -189,4 +216,8 @@ qspi4: &qspi4 {
 &fpllppu {
 	k-div = <1>;
 	k-pre-div = "1.1";
+};
+
+&fegtm {
+	status = "okay";
 };
