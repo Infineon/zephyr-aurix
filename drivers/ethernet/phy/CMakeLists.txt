@@ -24,4 +24,5 @@ zephyr_library_sources_ifdef(CONFIG_PHY_TI_DP83825 phy_ti_dp83825.c)
 zephyr_library_sources_ifdef(CONFIG_PHY_TI_DP83867 phy_ti_dp83867.c)
 zephyr_library_sources_ifdef(CONFIG_PHY_TJA1103 phy_tja1103.c)
 zephyr_library_sources_ifdef(CONFIG_PHY_TJA11XX phy_tja11xx.c)
+zephyr_library_sources_ifdef(CONFIG_PHY_XPCS phy_xpcs.c)
 # zephyr-keep-sorted-stop

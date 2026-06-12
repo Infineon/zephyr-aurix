@@ -1,0 +1,23 @@
+compatible: "snps,xpcs"
+
+description: Synopsys DesignWareCore XPCS
+
+include: ethernet-phy-common.yaml
+
+properties:
+  reg:
+    required: true
+  phy-handle:
+    type: phandle
+  fixed-link:
+    type: string
+    description: This link is fixed and does not require PHY configuration
+    enum:
+      - "10BASE-T Half-Duplex"
+      - "10BASE-T Full-Duplex"
+      - "100BASE-T Half-Duplex"
+      - "100BASE-T Full-Duplex"
+      - "1000BASE-T Half-Duplex"
+      - "1000BASE-T Full-Duplex"
+      - "2500BASE-T Full-Duplex"
+      - "5000BASE-T Full-Duplex"

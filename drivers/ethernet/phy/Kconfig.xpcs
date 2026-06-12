@@ -1,0 +1,8 @@
+config PHY_XPCS
+    bool "Synopsis XPCS Interface"
+    default y
+    depends on DT_HAS_SNPS_XPCS_ENABLED
+
+if PHY_XPCS
+
+endif
