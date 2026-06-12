@@ -100,12 +100,6 @@ static int eth_tc4x_leth_init(const struct device *dev)
 		}
 	}
 
-	for (i = 0; i < cfg->num_ports; i++) {
-		if (!cfg->ports[i].enabled) {
-			continue;
-		}
-	}
-
 	if (!aurix_kernel_reset((uintptr_t)&MODULE_LETH0.RST.CTRLA, 1000)) {
 		return -EIO;
 	}
