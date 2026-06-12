@@ -19,3 +19,7 @@ config SOC_TC4X_CPUAPP
 	bool
 	default y if TRICORE_CORE_ID < 6
 	default n
+
+config AURIX_PROT_DEFAULT
+	bool
+	default y

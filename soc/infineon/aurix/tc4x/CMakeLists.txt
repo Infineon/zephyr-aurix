@@ -1,6 +1,7 @@
 # Copyright (c) 2024 Infineon Technologies AG
 # SPDX-License-Identifier: Apache-2.0
 zephyr_sources(soc.c soc_boot.S cpu_idle.c)
+zephyr_sources_ifdef(CONFIG_AURIX_PROT_DEFAULT soc_prot.c)
 zephyr_include_directories(.)
 
 set(SOC_LINKER_SCRIPT ${ZEPHYR_BASE}/include/zephyr/arch/tricore/linker.ld CACHE INTERNAL "")
