@@ -47,6 +47,8 @@ properties:
       - "gmii"
       - "rgmii"
       - "internal"
+      - "sgmii"
+      - "usxgmii"
 
   ptp-clock:
     type: phandle
