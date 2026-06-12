@@ -1,0 +1,9 @@
+# Copyright (c) 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+config MDIO_DWC_ETHER_XGMAC
+	bool "Synopsys DWC Ether XGMAC MDIO driver"
+	depends on ETH_DWC_ETHER_XGMAC
+	default y
+	help
+	  Enable Synopsys DWC Ether XGMAC MDIO driver.
