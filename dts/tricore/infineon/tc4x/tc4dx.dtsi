@@ -1236,9 +1236,8 @@
 
             eth2: leth@f9410000 {
                 compatible = "snps,dwc-ether-qos";
-                reg = <0xF9410000 0x2000>;
+                reg = <0xF9410000 0x2000>, <0xf941f000 0x1000>;
                 ptp-clock = <&ptp_clock2>;
-                snps,dma = <&leth0_dma>;
                 snps,rx-channel-targets = <&leth0_dma 0>;
                 snps,tx-queue-sources = <&leth0_dma 0>;
                 snps,address-aligned-burst;
@@ -1248,9 +1247,8 @@
             };
             eth3: leth@f9412000 {
                 compatible = "snps,dwc-ether-qos";
-                reg = <0xF9412000 0x2000>;
+                reg = <0xF9412000 0x2000>, <0xf941f000 0x1000>;
                 ptp-clock = <&ptp_clock3>;
-                snps,dma = <&leth0_dma>;
                 snps,address-aligned-burst;
                 snps,fixed-burst-length;
                 snps,burst-length = <8>;
@@ -1258,9 +1256,8 @@
             };
             eth4: leth@f9414000 {
                 compatible = "snps,dwc-ether-qos";
-                reg = <0xF9414000 0x2000>;
+                reg = <0xF9414000 0x2000>, <0xf941f000 0x1000>;
                 ptp-clock = <&ptp_clock4>;
-                snps,dma = <&leth0_dma>;
                 snps,address-aligned-burst;
                 snps,fixed-burst-length;
                 snps,burst-length = <8>;
@@ -1268,9 +1265,8 @@
             };
             eth5: leth@f9416000 {
                 compatible = "snps,dwc-ether-qos";
-                reg = <0xF9416000 0x2000>;
+                reg = <0xF9416000 0x2000>, <0xf941f000 0x1000>;
                 ptp-clock = <&ptp_clock5>;
-                snps,dma = <&leth0_dma>;
                 snps,address-aligned-burst;
                 snps,fixed-burst-length;
                 snps,burst-length = <8>;
@@ -1356,16 +1352,9 @@
             #address-cells = <1>;
             #size-cells = <1>;
 
-            geth0_bridge: bridge@f901f000 {
-                compatible = "infineon,tc4x-geth-bridge";
-                reg = <0xf901f000 0x1000>;
-                interrupts = <IRQ_GETH0_INTR 5>;
-                #snps,tx-queue-source-cells = <1>;
-                #snps,rx-channel-target-cells = <1>;
-            };
 
             geth0_dma: dma@f901f000 {
-                compatible = "snps,dwc-ether-qos-dma";
+                compatible = "snps,dwc-ether-xgmac-dma";
                 reg = <0xf901f000 0x1000>;
                 snps,channel = <8>;
                 #snps,tx-queue-source-cells = <1>;

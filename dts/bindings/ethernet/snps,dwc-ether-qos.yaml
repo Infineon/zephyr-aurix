@@ -17,8 +17,6 @@ properties:
     type: boolean
   snps,dma-only:
     type: boolean
-  snps,dma:
-    type: phandle
   mac-eeprom:
     type: phandle
     description: EEPROM holding a factory EUI-48 to use as the MAC address.

@@ -1,7 +1,7 @@
 # Copyright (c) 2024, Infineon Technologies AG
 # SPDX-License-Identifier: Apache-2.0
 
-description: RX Queues Configuration for Synopsis IP MACs
+description: RX Queues Configuration for Synopsis DWC Ether QOS
 
 compatible: "snps,dwc-ether-qos-rx-queues"
 

@@ -1064,7 +1064,7 @@ static inline void eth_qos_set_mac_addr(const struct device *dev, uint8_t nr, ui
 	 .dma_only = DT_INST_PROP(n, snps_dma_only),                                               \
 	 .da_duplication = DT_INST_PROP(n, snps_da_duplication),                                   \
 	 .loopback = DT_INST_PROP(n, snps_loopback),                                               \
-	 IF_ENABLED(CONFIG_ETH_QOS_SHARED_DMA, (.dma_base = DT_REG_ADDR(DT_INST_PHANDLE(n, snps_dma)) - DMA_MODE,))                                                                                \
+	 IF_ENABLED(CONFIG_ETH_QOS_SHARED_DMA, (.dma_base = DT_INST_REG_ADDR_BY_IDX(n, 1) - DMA_MODE,))                                                                                \
 			     IF_ENABLED(CONFIG_PTP_CLOCK, (.ptp_clock = DEVICE_DT_GET(DT_INST_PHANDLE(n, ptp_clock)),))}
 
 #define ETH_QOS_DMA_DATA(n)                                                                        \
