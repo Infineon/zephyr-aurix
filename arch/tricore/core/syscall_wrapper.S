@@ -54,7 +54,8 @@ switch_no_reclaim:
 	ld.a    %a4, [%a15]+___cpu_t_current_OFFSET
 	call    z_tricore_mpu_stackguard_enable
 #endif
-	j 	syscall_return
+	rslcx
+	rfe
 
 #if CONFIG_USERSPACE
 dispatch_syscall:
@@ -95,10 +96,17 @@ dispatch_syscall:
 	enable
 1:
 	calli	%a14
+	/* Save return value to later inject it after lower-context registers
+	 * have been restored.
+	 */
+	mov	%d15, %d2
 
 	/* Restore stack */
 	lea	%a10, [%a10], 8
-	j syscall_return
+
+	rslcx
+	mov %d2, %d15
+	rfe
 #endif
 
 #if CONFIG_IRQ_OFFLOAD
@@ -129,16 +137,5 @@ except_syscall:
 	 */
 	call  	z_tricore_user_except
 
-syscall_return:
-	/* svlcx in the syscall trap vector saved D2 with the caller's
-	 * pre-trap value; rslcx would overwrite the handler's return.
-	 * Patch the saved D2 in the lower CSA pointed to by PCXI so the
-	 * syscall return value survives rslcx + rfe.
-	 */
-	mfcr	%d15, TRICORE_PCXI
-	sh	%d14, %d15, 12
-	insert	%d14, %d14, %d15, 6, 16
-	mov.a	%a15, %d14
-	st.w	[%a15]__z_tricore_lower_context_t_d2_OFFSET, %d2
 	rslcx
 	rfe
