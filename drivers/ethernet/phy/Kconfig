@@ -139,6 +139,16 @@ config PHY_REALTEK_RTL8211F
 	help
 	  Enable Realtek RTL8211F Ethernet PHY Driver
 
+config PHY_REALTEK_RTL822X
+	bool "Realtek RTL822x PHY Driver"
+	default y
+	depends on DT_HAS_REALTEK_RTL822X_ENABLED
+	select MDIO
+	select GPIO if ($(dt_compat_any_has_prop,$(DT_COMPAT_REALTEK_RTL822X),reset-gpios) || \
+			$(dt_compat_any_has_prop,$(DT_COMPAT_REALTEK_RTL822X),int-gpios))
+	help
+	  Enable Realtek RTL822x Ethernet PHY Driver
+
 config PHY_QUALCOMM_AR8031
 	bool "Qualcomm Atheros AR8031 Ethernet PHY Driver"
 	default y

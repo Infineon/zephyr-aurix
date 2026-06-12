@@ -1,0 +1,54 @@
+# Copyright 2024 Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Realtek RTL822x Ethernet PHY device
+
+compatible: "realtek,rtl822x"
+
+include: ethernet-phy-common.yaml
+
+properties:
+  reg:
+    type: array
+    required: true
+  no-reset:
+    type: boolean
+    description: Do not reset the PHY during initialization
+  fixed-link:
+    type: string
+    description: This link is fixed and does not require PHY configuration
+    enum:
+      - "10BASE-T Half-Duplex"
+      - "10BASE-T Full-Duplex"
+      - "100BASE-T Half-Duplex"
+      - "100BASE-T Full-Duplex"
+      - "1000BASE-T Half-Duplex"
+      - "1000BASE-T Full-Duplex"
+      - "2500BASE-T Full-Duplex"
+      - "5000BASE-T Full-Duplex"
+  reset-gpios:
+    type: phandle-array
+    description: GPIO connected to PHY reset signal pin. Reset is active low.
+  int-gpios:
+    type: phandle-array
+    description: GPIO for interrupt signal indicating PHY state change.
+  realtek,serdes-interface:
+    type: string
+    default: "HiSGMII"
+    enum:
+      - "2500Base-X+SGMII"
+      - "HiSGMII+SGMII"
+      - "2500Base-X"
+      - "HiSGMII"
+    description: Select SERDES interface type between PHY and SoC
+  realtek,serdes-auto-negotiation:
+    type: boolean
+    description: Enable Clause 37 auto-negotiation between PHY and SoC
+  eee-en:
+    type: boolean
+    description: |
+      Enable IEEE 802.3az Energy Efficient Ethernet which provides a mechanism
+      to greatly save the power consumption between data packets burst.
+  pma-local-loopback:
+    type: boolean
+    description: Enable loopback between Phy PMA TX and PHY PMA RX.
