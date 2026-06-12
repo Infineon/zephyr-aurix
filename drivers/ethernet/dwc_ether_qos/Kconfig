@@ -7,6 +7,7 @@ config ETH_DWC_ETHER_QOS
     depends on DT_HAS_SNPS_DWC_ETHER_QOS_ENABLED
     select NET_PKT_LINKING
     select EEPROM if $(dt_compat_any_has_prop,$(DT_COMPAT_SNPS_DWC_ETHER_QOS),mac-eeprom)
+    select NET_CHECKSUM_OFFLOAD_SUPPORTED if NET_L2_ETHERNET
 
 if ETH_DWC_ETHER_QOS
 
