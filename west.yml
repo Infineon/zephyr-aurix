@@ -24,7 +24,7 @@ manifest:
     - name: babblesim
       url-base: https://github.com/BabbleSim
     - name: linumiz
-      url-base: git@gitlab.com:linumiz/infineon/development
+      url-base: https://gitlab.com/linumiz/infineon/release
 
   group-filter: [-babblesim, -optional, -testing]
 
@@ -191,7 +191,7 @@ manifest:
         - hal
     - name: hal_infineon-aurix
       remote: linumiz
-      revision: release/ifx/v2.0.0
+      revision: release/ifx/v3.0.0
       path: modules/hal/infineon
       groups:
         - hal
