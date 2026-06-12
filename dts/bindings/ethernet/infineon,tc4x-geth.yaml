@@ -1,0 +1,17 @@
+# Copyright (c) 2024, Infineon Technologies AG
+# SPDX-License-Identifier: Apache-2.0
+
+description: Infineon TC4X GETH module
+
+compatible: "infineon,tc4x-geth"
+
+include: [base.yaml, pinctrl-device.yaml]
+
+properties:
+  clocks:
+    required: true
+  clock-names:
+    required: true
+  hsphy:
+    type: phandle
+    description: HSPHY module providing the Ethernet PHY interface for this GETH instance.

@@ -162,7 +162,7 @@ void pinctrl_configure_leth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin
 	MODULE_LETH0.P[id].PORTCTRL1.U = portctrl1;
 }
 
-#if DT_COMPAT_GET_ANY_STATUS_OKAY(infineon_tc4x_geth)
+#if DT_HAS_COMPAT_STATUS_OKAY(infineon_tc4x_geth)
 #include "IfxHsphy_reg.h"
 void pinctrl_configure_geth_mdio_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, mm_reg_t base)
 {

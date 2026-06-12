@@ -28,8 +28,8 @@ static void pinctrl_configure_pin(const pinctrl_soc_pin_t *pin)
 	void *protse = (void *)&PORT_BASE(pin->port)->PROTSE;
 	if (pin->analog) {
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_CONFIG);
-		atomic_ldmst_bit((uint8_t *)PORT_BASE(pin->port) + offsetof(Ifx_P, PDISC),
-				 pin->pin, 1);
+		atomic_ldmst_bit((uint8_t *)PORT_BASE(pin->port) + offsetof(Ifx_P, PDISC), pin->pin,
+				 1);
 		aurix_prot_set_state(protse, AURIX_PROT_STATE_RUN);
 		return;
 	}
@@ -70,7 +70,9 @@ int pinctrl_configure_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, uintp
 		DT_FOREACH_STATUS_OKAY(infineon_aurix_qspi, QSPI_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_qos, LETH_MAC_ENABLED_CASE)
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_qos_mdio, LETH_MDIO_ENABLED_CASE)
+#if DT_HAS_COMPAT_STATUS_OKAY(infineon_tc4x_geth)
 		DT_FOREACH_STATUS_OKAY(snps_dwc_ether_xgmac_mdio, GETH_MDIO_ENABLED_CASE)
+#endif
 	}
 
 	for (uint8_t i = 0U; i < pin_cnt; i++) {
