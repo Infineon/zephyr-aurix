@@ -156,6 +156,13 @@ config PHY_MAXLINEAR_GPY111
 	help
 	  Enable Maxlinear GPY111 Ethernet PHY Driver
 
+config PHY_HSPHY
+	bool "Infineon TC4X HSPHY Driver"
+	default y
+	depends on DT_HAS_INFINEON_TC4X_HSPHY_ENABLED
+	help
+	  Enable Infineon TC4X HSPHY Driver
+	
 config PHY_AUTONEG_TIMEOUT_MS
 	int "Auto-negotiation timeout value in milliseconds"
 	default 4000
